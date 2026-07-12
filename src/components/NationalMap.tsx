@@ -7,9 +7,10 @@ interface NationalMapProps {
   countryId: string;
   onBack: () => void;
   onRegionClick: (regionId: string) => void;
+  backLabel?: string;
 }
 
-export function NationalMap({ state, countryId, onBack, onRegionClick }: NationalMapProps) {
+export function NationalMap({ state, countryId, onBack, onRegionClick, backLabel = '← World Map' }: NationalMapProps) {
   const regions = getRegionsForCountry(countryId);
   const neighbourStrip = getNeighbourStrip(countryId);
   const country = state.countries[countryId];
@@ -27,7 +28,7 @@ export function NationalMap({ state, countryId, onBack, onRegionClick }: Nationa
     return (
       <div className="map-container national-map">
         <div className="national-map-header">
-          <button className="btn-back" onClick={onBack}>← World Map</button>
+          <button className="btn-back" onClick={onBack}>{backLabel}</button>
           <h2>{country?.name}</h2>
         </div>
         <p className="muted no-regions-msg">No regional map data for this nation.</p>
@@ -38,7 +39,7 @@ export function NationalMap({ state, countryId, onBack, onRegionClick }: Nationa
   return (
     <div className="map-container national-map">
       <div className="national-map-header">
-        <button className="btn-back" onClick={onBack}>← World Map</button>
+        <button className="btn-back" onClick={onBack}>{backLabel}</button>
         <h2>{country?.name}</h2>
         {relevantFronts.length > 0 && (
           <span className="front-count">{relevantFronts.length} active front{relevantFronts.length > 1 ? 's' : ''}</span>

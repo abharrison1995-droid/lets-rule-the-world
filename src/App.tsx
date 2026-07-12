@@ -16,6 +16,7 @@ import { playerDomesticPropaganda, playerForeignInfluence } from './engine/propa
 import { NationSelect } from './components/NationSelect';
 import { GameHeader } from './components/GameHeader';
 import { WorldMap } from './components/WorldMap';
+import { HemisphereChooser } from './components/HemisphereChooser';
 import { NationalMap } from './components/NationalMap';
 import { LayerTray } from './components/LayerTray';
 import { DiplomacyPanel } from './components/DiplomacyPanel';
@@ -23,6 +24,8 @@ import { EconomyPanel } from './components/EconomyPanel';
 import { EventModal } from './components/EventModal';
 import { RegionActionPanel } from './components/RegionActionPanel';
 import { SidePanel } from './components/SidePanel';
+import { useMobileLayout } from './hooks/useMobileLayout';
+import { getHemisphereForCountry, type HemisphereId } from './data/hemispheres';
 import './App.css';
 
 type Screen = 'menu' | 'game';
@@ -35,6 +38,9 @@ export default function App() {
   const [showSidePanel, setShowSidePanel] = useState(true);
   const [saveExists, setSaveExists] = useState(hasSavedGame());
   const [feedback, setFeedback] = useState<string | null>(null);
+  const isMobile = useMobileLayout();
+  const [mobileWorldView, setMobileWorldView] = useState<'chooser' | HemisphereId>('chooser');
+  const [lastHemisphere, setLastHemisphere] = useState<HemisphereId>('eurasia');
 
   const showFeedback = (msg: string | null) => {
     setFeedback(msg);
@@ -55,6 +61,8 @@ export default function App() {
     setShowDiplomacy(false);
     setShowEconomy(false);
     setFeedback(null);
+    setMobileWorldView('chooser');
+    setLastHemisphere(getHemisphereForCountry(countryId));
   }, []);
 
   const loadSaved = useCallback(() => {
@@ -83,18 +91,24 @@ export default function App() {
 
   const handleCountryClick = useCallback((countryId: string) => {
     if (!state) return;
+    if (isMobile && mobileWorldView !== 'chooser') {
+      setLastHemisphere(mobileWorldView);
+    }
     setState({
       ...state,
       selectedMapTier: 2,
       selectedCountryId: countryId,
       selectedRegionId: null,
     });
-  }, [state]);
+  }, [state, isMobile, mobileWorldView]);
 
   const handleBackToWorld = useCallback(() => {
     if (!state) return;
     setState({ ...state, selectedMapTier: 1, selectedCountryId: null, selectedRegionId: null });
-  }, [state]);
+    if (isMobile) {
+      setMobileWorldView(lastHemisphere);
+    }
+  }, [state, isMobile, lastHemisphere]);
 
   const handleRegionClick = useCallback((regionId: string) => {
     if (!state) return;
@@ -226,7 +240,23 @@ export default function App() {
       <div className="game-body">
         <main className="game-main">
           {state.selectedMapTier === 1 ? (
-            <WorldMap state={state} onCountryClick={handleCountryClick} />
+            isMobile ? (
+              mobileWorldView === 'chooser' ? (
+                <HemisphereChooser
+                  state={state}
+                  onSelect={(hemisphere) => setMobileWorldView(hemisphere)}
+                />
+              ) : (
+                <WorldMap
+                  state={state}
+                  hemisphere={mobileWorldView}
+                  onCountryClick={handleCountryClick}
+                  onBack={() => setMobileWorldView('chooser')}
+                />
+              )
+            ) : (
+              <WorldMap state={state} onCountryClick={handleCountryClick} />
+            )
           ) : state.selectedCountryId ? (
             <>
               <NationalMap
@@ -234,6 +264,7 @@ export default function App() {
                 countryId={state.selectedCountryId}
                 onBack={handleBackToWorld}
                 onRegionClick={handleRegionClick}
+                backLabel={isMobile ? '← Back' : '← World Map'}
               />
               <LayerTray
                 visibleLayers={state.visibleLayers}
