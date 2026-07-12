@@ -1042,6 +1042,23 @@ body {
   z-index: 20;
 }
 
+.map-recenter-btn {
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid #fbbf24;
+  background: rgba(15, 29, 46, 0.94);
+  color: #fbbf24;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
 @media (max-width: 768px) {
   .game-main {
     min-height: 0;

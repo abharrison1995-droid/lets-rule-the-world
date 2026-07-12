@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 
 export interface PanZoomTransform {
   x: number;
@@ -7,6 +7,7 @@ export interface PanZoomTransform {
 }
 
 interface UsePanZoomOptions {
+  containerRef: RefObject<HTMLElement | null>;
   minScale?: number;
   maxScale?: number;
   enabled?: boolean;
@@ -18,17 +19,64 @@ function touchDistance(a: { clientX: number; clientY: number }, b: { clientX: nu
   return Math.hypot(dx, dy);
 }
 
+function clampTransform(
+  t: PanZoomTransform,
+  viewportW: number,
+  viewportH: number
+): PanZoomTransform {
+  if (viewportW <= 0 || viewportH <= 0) return t;
+
+  // At 1× or below, content fits the frame — no panning (prevents blank margins)
+  if (t.scale <= 1) {
+    return { x: 0, y: 0, scale: t.scale };
+  }
+
+  // Scaled content extends beyond viewport; limit pan to keep map on screen
+  const maxX = (viewportW * (t.scale - 1)) / 2;
+  const maxY = (viewportH * (t.scale - 1)) / 2;
+
+  return {
+    scale: t.scale,
+    x: Math.max(-maxX, Math.min(maxX, t.x)),
+    y: Math.max(-maxY, Math.min(maxY, t.y)),
+  };
+}
+
 export function usePanZoom({
+  containerRef,
   minScale = 1,
   maxScale = 4,
   enabled = true,
-}: UsePanZoomOptions = {}) {
+}: UsePanZoomOptions) {
   const [transform, setTransform] = useState<PanZoomTransform>({ x: 0, y: 0, scale: 1 });
+  const [viewportSize, setViewportSize] = useState({ w: 0, h: 0 });
   const blockClickRef = useRef(false);
 
   const panStart = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
-  const pinchStart = useRef<{ distance: number; scale: number } | null>(null);
+  const pinchStart = useRef<{ distance: number; scale: number; tx: number; ty: number } | null>(null);
   const movedRef = useRef(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const update = () => setViewportSize({ w: el.clientWidth, h: el.clientHeight });
+    update();
+
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [containerRef]);
+
+  const applyTransform = useCallback(
+    (next: PanZoomTransform | ((prev: PanZoomTransform) => PanZoomTransform)) => {
+      setTransform(prev => {
+        const raw = typeof next === 'function' ? next(prev) : next;
+        return clampTransform(raw, viewportSize.w, viewportSize.h);
+      });
+    },
+    [viewportSize.w, viewportSize.h]
+  );
 
   const clampScale = useCallback(
     (s: number) => Math.min(maxScale, Math.max(minScale, s)),
@@ -39,11 +87,17 @@ export function usePanZoom({
     setTransform({ x: 0, y: 0, scale: 1 });
   }, []);
 
+  const isOffCenter =
+    transform.scale !== 1 || Math.abs(transform.x) > 2 || Math.abs(transform.y) > 2;
+
   const zoomBy = useCallback(
     (factor: number) => {
-      setTransform(t => ({ ...t, scale: clampScale(t.scale * factor) }));
+      applyTransform(t => {
+        const scale = clampScale(t.scale * factor);
+        return clampTransform({ ...t, scale }, viewportSize.w, viewportSize.h);
+      });
     },
-    [clampScale]
+    [applyTransform, clampScale, viewportSize.w, viewportSize.h]
   );
 
   const onPointerDown = useCallback(
@@ -71,24 +125,25 @@ export function usePanZoom({
         movedRef.current = true;
         blockClickRef.current = true;
       }
-      setTransform(t => ({
-        ...t,
-        x: panStart.current!.tx + dx,
-        y: panStart.current!.ty + dy,
-      }));
+      applyTransform({
+        x: panStart.current.tx + dx,
+        y: panStart.current.ty + dy,
+        scale: transform.scale,
+      });
     },
-    [enabled]
+    [enabled, applyTransform, transform.scale]
   );
 
   const onPointerUp = useCallback(() => {
     panStart.current = null;
+    applyTransform(t => t);
     if (movedRef.current) {
       blockClickRef.current = true;
       window.setTimeout(() => {
         blockClickRef.current = false;
       }, 80);
     }
-  }, []);
+  }, [applyTransform]);
 
   const onTouchStart = useCallback(
     (e: React.TouchEvent) => {
@@ -96,10 +151,12 @@ export function usePanZoom({
       pinchStart.current = {
         distance: touchDistance(e.touches[0], e.touches[1]),
         scale: transform.scale,
+        tx: transform.x,
+        ty: transform.y,
       };
       panStart.current = null;
     },
-    [enabled, transform.scale]
+    [enabled, transform.scale, transform.x, transform.y]
   );
 
   const onTouchMove = useCallback(
@@ -110,26 +167,29 @@ export function usePanZoom({
       const ratio = distance / pinchStart.current.distance;
       blockClickRef.current = true;
       movedRef.current = true;
-      setTransform(t => ({
-        ...t,
-        scale: clampScale(pinchStart.current!.scale * ratio),
-      }));
+      applyTransform({
+        x: pinchStart.current.tx,
+        y: pinchStart.current.ty,
+        scale: clampScale(pinchStart.current.scale * ratio),
+      });
     },
-    [enabled, clampScale]
+    [enabled, applyTransform, clampScale]
   );
 
   const onTouchEnd = useCallback(() => {
     if (pinchStart.current) {
       pinchStart.current = null;
+      applyTransform(t => t);
       window.setTimeout(() => {
         blockClickRef.current = false;
       }, 80);
     }
-  }, []);
+  }, [applyTransform]);
 
   return {
     transform,
     blockClickRef,
+    isOffCenter,
     reset,
     zoomIn: () => zoomBy(1.3),
     zoomOut: () => zoomBy(1 / 1.3),

@@ -21,11 +21,15 @@ interface PanZoomMapProps {
 }
 
 function PanZoomViewport({ children, className, showHint }: { children: ReactNode; className: string; showHint: boolean }) {
-  const { transform, blockClickRef, reset, zoomIn, zoomOut, handlers } = usePanZoom({ enabled: true });
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const { transform, blockClickRef, isOffCenter, reset, zoomIn, zoomOut, handlers } = usePanZoom({
+    containerRef: viewportRef,
+    enabled: true,
+  });
 
   return (
     <MapInteractionContext.Provider value={{ blockClickRef }}>
-      <div className={`map-stage pan-zoom-viewport ${className}`} {...handlers}>
+      <div ref={viewportRef} className={`map-stage pan-zoom-viewport ${className}`} {...handlers}>
         <div
           className="pan-zoom-content"
           style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})` }}
@@ -39,8 +43,14 @@ function PanZoomViewport({ children, className, showHint }: { children: ReactNod
           <button type="button" className="map-zoom-btn map-zoom-reset" onClick={reset} aria-label="Reset view">⟲</button>
         </div>
 
-        {showHint && transform.scale === 1 && transform.x === 0 && transform.y === 0 && (
+        {showHint && !isOffCenter && (
           <div className="map-pan-hint">Pinch or drag to explore</div>
+        )}
+
+        {isOffCenter && (
+          <button type="button" className="map-recenter-btn" onClick={reset} onPointerDown={e => e.stopPropagation()}>
+            Recenter map
+          </button>
         )}
       </div>
     </MapInteractionContext.Provider>
