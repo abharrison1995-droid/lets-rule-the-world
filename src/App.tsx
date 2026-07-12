@@ -35,6 +35,7 @@ export default function App() {
   const [showSidePanel, setShowSidePanel] = useState(true);
   const [saveExists, setSaveExists] = useState(hasSavedGame());
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
 
   const showFeedback = (msg: string | null) => {
     setFeedback(msg);
@@ -226,7 +227,12 @@ export default function App() {
       <div className="game-body">
         <main className="game-main">
           {state.selectedMapTier === 1 ? (
-            <WorldMap state={state} onCountryClick={handleCountryClick} />
+            <WorldMap
+              state={state}
+              onCountryClick={handleCountryClick}
+              hoveredCountryId={hoveredCountry}
+              onHoverCountry={setHoveredCountry}
+            />
           ) : state.selectedCountryId ? (
             <>
               <NationalMap

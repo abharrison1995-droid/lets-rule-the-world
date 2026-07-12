@@ -100,6 +100,7 @@ function flipRegion(state: GameState, region: typeof state.regions[string], newO
   region.controlledBy = newOwner;
   region.unrest = 60;
   region.garrison.troops = Math.max(500, region.garrison.troops * 0.3);
+  region.lastFlippedTurn = state.turn;
 }
 
 function getAllianceReinforcement(state: GameState, countryId: string): number {

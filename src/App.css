@@ -205,6 +205,7 @@ body {
 }
 
 .map-container {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -836,6 +837,89 @@ body {
   font-size: 0.68rem;
   color: var(--text-muted);
   margin-bottom: 0.15rem;
+}
+
+.world-map-svg {
+  min-height: 45dvh;
+}
+
+.national-map-svg {
+  min-height: 50dvh;
+}
+
+.country-group.hovered .country-path {
+  filter: brightness(1.25);
+}
+
+.country-label {
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  pointer-events: none;
+}
+
+.war-pulse {
+  animation: pulse-war 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-war {
+  0%, 100% { opacity: 1; r: 3; }
+  50% { opacity: 0.4; r: 5; }
+}
+
+.map-tooltip {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.region-flipped {
+  animation: region-flip 1.2s ease-out;
+}
+
+@keyframes region-flip {
+  0% { filter: brightness(2) saturate(1.5); }
+  50% { filter: brightness(1.5); }
+  100% { filter: none; }
+}
+
+.region-occupied .region-group path,
+.region-group.region-occupied path {
+  stroke-dasharray: 4 2;
+}
+
+.region-selected path {
+  filter: drop-shadow(0 0 4px #fbbf24);
+}
+
+.front-border-glow {
+  animation: front-pulse 2s ease-in-out infinite;
+}
+
+@keyframes front-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.85; }
+}
+
+.neighbour-region path {
+  pointer-events: none;
+}
+
+.event-pin {
+  animation: event-blink 1s ease-in-out infinite;
+}
+
+@keyframes event-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .peace-section .btn-action.peace {

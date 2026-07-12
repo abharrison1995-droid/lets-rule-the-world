@@ -110,7 +110,7 @@ export const REGIONS: Record<string, Region> = {
       'M 120,120 L 160,115 L 165,150 L 140,155 L 115,140 Z', [140, 135], 5),
     r('isr_north', 'israel', 'Northern Israel', ['isr_center', 'isr_golan'], 'coastal', 1500000, 150, 15000,
       'M 115,90 L 160,85 L 165,115 L 120,120 Z', [140, 102], 4),
-    r('isr_south', 'israel', 'Southern Israel', ['isr_center', 'isr_negev'], 'desert', 1200000, 80, 10000,
+    r('isr_south', 'israel', 'Southern Israel', ['isr_center', 'isr_negev', 'egy_sinai'], 'desert', 1200000, 80, 10000,
       'M 115,140 L 140,155 L 135,190 L 110,185 Z', [125, 165], 3),
     r('isr_golan', 'israel', 'Golan Heights', ['isr_north'], 'mountain', 50000, 20, 8000,
       'M 160,85 L 190,80 L 195,110 L 165,115 Z', [177, 97], 3),
@@ -267,22 +267,50 @@ export const REGIONS: Record<string, Region> = {
     r('deu_east', 'germany', 'Eastern Germany', ['deu_south', 'deu_north'], 'plains', 8000000, 400, 4000,
       'M 225,85 L 265,80 L 270,120 L 230,125 Z', [248, 103]),
   ].map(reg => [reg.id, reg])),
+
+  // Saudi Arabia — 5 regions (NPC)
+  ...Object.fromEntries([
+    r('sau_najd', 'saudi_arabia', 'Najd', ['sau_hejaz', 'sau_eastern', 'sau_asir'], 'desert', 9000000, 400, 15000,
+      'M 200,100 L 260,95 L 270,150 L 240,170 L 190,160 Z', [230, 132]),
+    r('sau_hejaz', 'saudi_arabia', 'Hejaz', ['sau_najd', 'sau_asir'], 'coastal', 10000000, 350, 12000,
+      'M 150,120 L 200,115 L 210,160 L 170,175 L 140,150 Z', [175, 145]),
+    r('sau_eastern', 'saudi_arabia', 'Eastern Province', ['sau_najd'], 'coastal', 5000000, 600, 10000,
+      'M 270,130 L 320,125 L 330,165 L 285,175 L 260,155 Z', [295, 150]),
+    r('sau_asir', 'saudi_arabia', 'Asir', ['sau_najd', 'sau_hejaz'], 'mountain', 4000000, 150, 8000,
+      'M 170,175 L 220,168 L 230,210 L 185,220 L 160,195 Z', [195, 195]),
+    r('sau_rub', 'saudi_arabia', 'Rub al-Khali', ['sau_najd', 'sau_asir', 'sau_eastern'], 'desert', 1000000, 80, 3000,
+      'M 240,170 L 300,165 L 310,220 L 250,230 L 220,200 Z', [265, 198]),
+  ].map(reg => [reg.id, reg])),
+
+  // Egypt — 4 regions (NPC)
+  ...Object.fromEntries([
+    r('egy_cairo', 'egypt', 'Cairo & Delta', ['egy_upper', 'egy_sinai'], 'urban', 25000000, 350, 20000,
+      'M 200,80 L 250,75 L 260,120 L 220,130 L 190,110 Z', [225, 102]),
+    r('egy_upper', 'egypt', 'Upper Egypt', ['egy_cairo', 'egy_western'], 'desert', 8000000, 120, 12000,
+      'M 190,130 L 230,125 L 240,180 L 200,190 L 175,160 Z', [210, 158]),
+    r('egy_sinai', 'egypt', 'Sinai', ['egy_cairo', 'isr_south'], 'desert', 600000, 50, 15000,
+      'M 260,120 L 310,115 L 320,160 L 280,170 L 250,145 Z', [285, 142]),
+    r('egy_western', 'egypt', 'Western Desert', ['egy_upper'], 'desert', 500000, 30, 5000,
+      'M 140,140 L 190,130 L 200,190 L 150,200 L 125,170 Z', [165, 165]),
+  ].map(reg => [reg.id, reg])),
 };
 
 /** Neighbour border strips for Tier 2 national maps */
 export const NEIGHBOUR_STRIPS: Record<string, string[]> = {
   russia: ['ukr_west', 'ukr_east', 'ukr_south', 'ukr_central'],
   ukraine: ['rus_west', 'rus_south', 'rus_crimea'],
-  israel: ['irn_southwest', 'irn_west'],
+  israel: ['irn_southwest', 'irn_west', 'egy_sinai', 'sau_hejaz'],
   india: ['pak_punjab', 'pak_sindh', 'chn_tibet'],
   pakistan: ['ind_north', 'ind_kashmir', 'ind_west', 'irn_east'],
   north_korea: ['sk_northwest', 'chn_northeast'],
   south_korea: ['nk_south', 'nk_west'],
   usa: [],
   china: ['ind_north'],
-  iran: ['pak_balochistan', 'isr_south'],
+  iran: ['pak_balochistan', 'isr_south', 'sau_rub', 'sau_asir'],
+  turkey: ['sau_najd'],
+  egypt: ['isr_south', 'sau_hejaz'],
+  saudi_arabia: ['irn_east', 'egy_upper', 'isr_south'],
   england: [],
-  turkey: [],
 };
 
 export function getRegionsForCountry(countryId: string): Region[] {

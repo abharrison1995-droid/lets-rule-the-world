@@ -57,6 +57,8 @@ export interface Region {
   mapPath: string;
   /** Center point for icon placement [x, y] */
   center: [number, number];
+  /** Turn when control last changed (for flip animation) */
+  lastFlippedTurn?: number;
 }
 
 export interface Alliance {
