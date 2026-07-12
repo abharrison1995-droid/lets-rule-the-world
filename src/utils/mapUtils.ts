@@ -1,7 +1,7 @@
 import type { Country, Region } from '../types/game';
 
 /** Compute a tight viewBox around visible countries for hemisphere zoom */
-export function computeHemisphereViewBox(countries: Country[], pad = 28): string {
+export function computeHemisphereViewBox(countries: Country[], pad = 42): string {
   if (countries.length === 0) return '0 0 900 400';
 
   const xs = countries.map(c => c.worldMapLabel[0]);
@@ -14,20 +14,12 @@ export function computeHemisphereViewBox(countries: Country[], pad = 28): string
   let w = maxX - minX;
   let h = maxY - minY;
 
-  // Single-nation hemispheres (Americas): pad to a squarer frame for mobile fill
+  // Single-nation hemispheres (Americas): squarer frame
   if (countries.length <= 2) {
-    const size = Math.max(w, h, 160);
+    const size = Math.max(w, h, 180);
     const cx = (minX + maxX) / 2;
     const cy = (minY + maxY) / 2;
     return `${cx - size / 2} ${cy - size / 2} ${size} ${size}`;
-  }
-
-  // Multi-nation: add vertical padding so slice crop feels less extreme
-  const aspect = w / h;
-  if (aspect > 2) {
-    const targetH = w / 1.35;
-    const extra = (targetH - h) / 2;
-    return `${minX} ${minY - extra} ${w} ${targetH}`;
   }
 
   return `${minX} ${minY} ${w} ${h}`;
