@@ -35,7 +35,9 @@ export default function App() {
   const [state, setState] = useState<GameState | null>(null);
   const [showDiplomacy, setShowDiplomacy] = useState(false);
   const [showEconomy, setShowEconomy] = useState(false);
-  const [showSidePanel, setShowSidePanel] = useState(true);
+  const [showSidePanel, setShowSidePanel] = useState(() =>
+    typeof window !== 'undefined' ? !window.matchMedia('(max-width: 768px)').matches : true
+  );
   const [saveExists, setSaveExists] = useState(hasSavedGame());
   const [feedback, setFeedback] = useState<string | null>(null);
   const isMobile = useMobileLayout();

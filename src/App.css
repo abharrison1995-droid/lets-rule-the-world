@@ -214,9 +214,25 @@ body {
 
 .map-svg {
   width: 100%;
-  height: auto;
   flex: 1;
   min-height: 300px;
+}
+
+.map-stage {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.map-stage .map-svg {
+  height: 100%;
+}
+
+.country-label,
+.region-label {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
 }
 
 .country-path, .region-group {
@@ -938,25 +954,75 @@ body {
 
 .world-map--hemisphere .world-map-svg {
   flex: 1;
-  min-height: 55dvh;
 }
 
 .world-map-header {
   flex-shrink: 0;
 }
 
+.world-map--mobile-fill .map-stage,
+.national-map--mobile-fill .map-stage {
+  min-height: 75dvh;
+}
+
+.world-map--mobile-fill .map-stage .world-map-svg,
+.national-map--mobile-fill .map-stage .national-map-svg {
+  min-height: 75dvh;
+  height: 75dvh;
+}
+
 @media (max-width: 768px) {
-  .world-map-svg {
-    min-height: 55dvh;
-  }
-
-  .national-map-svg,
-  .map-svg.national-map-svg {
-    min-height: 50dvh;
-  }
-
   .game-main {
     min-height: 0;
+    width: 100%;
+  }
+
+  .game-body {
+    position: relative;
+  }
+
+  /* Intel panel overlays instead of stealing map width */
+  .side-panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: min(280px, 88vw);
+    z-index: 120;
+    box-shadow: -6px 0 24px rgba(0, 0, 0, 0.45);
+  }
+
+  .side-panel-toggle {
+    z-index: 130;
+  }
+
+  .hemisphere-chooser {
+    min-height: 70dvh;
+  }
+
+  .hemisphere-card {
+    min-height: 140px;
+  }
+
+  .world-map--mobile-fill .map-stage,
+  .national-map--mobile-fill .map-stage {
+    min-height: 72dvh;
+  }
+
+  .world-map--mobile-fill .map-stage .world-map-svg,
+  .national-map--mobile-fill .map-stage .national-map-svg {
+    min-height: 72dvh;
+    height: 72dvh;
+  }
+
+  .national-map-header,
+  .world-map-header {
+    padding: 0.4rem 0.75rem;
+  }
+
+  .layer-tray {
+    padding: 0.4rem 0.75rem;
+    flex-shrink: 0;
   }
 }
 
