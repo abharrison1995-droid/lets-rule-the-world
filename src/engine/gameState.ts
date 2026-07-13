@@ -14,6 +14,7 @@ import { applyTurnIncome, checkTaxPoliticalPressure, getDefaultCorporateTaxRate,
 import { tickFiscalDebt } from './fiscal';
 import { resolveStrikeCampaigns } from './strikeCampaigns';
 import { runNpcGreyZoneStrikes, runNpcWartimeStrikes } from './npcStrikes';
+import { tickNpcWorldActivity } from './npcNation';
 import { tickWarReadiness, forceHaltCampaignsFromWeariness } from './warReadiness';
 import { buildTurnReport } from './turnReport';
 import { resetActionEnergy } from './actionEnergy';
@@ -126,6 +127,7 @@ export function advanceTurn(state: GameState): GameState {
   // Turn loop per spec
   tickEconomy(newState);
   tickDiplomacy(newState);
+  tickNpcWorldActivity(newState);
   tickInternationalPariah(newState);
   rollEvents(newState);
   applyBudgetEffects(newState);

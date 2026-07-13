@@ -971,6 +971,132 @@ body {
   flex-shrink: 0;
 }
 
+.nation-dot.large {
+  width: 14px;
+  height: 14px;
+}
+
+.npc-browser-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 0.75rem;
+}
+
+.npc-dossier {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+}
+
+.npc-dossier-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.npc-dossier-header h5 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.npc-role-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+.npc-dossier-header .dossier-rel {
+  margin-left: auto;
+  font-size: 0.85rem;
+}
+
+.npc-quote {
+  margin: 0.5rem 0;
+  padding-left: 0.65rem;
+  border-left: 2px solid var(--accent, #3b82f6);
+  font-style: italic;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.npc-foreign-policy {
+  font-size: 0.82rem;
+  margin: 0.5rem 0;
+}
+
+.npc-standing {
+  margin: 0.5rem 0;
+  padding-left: 1.1rem;
+  font-size: 0.8rem;
+}
+
+.npc-standing li {
+  margin-bottom: 0.2rem;
+}
+
+.npc-behavior h6,
+.npc-relations-grid h6,
+.npc-other-relations h6 {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin: 0.5rem 0 0.35rem;
+}
+
+.npc-behavior ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.8rem;
+}
+
+.npc-relations-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+@media (max-width: 480px) {
+  .npc-relations-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.npc-rel-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.npc-rel-chip {
+  font-size: 0.72rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.npc-rel-chip.positive {
+  color: var(--success, #22c55e);
+}
+
+.npc-rel-chip.negative {
+  color: var(--danger, #ef4444);
+}
+
+.npc-dossier-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.65rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
 .btn-small.meeting {
   color: var(--accent);
   font-size: 0.7rem;

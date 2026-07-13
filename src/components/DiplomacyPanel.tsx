@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { GameState, PeaceTermsType, TalkOptionId, CovertTalkOptionId, PressActionId } from '../types/game';
-import { getAllRelationsForCountry } from '../engine/diplomacy';
+import { getPlayableRelationTargets, getNpcNationDossier, getNpcNationIds } from '../engine/npcNation';
+import { NpcNationBrowser } from './NpcNationDossier';
 import { getMechanicsForNation } from '../data/mechanics';
 import { getPeaceOptions, calculatePeaceAcceptance } from '../engine/peace';
 import { formatRelationValue, previewPeaceReconciliation } from '../engine/conflictRelations';
@@ -60,8 +61,9 @@ export function DiplomacyPanel({
   const [talksTarget, setTalksTarget] = useState<string | null>(null);
   const [mechanicTarget, setMechanicTarget] = useState('');
   const [peaceTarget, setPeaceTarget] = useState('');
+  const [npcInspectId, setNpcInspectId] = useState('');
 
-  const relations = getAllRelationsForCountry(state, state.playerCountryId);
+  const relations = getPlayableRelationTargets(state, state.playerCountryId);
   const alliances = state.alliances.filter(a => a.members.includes(state.playerCountryId));
   const covertAlliances = getActiveCovertAlliances(state, state.playerCountryId);
   const mechanics = getMechanicsForNation(state.playerCountryId);
@@ -211,6 +213,7 @@ export function DiplomacyPanel({
 
       <section className="panel-section">
         <h4>Relations</h4>
+        <p className="muted small">Playable nations — use World Powers below for NPC dossiers.</p>
         {RELATION_GROUP_ORDER.map(category => {
           const group = grouped[category];
           if (group.length === 0) return null;
@@ -263,14 +266,32 @@ export function DiplomacyPanel({
         })}
       </section>
 
+      <NpcNationBrowser
+        state={state}
+        selectedId={npcInspectId}
+        onSelect={setNpcInspectId}
+        onMeeting={openTalks}
+        onCovertOp={onCovertOp}
+        onProbePacts={onProbePacts}
+        getDossier={getNpcNationDossier}
+        getNpcIds={getNpcNationIds}
+      />
+
       {mechanics.length > 0 && (
         <section className="panel-section">
           <h4>Special Actions</h4>
           <select className="target-select" value={mechanicTarget} onChange={e => setMechanicTarget(e.target.value)}>
             <option value="">Select target nation...</option>
-            {relations.map(r => (
-              <option key={r.countryId} value={r.countryId}>{r.name}</option>
-            ))}
+            <optgroup label="Playable nations">
+              {relations.map(r => (
+                <option key={r.countryId} value={r.countryId}>{r.name}</option>
+              ))}
+            </optgroup>
+            <optgroup label="World powers (NPC)">
+              {getNpcNationIds(state).map(id => (
+                <option key={id} value={id}>{state.countries[id]?.name ?? id}</option>
+              ))}
+            </optgroup>
           </select>
           {mechanics.map(m => {
             const lastUsed = state.mechanicCooldowns[m.id] ?? 0;
