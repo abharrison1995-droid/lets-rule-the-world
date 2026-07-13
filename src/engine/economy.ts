@@ -17,20 +17,19 @@ export function tickEconomy(state: GameState): void {
     const ownedRegions = Object.values(state.regions).filter(r => r.controlledBy === country.id);
     const regionBonus = ownedRegions.reduce((sum, r) => {
       const penalty = r.controlledBy !== r.countryId && r.unrest > 20 ? 0.5 : 1;
-      return sum + r.industryValue * penalty * 0.00001;
+      return sum + r.industryValue * penalty * 0.000002;
     }, 0);
-    country.stats.gdp *= (1 + regionBonus);
+    country.stats.treasuryPoints *= (1 + regionBonus);
 
     const modifiers = computeGrowthModifiers(state, country);
-    const growth = country.stats.gdpGrowth + modifiers;
-    country.stats.gdp *= (1 + growth);
+    const growth = country.stats.baseGrowthRate + modifiers;
+    country.stats.treasuryPoints *= (1 + growth);
 
-    // Tech level — use nation's own defense budget, not player budget
-    const techInvestment = country.stats.gdp * country.stats.defenseBudget * 0.00005;
+    const techInvestment = country.stats.treasuryPoints * country.stats.defenseBudget * 0.0002;
     const allianceTechBonus = computeAllianceTechSharing(state, country.id);
     country.stats.techLevel = Math.min(
       1,
-      country.stats.techLevel + country.stats.gdpGrowth * 0.002 + techInvestment + allianceTechBonus
+      country.stats.techLevel + country.stats.baseGrowthRate * 0.002 + techInvestment + allianceTechBonus
     );
 
     // War exhaustion

@@ -7,6 +7,7 @@ import { getRegionsForCountry } from '../data/regions';
 const STAT_COMPARE: Record<string, 'lte' | 'gte'> = {
   moraleBase: 'lte',
   regimeSecurity: 'lte',
+  treasuryPoints: 'lte',
   gdp: 'lte',
   defenseBudget: 'lte',
   warExhaustion: 'gte',
@@ -96,7 +97,7 @@ function buildActiveEvent(
   const regionId = pickPlayerRegion(countryId);
   const region = regionId ? state.regions[regionId] : null;
   const partnerName = partner ? state.countries[partner]?.name ?? partner : 'a foreign power';
-  const donation = Math.round(15 + Math.random() * 85);
+  const donation = Math.round(12 + Math.random() * 22);
   const cause = pickCauseLabel();
 
   if (event.id === 'alliance_proposal' && partner) {
@@ -119,7 +120,7 @@ function buildActiveEvent(
     active.contextAmount = donation;
     active.displayDescription =
       `A rogue tech billionaire wants to build a hyperscale data centre in ${region.name}. ` +
-      `Local residents are furious — but he will donate $${donation}B to ${cause} if you approve the permits.`;
+      `Local residents are furious — but he will donate ${donation} treasury points to ${cause} if you approve the permits.`;
   } else if (event.id === 'dissident_pardon') {
     active.displayDescription =
       'A political dissident requests a presidential pardon. They attempted to assassinate your chief political rival last year. ' +
@@ -128,7 +129,7 @@ function buildActiveEvent(
     active.contextNationId = partner;
     active.contextAmount = donation;
     active.displayDescription =
-      `${partnerName} offers a discounted arms package worth $${donation}B — ` +
+      `${partnerName} offers a discounted arms package worth ${donation} TP — ` +
       `with strings attached on future diplomatic votes.`;
   } else if (event.id === 'refugee_crisis' && region) {
     active.contextRegionId = regionId!;
@@ -180,7 +181,8 @@ function getStatValue(state: GameState, countryId: string, key: string): number 
     case 'moraleBase': return country.stats.moraleBase;
     case 'warExhaustion': return country.stats.warExhaustion;
     case 'regimeSecurity': return country.stats.regimeSecurity;
-    case 'gdp': return country.stats.gdp;
+    case 'treasuryPoints':
+    case 'gdp': return country.stats.treasuryPoints;
     case 'propagandaSaturation': return country.stats.propagandaSaturation;
     case 'defenseBudget': return country.stats.defenseBudget;
     case 'atWar': return state.wars.some(w => w.belligerents.includes(countryId));
@@ -295,8 +297,15 @@ function applyEffect(
   const dev = country.militaryDev;
 
   switch (stat) {
-    case 'gdp': stats.gdp += delta; break;
-    case 'gdpGrowth': stats.gdpGrowth += delta; break;
+    case 'treasuryPoints':
+    case 'gdp': {
+      let tpDelta = stat === 'gdp' ? Math.round(delta / 8) : delta;
+      if (tpDelta === 0 && active?.contextAmount) tpDelta = active.contextAmount;
+      stats.treasuryPoints = Math.max(0, stats.treasuryPoints + tpDelta);
+      break;
+    }
+    case 'baseGrowthRate':
+    case 'gdpGrowth': stats.baseGrowthRate += delta; break;
     case 'moraleBase': stats.moraleBase = Math.max(0, Math.min(1, stats.moraleBase + delta)); break;
     case 'regimeSecurity': stats.regimeSecurity = Math.max(0, Math.min(1, stats.regimeSecurity + delta)); break;
     case 'warPopularity': stats.warPopularity = Math.max(0, Math.min(1, stats.warPopularity + delta)); break;
@@ -313,7 +322,9 @@ function applyEffect(
       }
       break;
     }
-    case 'reserve': state.reserveFunds += active?.contextAmount ?? delta; break;
+    case 'reserve':
+      country.stats.treasuryPoints += active?.contextAmount ?? delta;
+      break;
     case 'alliance': {
       const targetId = resolveRelationTarget(state, country, target);
       if (targetId) proposeAlliance(state, country.id, targetId, 'defensive_pact');

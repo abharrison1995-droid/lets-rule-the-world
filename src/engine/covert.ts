@@ -124,7 +124,7 @@ function applyCovertEffects(
     target.stats.moraleBase = Math.max(0, target.stats.moraleBase + effects.targetMorale * scale);
   }
   if (effects.targetTechGrowth) {
-    target.stats.gdpGrowth = Math.max(-0.05, target.stats.gdpGrowth + effects.targetTechGrowth * scale);
+    target.stats.baseGrowthRate = Math.max(-0.05, target.stats.baseGrowthRate + effects.targetTechGrowth * scale);
   }
   if (effects.targetUnrest) {
     for (const region of getRegionsForCountry(op.targetNation)) {

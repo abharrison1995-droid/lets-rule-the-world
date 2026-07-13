@@ -43,10 +43,10 @@ export function getWinProgress(state: GameState): WinProgress {
     details.push(`Minimum turns: ${state.turn} / ${win.minTurns}`);
   }
 
-  if (win.minGdp !== undefined) {
-    const met = player.stats.gdp >= win.minGdp;
+  if (win.minTreasury !== undefined) {
+    const met = player.stats.treasuryPoints >= win.minTreasury;
     checks.push(met);
-    details.push(`GDP: $${player.stats.gdp.toFixed(0)}B / $${win.minGdp}B`);
+    details.push(`Economy: ${player.stats.treasuryPoints} TP / ${win.minTreasury} TP`);
   }
 
   if (win.minRegimeSecurity !== undefined) {

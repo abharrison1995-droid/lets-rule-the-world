@@ -96,9 +96,9 @@ export function proposePeace(
   if (terms === 'ceasefire') {
     modifyRelation(state.relations, state.playerCountryId, targetId, 5);
   } else if (terms === 'reparations') {
-    const payment = Math.min(target.stats.gdp * 0.05, 200);
-    target.stats.gdp -= payment;
-    player.stats.gdp += payment * 0.8;
+    const payment = Math.min(target.stats.treasuryPoints * 0.05, 50);
+    target.stats.treasuryPoints -= payment;
+    player.stats.treasuryPoints += payment * 0.8;
     modifyRelation(state.relations, state.playerCountryId, targetId, -10);
   } else {
     modifyRelation(state.relations, state.playerCountryId, targetId, 2);

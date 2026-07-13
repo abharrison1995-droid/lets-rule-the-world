@@ -1,8 +1,8 @@
 import type { GameState } from '../types/game';
 import { getRelation } from '../data/relations';
-import { formatGDP } from '../engine/gameState';
 import { getWinCondition } from './winConditions';
-import { getFiscalHeadroom, formatDebtRatio } from '../engine/fiscal';
+import { getFiscalHeadroom } from '../engine/fiscal';
+import { formatDisplayGDP, formatDebtRatio } from '../engine/treasuryDisplay';
 import { ALLIANCES_DATA } from './countries';
 
 export interface NationIntro {
@@ -65,7 +65,9 @@ export function getNationStandingBullets(state: GameState, countryId: string): s
   const headroom = getFiscalHeadroom(country);
   const debt = country.debtToGdp ?? 0;
 
-  bullets.push(`GDP: ${formatGDP(country.stats.gdp)} · Fiscal headroom: ${formatGDP(headroom)}`);
+  bullets.push(
+    `GDP (est.): ${formatDisplayGDP(country.stats.treasuryPoints)} · Treasury: ${country.stats.treasuryPoints} TP · Spendable: ${Math.round(headroom)} TP`
+  );
   if (debt > 0) {
     bullets.push(`National debt: ${formatDebtRatio(debt)} — servicing limits spending power`);
   }

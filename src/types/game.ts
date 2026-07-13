@@ -173,8 +173,10 @@ export interface CollapseCondition {
 }
 
 export interface CountryStats {
-  gdp: number;
-  gdpGrowth: number;
+  /** Engine-facing spendable economic power (TP). Not shown directly to player. */
+  treasuryPoints: number;
+  /** Per-turn growth rate applied to treasuryPoints */
+  baseGrowthRate: number;
   defenseBudget: number;
   troopQuality: number;
   techLevel: number;
@@ -232,7 +234,7 @@ export interface WinConditionDef {
   regionControlPct?: number;
   surviveTurns?: number;
   minTurns?: number;
-  minGdp?: number;
+  minTreasury?: number;
   minAlliesHighRelation?: number;
   minRelations?: Record<string, number>;
   minRegimeSecurity?: number;
@@ -374,7 +376,6 @@ export interface GameState {
   activeCovertOps: CovertOp[];
   strikeAnimations: StrikeAnimation[];
   mechanicCooldowns: Record<string, number>;
-  reserveFunds: number;
   gameOver: boolean;
   gameOverReason?: string;
   playerWon: boolean;

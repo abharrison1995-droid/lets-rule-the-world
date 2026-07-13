@@ -1,6 +1,6 @@
 import type { GameState } from '../types/game';
 import { getPlayerWars } from '../engine/gameState';
-import { formatGDP } from '../engine/gameState';
+import { formatDisplayGDP } from '../engine/treasuryDisplay';
 import { getWinProgress } from '../engine/winConditions';
 import { getPendingMissions, getTurnsUntilResolution } from '../engine/diplomaticMissions';
 
@@ -36,8 +36,8 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
 
           <section className="side-section">
             <h4>Status</h4>
-            <p>GDP: {formatGDP(player?.stats.gdp ?? 0)}</p>
-            <p>Reserve: ${state.reserveFunds.toFixed(0)}B</p>
+            <p>GDP (est.): {formatDisplayGDP(player?.stats.treasuryPoints ?? 0)}</p>
+            <p>Treasury: {player?.stats.treasuryPoints ?? 0} TP</p>
             <p>Counter-Intel: {((state.counterIntelLevel) * 100).toFixed(0)}%</p>
             <p>Morale: {((player?.stats.moraleBase ?? 0) * 100).toFixed(0)}%</p>
             <p>War Exhaustion: {((player?.stats.warExhaustion ?? 0) * 100).toFixed(0)}%</p>

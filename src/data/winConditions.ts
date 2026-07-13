@@ -23,8 +23,8 @@ export const WIN_CONDITIONS: Record<string, WinConditionDef> = {
   },
   china: {
     type: 'economic',
-    description: 'Economic dominance: GDP above $25T while maintaining regime security above 0.5.',
-    minGdp: 25000,
+    description: 'Economic dominance: treasury reaches 1,400 TP while maintaining regime security above 0.5.',
+    minTreasury: 1400,
     minRegimeSecurity: 0.5,
     minTurns: 40,
   },
@@ -43,21 +43,21 @@ export const WIN_CONDITIONS: Record<string, WinConditionDef> = {
   },
   india: {
     type: 'economic',
-    description: 'Rising power: GDP above $8T and control all home regions for 35 turns.',
-    minGdp: 8000,
+    description: 'Rising power: treasury reaches 700 TP and control all home regions for 35 turns.',
+    minTreasury: 700,
     minTurns: 35,
   },
   pakistan: {
     type: 'survival',
-    description: 'Survive 45 turns without economic collapse (GDP above $250B).',
+    description: 'Survive 45 turns without economic collapse (treasury above 180 TP).',
     surviveTurns: 45,
-    minGdp: 250,
+    minTreasury: 180,
   },
   iran: {
     type: 'survival',
-    description: 'Resist sanctions: survive 40 turns with GDP above $350B.',
+    description: 'Resist sanctions: survive 40 turns with treasury above 175 TP.',
     surviveTurns: 40,
-    minGdp: 350,
+    minTreasury: 175,
   },
   north_korea: {
     type: 'survival',

@@ -2,6 +2,7 @@ import type { GameState, PressActionId, PressActionPreview } from '../types/game
 import { getRelation, modifyRelation } from '../data/relations';
 import { spendActionEnergy, actionEnergyBlockReason } from './actionEnergy';
 import { deductCost } from './actions';
+import { formatDisplayCost } from './treasuryDisplay';
 import { hasPendingMission } from './diplomaticMissions';
 import { getRegionsForCountry } from '../data/regions';
 
@@ -140,7 +141,7 @@ export function dispatchSummitMission(
   }
   if (!deductCost(state, preview.cost)) {
     state.actionEnergy += preview.energyCost;
-    return { success: false, message: `Insufficient funds (need $${preview.cost}B).` };
+    return { success: false, message: `Insufficient funds (need ${formatDisplayCost(preview.cost)}).` };
   }
 
   const targetName = state.countries[targetId]?.name ?? targetId;
@@ -246,7 +247,7 @@ export function executePressAction(
   }
   if (!deductCost(state, preview.cost)) {
     state.actionEnergy += preview.energyCost;
-    return { success: false, message: `Insufficient funds (need $${preview.cost}B).` };
+    return { success: false, message: `Insufficient funds (need ${formatDisplayCost(preview.cost)}).` };
   }
 
   let result: PressActionResult;

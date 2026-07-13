@@ -198,7 +198,7 @@ export const EVENTS: GameEvent[] = [
     title: 'IMF Bailout Offer',
     description: 'The IMF offers emergency financing with structural reform conditions attached.',
     scope: 'national',
-    triggerConditions: { minTurn: 5, requiredState: [{ key: 'gdp', op: 'lt', value: 500 }] },
+    triggerConditions: { minTurn: 5, requiredState: [{ key: 'treasuryPoints', op: 'lt', value: 220 }] },
     weight: 8,
     choices: [
       { label: 'Accept bailout', effects: [{ stat: 'gdp', target: 'self', delta: 80 }, { stat: 'regimeSecurity', target: 'self', delta: -0.05 }] },
@@ -322,7 +322,7 @@ export const EVENTS: GameEvent[] = [
     title: 'Currency in Freefall',
     description: 'The Pakistani rupee collapses. IMF talks stall. Military factions grow restless.',
     scope: 'national',
-    triggerConditions: { targetCountry: 'pakistan', requiredState: [{ key: 'gdp', op: 'lt', value: 300 }] },
+    triggerConditions: { targetCountry: 'pakistan', requiredState: [{ key: 'treasuryPoints', op: 'lt', value: 185 }] },
     weight: 18,
     telegraph: true,
     choices: [
@@ -336,7 +336,7 @@ export const EVENTS: GameEvent[] = [
     title: 'Sanctions Squeeze Tightens',
     description: 'SWIFT restrictions and oil export blocks devastate the Iranian economy.',
     scope: 'national',
-    triggerConditions: { targetCountry: 'iran', requiredState: [{ key: 'gdp', op: 'lt', value: 350 }] },
+    triggerConditions: { targetCountry: 'iran', requiredState: [{ key: 'treasuryPoints', op: 'lt', value: 190 }] },
     weight: 16,
     telegraph: true,
     choices: [
@@ -431,7 +431,7 @@ export const EVENTS: GameEvent[] = [
     triggerConditions: { minTurn: 3 },
     weight: 14,
     choices: [
-      { label: 'Approve permits — take the donation', effects: [{ stat: 'reserve', target: 'self', delta: 40 }, { stat: 'unrest', target: 'self', delta: 18 }, { stat: 'moraleBase', target: 'self', delta: -0.04 }] },
+      { label: 'Approve permits — take the donation', effects: [{ stat: 'treasuryPoints', target: 'self', delta: 0 }, { stat: 'unrest', target: 'self', delta: 18 }, { stat: 'moraleBase', target: 'self', delta: -0.04 }] },
       { label: 'Reject the project outright', effects: [{ stat: 'moraleBase', target: 'self', delta: 0.05 }, { stat: 'gdpGrowth', target: 'self', delta: -0.003 }] },
       { label: 'Nationalize the site', effects: [{ stat: 'gdp', target: 'self', delta: -35 }, { stat: 'regimeSecurity', target: 'self', delta: 0.04 }] },
     ],

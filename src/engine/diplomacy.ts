@@ -173,7 +173,7 @@ export function checkAllianceCallUp(state: GameState, defenderId: string, attack
     for (const member of alliance.members) {
       if (member === defenderId || member === attackerId) continue;
       const relation = getRelation(state.relations, member, defenderId);
-      const economyFactor = state.countries[member]?.stats.gdpGrowth ?? 0;
+      const economyFactor = state.countries[member]?.stats.baseGrowthRate ?? 0;
       const warWeariness = state.countries[member]?.stats.warExhaustion ?? 0;
       const probability = (relation / 100) * weight * (1 + economyFactor) * (1 - warWeariness) * 0.5;
       if (Math.random() < probability) {
@@ -269,7 +269,7 @@ export function tickInternationalPariah(state: GameState): void {
 
   const player = state.countries[state.playerCountryId];
   if (player && state.internationalPariahTurns > 0) {
-    player.stats.gdpGrowth = Math.max(-0.05, player.stats.gdpGrowth - 0.005);
+    player.stats.baseGrowthRate = Math.max(-0.05, player.stats.baseGrowthRate - 0.005);
   }
 }
 

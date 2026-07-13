@@ -110,7 +110,7 @@ function getAllianceReinforcement(state: GameState, countryId: string): number {
       if (memberId === countryId) continue;
       const member = state.countries[memberId];
       if (member && !state.wars.some(w => w.belligerents.includes(memberId))) {
-        reinforcement += member.stats.defenseBudget * member.stats.gdp * 0.01;
+        reinforcement += member.stats.defenseBudget * member.stats.treasuryPoints * 0.04;
       }
     }
   }

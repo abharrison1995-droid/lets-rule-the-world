@@ -10,8 +10,7 @@ import { rollEvents, checkCollapseConditions } from './events';
 import { checkWinConditions } from './winConditions';
 import { resolveCovertOps, runNpcCovertOps } from './covert';
 import { tickCovertAllianceExposure } from './covertAlliances';
-import { accumulateReserve } from './actions';
-import { getStartingReserve } from './fiscal';
+import { accumulateTreasury } from './actions';
 import { resetActionEnergy } from './actionEnergy';
 import { resolveDiplomaticMissions } from './diplomaticMissions';
 import {
@@ -45,7 +44,6 @@ export function createInitialState(playerCountryId: string): GameState {
     activeCovertOps: [],
     strikeAnimations: [],
     mechanicCooldowns: {},
-    reserveFunds: 0,
     gameOver: false,
     playerWon: false,
     declineMode: false,
@@ -65,7 +63,6 @@ export function createInitialState(playerCountryId: string): GameState {
   };
 
   resetActionEnergy(state);
-  state.reserveFunds = getStartingReserve(countries[playerCountryId]);
 
   // Seed opening scenario: Russia-Ukraine war
   seedOpeningScenario(state);
@@ -104,7 +101,7 @@ export function advanceTurn(state: GameState): GameState {
   applyBudgetEffects(newState);
   tickCounterIntel(newState);
   applyDomesticPropagandaTick(newState);
-  accumulateReserve(newState);
+  accumulateTreasury(newState);
   runNpcCovertOps(newState);
   resolveCovertOps(newState);
   tickCovertAllianceExposure(newState);
@@ -128,9 +125,11 @@ export const LAYER_LABELS: Record<LayerCategory, string> = {
   economic: 'Economic',
 };
 
-export function formatGDP(billions: number): string {
-  if (billions >= 1000) return `$${(billions / 1000).toFixed(1)}T`;
-  return `$${billions.toFixed(0)}B`;
+import { formatDisplayGDP } from './treasuryDisplay';
+
+/** @deprecated Use formatDisplayGDP(treasuryPoints) — kept for gradual migration */
+export function formatGDP(tpOrLegacy: number): string {
+  return formatDisplayGDP(tpOrLegacy);
 }
 
 export function formatPercent(value: number): string {

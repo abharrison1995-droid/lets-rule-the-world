@@ -1,10 +1,16 @@
 import { useState } from 'react';
 import type { GameState, BudgetAllocation, MilitaryDev, DomesticSplit } from '../types/game';
-import { formatGDP, formatPercent } from '../engine/gameState';
+import { formatPercent } from '../engine/gameState';
 import { normalizeBudget } from '../engine/economy';
 import { normalizeDomesticSplit } from '../engine/propaganda';
 import { BottomSheet } from './BottomSheet';
-import { getFiscalHeadroom, formatDebtRatio } from '../engine/fiscal';
+import { getFiscalHeadroom } from '../engine/fiscal';
+import {
+  formatDisplayGDP,
+  formatDisplayDebt,
+  formatDebtRatio,
+  formatDisplayCost,
+} from '../engine/treasuryDisplay';
 
 interface EconomyPanelProps {
   state: GameState;
@@ -79,21 +85,23 @@ export function EconomyPanel({
 
       <div className="stat-grid">
         <div className="stat-item">
-          <span className="stat-label">GDP</span>
-          <span className="stat-value">{formatGDP(country.stats.gdp)}</span>
+          <span className="stat-label">GDP (est.)</span>
+          <span className="stat-value">{formatDisplayGDP(country.stats.treasuryPoints)}</span>
         </div>
         <div className="stat-item">
-          <span className="stat-label">Reserve</span>
-          <span className="stat-value">${state.reserveFunds.toFixed(0)}B</span>
+          <span className="stat-label">Treasury</span>
+          <span className="stat-value">{country.stats.treasuryPoints} TP</span>
         </div>
         <div className="stat-item">
-          <span className="stat-label">Fiscal Headroom</span>
-          <span className="stat-value">{formatGDP(headroom)}</span>
+          <span className="stat-label">Spendable</span>
+          <span className="stat-value">{Math.round(headroom)} TP</span>
         </div>
         {debt > 0 && (
           <div className="stat-item">
             <span className="stat-label">National Debt</span>
-            <span className="stat-value warning-text">{formatDebtRatio(debt)}</span>
+            <span className="stat-value warning-text">
+              {formatDebtRatio(debt)} ({formatDisplayDebt(country.stats.treasuryPoints, debt)})
+            </span>
           </div>
         )}
         <div className="stat-item">
@@ -140,7 +148,7 @@ export function EconomyPanel({
       <section className="panel-section">
         <h4>Propaganda Actions</h4>
         <button className="btn-action" onClick={onDomesticPropaganda}>
-          📢 Domestic Propaganda Campaign ($15B)
+          📢 Domestic Propaganda Campaign ({formatDisplayCost(15)})
         </button>
         <p className="muted small">Boosts war popularity & morale. Diminishing returns when saturation is high.</p>
         <select className="target-select" value={influenceTarget} onChange={e => setInfluenceTarget(e.target.value)}>
@@ -150,12 +158,12 @@ export function EconomyPanel({
             .map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <button className="btn-action" disabled={!influenceTarget} onClick={() => influenceTarget && onForeignInfluence(influenceTarget)}>
-          🌐 Foreign Influence Campaign ($20B)
+          🌐 Foreign Influence Campaign ({formatDisplayCost(20)})
         </button>
       </section>
 
       <section className="panel-section">
-        <h4>Military Development ($40B per upgrade)</h4>
+        <h4>Military Development ({formatDisplayCost(40)} per upgrade)</h4>
         <div className="mil-dev-grid">
           {(Object.keys(MIL_LABELS) as Array<keyof MilitaryDev>).map(key => {
             const val = country.militaryDev[key];

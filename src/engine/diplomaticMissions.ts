@@ -12,6 +12,7 @@ import {
   ACTION_ENERGY_COSTS,
 } from './actionEnergy';
 import { deductCost } from './actions';
+import { formatDisplayCost } from './treasuryDisplay';
 import {
   getNegotiationPreview,
   resolveNegotiationMission,
@@ -80,7 +81,7 @@ export function dispatchTalkMission(
 
   if (preview.cost > 0 && !deductCost(state, preview.cost)) {
     state.actionEnergy += preview.energyCost;
-    return { success: false, message: `Insufficient funds (need $${preview.cost}B).` };
+    return { success: false, message: `Insufficient funds (need ${formatDisplayCost(preview.cost)}).` };
   }
 
   const duration = TALK_DURATIONS[option];
@@ -124,7 +125,7 @@ export function dispatchCovertMission(
 
   if (!deductCost(state, preview.cost)) {
     state.actionEnergy += preview.energyCost;
-    return { success: false, message: `Insufficient funds (need $${preview.cost}B).` };
+    return { success: false, message: `Insufficient funds (need ${formatDisplayCost(preview.cost)}).` };
   }
 
   const duration = COVERT_DURATIONS[option];

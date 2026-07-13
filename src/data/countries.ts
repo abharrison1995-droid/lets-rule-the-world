@@ -1,6 +1,6 @@
 import type { Country } from '../types/game';
 
-/** GDP in billions USD, growth as decimal, budgets as % of GDP */
+/** Treasury points (TP) — compressed economic scale; growth as decimal per turn */
 export const COUNTRIES: Record<string, Country> = {
   usa: {
     id: 'usa',
@@ -11,8 +11,8 @@ export const COUNTRIES: Record<string, Country> = {
     worldMapPath: 'M 120,180 L 180,170 L 220,190 L 240,210 L 230,240 L 200,250 L 160,240 L 130,220 Z',
     worldMapLabel: [175, 215],
     stats: {
-      gdp: 28780,
-      gdpGrowth: 0.024,
+      treasuryPoints: 1000,
+      baseGrowthRate: 0.024,
       defenseBudget: 0.039,
       troopQuality: 0.92,
       techLevel: 0.95,
@@ -38,8 +38,8 @@ export const COUNTRIES: Record<string, Country> = {
     worldMapPath: 'M 480,155 L 500,150 L 510,165 L 505,180 L 490,185 L 478,175 Z',
     worldMapLabel: [492, 168],
     stats: {
-      gdp: 3490,
-      gdpGrowth: 0.011,
+      treasuryPoints: 411,
+      baseGrowthRate: 0.011,
       defenseBudget: 0.024,
       troopQuality: 0.85,
       techLevel: 0.82,
@@ -65,8 +65,8 @@ export const COUNTRIES: Record<string, Country> = {
     worldMapPath: 'M 520,120 L 680,110 L 720,140 L 710,180 L 650,200 L 580,190 L 530,160 Z',
     worldMapLabel: [620, 155],
     stats: {
-      gdp: 2050,
-      gdpGrowth: 0.018,
+      treasuryPoints: 338,
+      baseGrowthRate: 0.018,
       defenseBudget: 0.065,
       troopQuality: 0.55,
       techLevel: 0.55,
@@ -92,8 +92,8 @@ export const COUNTRIES: Record<string, Country> = {
     worldMapPath: 'M 680,180 L 780,170 L 820,200 L 810,250 L 750,270 L 690,240 L 670,210 Z',
     worldMapLabel: [745, 220],
     stats: {
-      gdp: 18600,
-      gdpGrowth: 0.048,
+      treasuryPoints: 823,
+      baseGrowthRate: 0.048,
       defenseBudget: 0.017,
       troopQuality: 0.65,
       techLevel: 0.78,
@@ -119,8 +119,8 @@ export const COUNTRIES: Record<string, Country> = {
     worldMapPath: 'M 540,210 L 580,205 L 595,225 L 585,245 L 550,250 L 535,230 Z',
     worldMapLabel: [560, 228],
     stats: {
-      gdp: 1150,
-      gdpGrowth: 0.042,
+      treasuryPoints: 277,
+      baseGrowthRate: 0.042,
       defenseBudget: 0.025,
       troopQuality: 0.70,
       techLevel: 0.60,
@@ -146,8 +146,8 @@ export const COUNTRIES: Record<string, Country> = {
     worldMapPath: 'M 555,255 L 570,250 L 575,265 L 568,275 L 555,270 Z',
     worldMapLabel: [562, 263],
     stats: {
-      gdp: 540,
-      gdpGrowth: 0.032,
+      treasuryPoints: 221,
+      baseGrowthRate: 0.032,
       defenseBudget: 0.058,
       troopQuality: 0.88,
       techLevel: 0.85,
@@ -173,8 +173,8 @@ export const COUNTRIES: Record<string, Country> = {
     worldMapPath: 'M 620,260 L 680,250 L 710,280 L 700,320 L 650,330 L 615,300 Z',
     worldMapLabel: [660, 290],
     stats: {
-      gdp: 4100,
-      gdpGrowth: 0.068,
+      treasuryPoints: 438,
+      baseGrowthRate: 0.068,
       defenseBudget: 0.024,
       troopQuality: 0.50,
       techLevel: 0.55,
@@ -200,8 +200,8 @@ export const COUNTRIES: Record<string, Country> = {
     worldMapPath: 'M 610,240 L 650,235 L 665,260 L 655,285 L 620,290 L 605,265 Z',
     worldMapLabel: [632, 262],
     stats: {
-      gdp: 380,
-      gdpGrowth: 0.025,
+      treasuryPoints: 201,
+      baseGrowthRate: 0.025,
       defenseBudget: 0.04,
       troopQuality: 0.55,
       techLevel: 0.40,
@@ -216,7 +216,7 @@ export const COUNTRIES: Record<string, Country> = {
     startingRelations: {},
     difficultyRating: { score: 7, blurb: 'Hard — nuclear deterrent but chronic economic fragility and IMF default risk.' },
     uniqueMechanics: ['nuclear_brinkmanship'],
-    collapseCondition: { type: 'hard', triggerStats: { gdp: 200 }, telegraphEventId: 'pakistan_default_warning' },
+    collapseCondition: { type: 'hard', triggerStats: { treasuryPoints: 165 }, telegraphEventId: 'pakistan_default_warning' },
   },
   iran: {
     id: 'iran',
@@ -227,8 +227,8 @@ export const COUNTRIES: Record<string, Country> = {
     worldMapPath: 'M 580,250 L 620,245 L 635,270 L 625,295 L 590,300 L 575,275 Z',
     worldMapLabel: [602, 273],
     stats: {
-      gdp: 480,
-      gdpGrowth: 0.035,
+      treasuryPoints: 213,
+      baseGrowthRate: 0.035,
       defenseBudget: 0.035,
       troopQuality: 0.60,
       techLevel: 0.50,
@@ -243,7 +243,7 @@ export const COUNTRIES: Record<string, Country> = {
     startingRelations: {},
     difficultyRating: { score: 7, blurb: 'Hard — proxy warfare strength but sanctions-driven collapse risk.' },
     uniqueMechanics: ['proxy_militia', 'cheap_covert_ops'],
-    collapseCondition: { type: 'hard', triggerStats: { gdp: 250, regimeSecurity: 0.3 }, telegraphEventId: 'iran_sanctions_warning' },
+    collapseCondition: { type: 'hard', triggerStats: { treasuryPoints: 175, regimeSecurity: 0.3 }, telegraphEventId: 'iran_sanctions_warning' },
   },
   north_korea: {
     id: 'north_korea',
@@ -254,8 +254,8 @@ export const COUNTRIES: Record<string, Country> = {
     worldMapPath: 'M 790,210 L 810,205 L 820,230 L 815,255 L 795,260 L 785,235 Z',
     worldMapLabel: [802, 233],
     stats: {
-      gdp: 28,
-      gdpGrowth: 0.01,
+      treasuryPoints: 125,
+      baseGrowthRate: 0.01,
       defenseBudget: 0.24,
       troopQuality: 0.40,
       techLevel: 0.25,
@@ -281,8 +281,8 @@ export const COUNTRIES: Record<string, Country> = {
     worldMapPath: 'M 790,240 L 815,235 L 825,260 L 820,280 L 795,285 L 785,260 Z',
     worldMapLabel: [805, 260],
     stats: {
-      gdp: 1870,
-      gdpGrowth: 0.022,
+      treasuryPoints: 327,
+      baseGrowthRate: 0.022,
       defenseBudget: 0.027,
       troopQuality: 0.75,
       techLevel: 0.80,
@@ -309,7 +309,7 @@ export const COUNTRIES: Record<string, Country> = {
     worldMapPath: 'M 530,175 L 560,170 L 575,195 L 565,215 L 535,220 L 525,195 Z',
     worldMapLabel: [548, 195],
     stats: {
-      gdp: 210, gdpGrowth: 0.03, defenseBudget: 0.22, troopQuality: 0.65, techLevel: 0.45,
+      treasuryPoints: 174, baseGrowthRate: 0.03, defenseBudget: 0.22, troopQuality: 0.65, techLevel: 0.45,
       moraleBase: 0.75, regimeSecurity: 0.60, warPopularity: 0.7, warExhaustion: 0.3, propagandaSaturation: 0,
     },
     militaryDev: { troopQuality: 3, missileDefense: 1, droneProgram: 3, strikeCapability: 2, fortification: 2 },
@@ -328,7 +328,7 @@ export const COUNTRIES: Record<string, Country> = {
     worldMapPath: 'M 570,280 L 620,275 L 635,300 L 625,320 L 580,325 L 565,300 Z',
     worldMapLabel: [598, 300],
     stats: {
-      gdp: 1100, gdpGrowth: 0.035, defenseBudget: 0.07, troopQuality: 0.50, techLevel: 0.55,
+      treasuryPoints: 273, baseGrowthRate: 0.035, defenseBudget: 0.07, troopQuality: 0.50, techLevel: 0.55,
       moraleBase: 0.60, regimeSecurity: 0.70, warPopularity: 0.5, warExhaustion: 0, propagandaSaturation: 0,
     },
     militaryDev: { troopQuality: 2, missileDefense: 2, droneProgram: 2, strikeCapability: 3, fortification: 1 },
@@ -347,7 +347,7 @@ export const COUNTRIES: Record<string, Country> = {
     worldMapPath: 'M 820,210 L 850,200 L 860,230 L 855,260 L 830,270 L 815,240 Z',
     worldMapLabel: [838, 235],
     stats: {
-      gdp: 4100, gdpGrowth: 0.012, defenseBudget: 0.012, troopQuality: 0.80, techLevel: 0.88,
+      treasuryPoints: 438, baseGrowthRate: 0.012, defenseBudget: 0.012, troopQuality: 0.80, techLevel: 0.88,
       moraleBase: 0.65, regimeSecurity: 0.85, warPopularity: 0.4, warExhaustion: 0, propagandaSaturation: 0,
     },
     militaryDev: { troopQuality: 3, missileDefense: 3, droneProgram: 3, strikeCapability: 2, fortification: 2 },
@@ -366,7 +366,7 @@ export const COUNTRIES: Record<string, Country> = {
     worldMapPath: 'M 475,185 L 500,180 L 510,200 L 500,220 L 478,225 L 470,205 Z',
     worldMapLabel: [490, 203],
     stats: {
-      gdp: 3100, gdpGrowth: 0.011, defenseBudget: 0.019, troopQuality: 0.82, techLevel: 0.80,
+      treasuryPoints: 393, baseGrowthRate: 0.011, defenseBudget: 0.019, troopQuality: 0.82, techLevel: 0.80,
       moraleBase: 0.65, regimeSecurity: 0.80, warPopularity: 0.5, warExhaustion: 0, propagandaSaturation: 0,
     },
     militaryDev: { troopQuality: 4, missileDefense: 2, droneProgram: 3, strikeCapability: 3, fortification: 2 },
@@ -385,7 +385,7 @@ export const COUNTRIES: Record<string, Country> = {
     worldMapPath: 'M 500,175 L 530,170 L 540,190 L 535,210 L 510,215 L 495,195 Z',
     worldMapLabel: [518, 193],
     stats: {
-      gdp: 4600, gdpGrowth: 0.008, defenseBudget: 0.014, troopQuality: 0.75, techLevel: 0.82,
+      treasuryPoints: 458, baseGrowthRate: 0.008, defenseBudget: 0.014, troopQuality: 0.75, techLevel: 0.82,
       moraleBase: 0.60, regimeSecurity: 0.85, warPopularity: 0.4, warExhaustion: 0, propagandaSaturation: 0,
     },
     militaryDev: { troopQuality: 3, missileDefense: 1, droneProgram: 2, strikeCapability: 2, fortification: 2 },
@@ -404,7 +404,7 @@ export const COUNTRIES: Record<string, Country> = {
     worldMapPath: 'M 540,270 L 570,265 L 580,285 L 570,305 L 545,310 L 535,290 Z',
     worldMapLabel: [558, 288],
     stats: {
-      gdp: 480, gdpGrowth: 0.035, defenseBudget: 0.012, troopQuality: 0.55, techLevel: 0.40,
+      treasuryPoints: 213, baseGrowthRate: 0.035, defenseBudget: 0.012, troopQuality: 0.55, techLevel: 0.40,
       moraleBase: 0.50, regimeSecurity: 0.55, warPopularity: 0.5, warExhaustion: 0, propagandaSaturation: 0,
     },
     militaryDev: { troopQuality: 2, missileDefense: 1, droneProgram: 1, strikeCapability: 2, fortification: 1 },

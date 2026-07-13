@@ -1,5 +1,5 @@
 import type { GameState } from '../types/game';
-import { formatGDP } from '../engine/gameState';
+import { formatDisplayGDP } from '../engine/treasuryDisplay';
 import { getActionEnergy } from '../engine/actionEnergy';
 
 interface GameHeaderProps {
@@ -24,7 +24,7 @@ export function GameHeader({ state, onEndTurn, onOpenDiplomacy, onOpenEconomy, o
 
       <div className="header-center">
         <span className="nation-name" style={{ color: country?.color }}>{country?.name}</span>
-        <span className="gdp-display">{formatGDP(country?.stats.gdp ?? 0)}</span>
+        <span className="gdp-display">{formatDisplayGDP(country?.stats.treasuryPoints ?? 0)}</span>
         <span className="energy-display" title="Action energy — consequential moves cost energy each turn">
           ⚡ {energy.current}/{energy.max}
         </span>

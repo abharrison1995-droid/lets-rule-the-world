@@ -135,7 +135,7 @@ function calculateNegotiationAcceptance(
   } else if (option === 'ultimatum') {
     const player = state.countries[playerId];
     if (player && target) {
-      const powerRatio = player.stats.gdp / Math.max(1, target.stats.gdp);
+      const powerRatio = player.stats.treasuryPoints / Math.max(1, target.stats.treasuryPoints);
       score += Math.min(0.12, powerRatio * 0.04);
     }
     if (!alliance) score *= 0.5;

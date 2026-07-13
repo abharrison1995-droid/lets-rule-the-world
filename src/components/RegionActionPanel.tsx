@@ -2,6 +2,7 @@ import type { GameState } from '../types/game';
 import { isAtWarWith } from '../engine/actions';
 import type { StrikeType } from '../engine/strikes';
 import { getStrikeOptions, getStrikeRange, getStrikeRangeLabel } from '../engine/strikes';
+import { formatDisplayCost } from '../engine/treasuryDisplay';
 
 interface RegionActionPanelProps {
   state: GameState;
@@ -50,7 +51,7 @@ export function RegionActionPanel({ state, regionId, onClose, onStrike }: Region
                 title={opt.blockReason ?? opt.description}
                 onClick={() => onStrike(regionId, opt.type)}
               >
-                ⚡ {opt.label} — ${opt.cost}B
+                ⚡ {opt.label} — {formatDisplayCost(opt.cost)}
                 {!opt.available && opt.blockReason && (
                   <span className="strike-block-reason"> ({opt.blockReason})</span>
                 )}

@@ -24,9 +24,9 @@ import {
 import {
   getSpendingPool,
   getEffectiveSpendCost,
-  getFiscalHeadroom,
   getDebtServicePerTurn,
 } from './fiscal';
+import { formatDisplayCost } from './treasuryDisplay';
 import type { StrikeType } from './strikes';
 import { getStrikeOptions, computeStrikePower } from './strikes';
 
@@ -34,30 +34,20 @@ export function isAtWarWith(state: GameState, a: string, b: string): boolean {
   return state.wars.some(w => w.belligerents.includes(a) && w.belligerents.includes(b));
 }
 
-export function canAfford(state: GameState, costBillions: number): boolean {
+export function canAfford(state: GameState, costTp: number): boolean {
   const country = state.countries[state.playerCountryId];
   if (!country) return false;
-  const effective = getEffectiveSpendCost(country, costBillions);
+  const effective = getEffectiveSpendCost(country, costTp);
   return getSpendingPool(state) >= effective;
 }
 
-export function deductCost(state: GameState, costBillions: number): boolean {
+export function deductCost(state: GameState, costTp: number): boolean {
   const country = state.countries[state.playerCountryId];
   if (!country) return false;
 
-  const effective = getEffectiveSpendCost(country, costBillions);
-
-  if (state.reserveFunds >= effective) {
-    state.reserveFunds -= effective;
-    return true;
-  }
-
-  const fromReserve = state.reserveFunds;
-  const remainder = effective - fromReserve;
-  state.reserveFunds = 0;
-
-  if (country.stats.gdp >= remainder) {
-    country.stats.gdp -= remainder;
+  const effective = getEffectiveSpendCost(country, costTp);
+  if (country.stats.treasuryPoints >= effective) {
+    country.stats.treasuryPoints -= effective;
     return true;
   }
   return false;
@@ -139,7 +129,7 @@ export function playerProbeCovertPacts(state: GameState, targetNationId: string)
 
   if (!deductCost(state, baseCost)) {
     state.actionEnergy += energyCost;
-    return `Insufficient funds (need $${baseCost}B).`;
+    return `Insufficient funds (need ${formatDisplayCost(baseCost)}).`;
   }
 
   state.activeCovertOps.push({
@@ -183,7 +173,7 @@ export function playerLaunchStrike(
 
   if (!deductCost(state, option.cost)) {
     state.actionEnergy += option.energyCost;
-    return `Insufficient funds (need $${option.cost}B).`;
+    return `Insufficient funds (need ${formatDisplayCost(option.cost)}).`;
   }
 
   const strikePower = computeStrikePower(attacker, strikeType, option.power);
@@ -211,7 +201,7 @@ export function playerLaunchCovertOp(state: GameState, targetNationId: string): 
 
   if (!deductCost(state, baseCost)) {
     state.actionEnergy += energyCost;
-    return `Insufficient funds (need $${baseCost}B).`;
+    return `Insufficient funds (need ${formatDisplayCost(baseCost)}).`;
   }
 
   state.activeCovertOps.push({
@@ -251,7 +241,7 @@ export function playerExecuteMechanic(
 
   if (!deductCost(state, mechanic.cost)) {
     state.actionEnergy += energyCost;
-    return `Insufficient funds (need $${mechanic.cost}B).`;
+    return `Insufficient funds (need ${formatDisplayCost(mechanic.cost)}).`;
   }
 
   const player = state.countries[state.playerCountryId];
@@ -282,7 +272,7 @@ export function playerExecuteMechanic(
     }
     state.history.push(`Turn ${state.turn}: ${mechanic.name} improved international standing.`);
   } else if (mechanic.effects.gdpGrowthBoost) {
-    player.stats.gdpGrowth += mechanic.effects.gdpGrowthBoost;
+    player.stats.baseGrowthRate += mechanic.effects.gdpGrowthBoost;
     state.history.push(`Turn ${state.turn}: ${mechanic.name} boosted economic growth.`);
   } else if (mechanic.effects.defenseBoost) {
     for (const region of getRegionsForCountry(state.playerCountryId)) {
@@ -337,7 +327,7 @@ export function playerInvestMilitary(
   const cost = 40;
   if (!deductCost(state, cost)) {
     state.actionEnergy += energyCost;
-    return `Insufficient funds (need $${cost}B).`;
+    return `Insufficient funds (need ${formatDisplayCost(cost)}).`;
   }
 
   const current = country.militaryDev[category];
@@ -367,11 +357,13 @@ export function playerInvestMilitary(
   return null;
 }
 
-export function accumulateReserve(state: GameState): void {
+export function accumulateTreasury(state: GameState): void {
   const country = state.countries[state.playerCountryId];
   if (!country) return;
-  const headroom = getFiscalHeadroom(country);
-  const contribution = headroom * state.budget.reserve * 0.0015;
+  const contribution = country.stats.treasuryPoints * state.budget.reserve * 0.008;
   const debtService = getDebtServicePerTurn(country);
-  state.reserveFunds += Math.max(0, contribution - debtService);
+  country.stats.treasuryPoints += Math.max(0, contribution - debtService);
 }
+
+/** @deprecated Use accumulateTreasury */
+export const accumulateReserve = accumulateTreasury;

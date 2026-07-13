@@ -1,6 +1,7 @@
 import type { GameState } from '../types/game';
 import { modifyRelation } from '../data/relations';
 import { deductCost } from './actions';
+import { formatDisplayCost } from './treasuryDisplay';
 import { computeIntelAgreementBonus } from './talks';
 import { computeCovertIntelBonus } from './covertAlliances';
 
@@ -43,7 +44,7 @@ export function playerDomesticPropaganda(state: GameState): string | null {
   if (!player) return 'Invalid player.';
 
   const cost = 15;
-  if (!deductCost(state, cost)) return `Insufficient funds (need $${cost}B).`;
+  if (!deductCost(state, cost)) return `Insufficient funds (need ${formatDisplayCost(cost)}).`;
 
   const saturation = player.stats.propagandaSaturation;
   const effectiveness = Math.max(0.1, 1 - saturation);
@@ -68,7 +69,7 @@ export function playerForeignInfluence(state: GameState, targetNationId: string)
   if (!target) return 'Invalid target.';
 
   const cost = 20;
-  if (!deductCost(state, cost)) return `Insufficient funds (need $${cost}B).`;
+  if (!deductCost(state, cost)) return `Insufficient funds (need ${formatDisplayCost(cost)}).`;
 
   const covertBonus = state.budget.covert * 5;
   modifyRelation(state.relations, state.playerCountryId, targetNationId, 8 + covertBonus);
