@@ -1592,6 +1592,15 @@ body {
   color: var(--text-muted);
 }
 
+.peace-option-block {
+  margin-bottom: 0.65rem;
+}
+
+.peace-option-block .fiscal-impact-line {
+  margin-top: 0.35rem;
+  margin-bottom: 0;
+}
+
 .fiscal-impact-line {
   margin: 0.5rem 0 0.75rem;
   padding: 0.45rem 0.6rem;

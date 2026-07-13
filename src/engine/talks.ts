@@ -8,6 +8,7 @@ import {
 } from './diplomacy';
 import { proposePeace, getPeaceOptions, calculatePeaceAcceptance } from './peace';
 import { formatRelationValue, previewPeaceReconciliation } from './conflictRelations';
+import { previewSpendFiscalImpact } from './fiscal';
 import { actionEnergyBlockReason } from './actionEnergy';
 import { getRegionsForCountry } from '../data/regions';
 
@@ -269,6 +270,7 @@ export function getNegotiationPreview(
     durationTurns,
     acceptanceChance,
     effects,
+    fiscal: previewSpendFiscalImpact(state, playerId, cost),
   };
 }
 

@@ -7,6 +7,7 @@ import {
   getPressActionPreview,
   PRESS_ACTION_ORDER,
 } from '../engine/pressActions';
+import { FiscalImpactLine } from './FiscalImpactLine';
 
 interface PressConferenceScreenProps {
   state: GameState;
@@ -132,6 +133,7 @@ export function PressConferenceScreen({
             <ul className="preview-effects">
               {preview.effects.map((e, i) => <li key={i}>{e}</li>)}
             </ul>
+            <FiscalImpactLine fiscal={preview.fiscal} />
             {preview.blockReason && <p className="warning">{preview.blockReason}</p>}
             <button
               className="btn-action"

@@ -4,6 +4,9 @@ import { getAllRelationsForCountry } from '../engine/diplomacy';
 import { getMechanicsForNation } from '../data/mechanics';
 import { getPeaceOptions, calculatePeaceAcceptance } from '../engine/peace';
 import { formatRelationValue, previewPeaceReconciliation } from '../engine/conflictRelations';
+import { previewSpendFiscalImpact } from '../engine/fiscal';
+import { TALK_COSTS } from '../engine/talks';
+import { FiscalImpactLine } from './FiscalImpactLine';
 import {
   categorizeRelation,
   RELATION_GROUP_LABELS,
@@ -142,17 +145,20 @@ export function DiplomacyPanel({
           {peaceTarget && getPeaceOptions(state, peaceTarget).map(terms => {
             const recon = previewPeaceReconciliation(state, state.playerCountryId, peaceTarget, terms);
             const acceptance = Math.round(calculatePeaceAcceptance(state, peaceTarget, terms) * 100);
+            const fiscal = previewSpendFiscalImpact(state, state.playerCountryId, TALK_COSTS.peace);
             return (
-              <button
-                key={terms}
-                className="btn-action peace"
-                onClick={() => onProposePeace(peaceTarget, terms)}
-              >
-                <span>🤝 {PEACE_LABELS[terms]}</span>
-                <span className="peace-preview-hint">
-                  ~{acceptance}% accept · ties {formatRelationValue(recon.current)} → ~{formatRelationValue(recon.projected)}
-                </span>
-              </button>
+              <div key={terms} className="peace-option-block">
+                <button
+                  className="btn-action peace"
+                  onClick={() => onProposePeace(peaceTarget, terms)}
+                >
+                  <span>🤝 {PEACE_LABELS[terms]}</span>
+                  <span className="peace-preview-hint">
+                    ~{acceptance}% accept · ties {formatRelationValue(recon.current)} → ~{formatRelationValue(recon.projected)}
+                  </span>
+                </button>
+                <FiscalImpactLine fiscal={fiscal} />
+              </div>
             );
           })}
         </section>

@@ -275,11 +275,18 @@ export function resolveEventChoice(
   }
 
   if (choice.followUpEventId) {
+    const followTurn = state.turn + 1 + Math.floor(Math.random() * 2);
     state.pendingFollowUps.push({
       eventId: choice.followUpEventId,
-      triggerTurn: state.turn + 1 + Math.floor(Math.random() * 2),
+      triggerTurn: followTurn,
       targetCountryId,
     });
+    const followEvent = getEventById(choice.followUpEventId);
+    if (followEvent) {
+      state.history.push(
+        `Turn ${state.turn}: Aftermath brewing — ${followEvent.title} expected around turn ${followTurn}.`
+      );
+    }
   }
 
   if (active) active.resolved = true;

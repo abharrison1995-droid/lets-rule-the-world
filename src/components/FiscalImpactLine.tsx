@@ -1,3 +1,4 @@
+import type { ActionFiscalPreview } from '../types/game';
 import type { SpendFiscalPreview } from '../engine/fiscal';
 import { formatDisplayGDP } from '../engine/treasuryDisplay';
 
@@ -7,7 +8,7 @@ function formatDebtTrend(delta: number): string {
 }
 
 interface FiscalImpactLineProps {
-  fiscal: SpendFiscalPreview | null;
+  fiscal: ActionFiscalPreview | SpendFiscalPreview | null;
 }
 
 export function FiscalImpactLine({ fiscal }: FiscalImpactLineProps) {

@@ -13,6 +13,7 @@ import {
   COVERT_OPTION_ORDER,
 } from '../engine/covertAlliances';
 import { getPendingMissions, getTurnsUntilResolution } from '../engine/diplomaticMissions';
+import { FiscalImpactLine } from './FiscalImpactLine';
 
 interface TalksScreenProps {
   state: GameState;
@@ -264,6 +265,8 @@ export function TalksScreen({
             ))}
           </ul>
 
+          <FiscalImpactLine fiscal={preview.fiscal} />
+
           {preview.blockReason && <p className="warning">{preview.blockReason}</p>}
 
           <button
@@ -316,6 +319,8 @@ export function TalksScreen({
               <li key={i}>{effect}</li>
             ))}
           </ul>
+
+          <FiscalImpactLine fiscal={covertPreview.fiscal} />
 
           {covertPreview.blockReason && <p className="warning">{covertPreview.blockReason}</p>}
 

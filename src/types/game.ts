@@ -116,6 +116,14 @@ export interface CovertAlliance {
 
 export type CovertTalkOptionId = 'covert_trade' | 'covert_military' | 'covert_intel';
 
+export interface ActionFiscalPreview {
+  effectiveCost: number;
+  treasuryNow: number;
+  treasuryAfter: number;
+  debtDeltaNow: number;
+  debtDeltaAfter: number;
+}
+
 export interface CovertNegotiationPreview {
   optionId: CovertTalkOptionId;
   label: string;
@@ -128,6 +136,7 @@ export interface CovertNegotiationPreview {
   acceptanceChance: number;
   exposureRisk: number;
   effects: string[];
+  fiscal: ActionFiscalPreview | null;
 }
 
 export type DiplomaticMissionType =
@@ -172,6 +181,7 @@ export interface PressActionPreview {
   durationTurns: number;
   isInstant: boolean;
   effects: string[];
+  fiscal: ActionFiscalPreview | null;
 }
 
 export interface NegotiationPreview {
@@ -185,6 +195,7 @@ export interface NegotiationPreview {
   durationTurns: number;
   acceptanceChance: number;
   effects: string[];
+  fiscal: ActionFiscalPreview | null;
 }
 
 export interface DifficultyRating {

@@ -15,6 +15,9 @@ function categorizeHistoryLine(line: string): TurnReportCategory {
   if (lower.includes('alliance') || lower.includes('nato') || lower.includes('pact') || lower.includes('bloc')) {
     return 'alliance';
   }
+  if (lower.includes('aftermath brewing')) {
+    return 'other';
+  }
   if (lower.includes('relations') || lower.includes('diplomat') || lower.includes('envoy') || lower.includes('condemnation')) {
     return 'diplomacy';
   }
@@ -120,6 +123,7 @@ function filterPlayerRelevant(
   const playerName = state.countries[playerId]?.name ?? '';
   if (line.includes(playerName)) return true;
   if (line.includes('YOUR TERRITORY')) return true;
+  if (line.includes('Aftermath brewing')) return true;
 
   const lower = line.toLowerCase();
   if (lower.includes('grey-zone')) {

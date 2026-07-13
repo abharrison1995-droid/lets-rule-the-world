@@ -5,6 +5,7 @@ import { deductCost } from './actions';
 import { formatDisplayCost } from './treasuryDisplay';
 import { hasPendingMission } from './diplomaticMissions';
 import { getRegionsForCountry } from '../data/regions';
+import { previewSpendFiscalImpact } from './fiscal';
 
 export const PRESS_COSTS: Record<PressActionId, number> = {
   condemn_aggression: 45,
@@ -80,6 +81,7 @@ export function getPressActionPreview(
   }
 
   const effects = getPressEffects(actionId, state.playerCountryId === 'usa');
+  const playerId = state.playerCountryId;
 
   return {
     actionId,
@@ -92,6 +94,7 @@ export function getPressActionPreview(
     durationTurns,
     isInstant,
     effects,
+    fiscal: cost > 0 ? previewSpendFiscalImpact(state, playerId, cost) : null,
   };
 }
 

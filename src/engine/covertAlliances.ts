@@ -9,6 +9,7 @@ import { getRelation, modifyRelation } from '../data/relations';
 import { computeAllianceScore, findAllianceBetween } from './diplomacy';
 import { hasBilateralAgreement } from './talks';
 import { actionEnergyBlockReason } from './actionEnergy';
+import { previewSpendFiscalImpact } from './fiscal';
 
 export const COVERT_TALK_COSTS: Record<CovertTalkOptionId, number> = {
   covert_trade: 14,
@@ -195,6 +196,7 @@ export function getCovertNegotiationPreview(
     acceptanceChance,
     exposureRisk: Math.round(exposureRisk),
     effects: [...getCovertEffects(option), `Backchannel envoy returns in ${durationTurns} turns`],
+    fiscal: previewSpendFiscalImpact(state, playerId, COVERT_TALK_COSTS[option]),
   };
 }
 
