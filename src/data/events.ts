@@ -75,11 +75,22 @@ export const EVENTS: GameEvent[] = [
     title: 'Defensive Pact Proposal',
     description: 'A foreign power seeks closer military cooperation with your nation.',
     scope: 'national',
-    triggerConditions: { minTurn: 2 },
-    weight: 12,
+    triggerConditions: {
+      minTurn: 8,
+      requiredState: [{ key: 'notAtWar', op: 'eq', value: true }],
+    },
+    weight: 2,
     choices: [
-      { label: 'Accept defensive pact', effects: [{ stat: 'alliance', target: 'sender', delta: 1 }] },
-      { label: 'Decline politely', effects: [{ stat: 'relations', target: 'sender', delta: -10 }] },
+      {
+        label: 'Accept defensive pact ($12B commitment)',
+        effects: [
+          { stat: 'treasuryPoints', target: 'self', delta: -12 },
+          { stat: 'alliance', target: 'sender', delta: 1 },
+          { stat: 'warExhaustion', target: 'self', delta: 0.03 },
+        ],
+      },
+      { label: 'Decline politely', effects: [{ stat: 'relations', target: 'sender', delta: -8 }] },
+      { label: 'Counter-propose trade instead', effects: [{ stat: 'gdpGrowth', target: 'self', delta: 0.004 }, { stat: 'relations', target: 'sender', delta: 3 }] },
     ],
     flavourOnly: false,
   },
@@ -393,7 +404,7 @@ export const EVENTS: GameEvent[] = [
     description: 'Your strike on a nation you are not at war with triggers international outrage.',
     scope: 'global',
     triggerConditions: { minTurn: 2, manualOnly: true },
-    weight: 20,
+    weight: 0,
     choices: [
       { label: 'Issue justification', effects: [{ stat: 'relations', target: 'all', delta: -5 }, { stat: 'warPopularity', target: 'self', delta: -0.1 }] },
       { label: 'Express regret', effects: [{ stat: 'relations', target: 'all', delta: 3 }] },
@@ -552,6 +563,97 @@ export const EVENTS: GameEvent[] = [
     choices: [
       { label: 'Hold course — project strength', effects: [{ stat: 'warPopularity', target: 'self', delta: 0.06 }, { stat: 'relations', target: 'sender', delta: -8 }] },
       { label: 'De-escalate and withdraw', effects: [{ stat: 'relations', target: 'sender', delta: 6 }, { stat: 'moraleBase', target: 'self', delta: -0.02 }] },
+    ],
+    flavourOnly: false,
+  },
+  {
+    id: 'strait_of_hormuz',
+    title: 'Strait of Hormuz Crisis',
+    description:
+      'War with Iran triggers an energy chokepoint crisis. Tehran threatens to interdict tanker traffic; Brent crude spikes and import-dependent economies shudder.',
+    scope: 'global',
+    triggerConditions: { minTurn: 1, manualOnly: true },
+    weight: 0,
+    choices: [
+      {
+        label: 'Deploy naval convoys ($18B)',
+        effects: [
+          { stat: 'treasuryPoints', target: 'self', delta: -18 },
+          { stat: 'globalOilShock', target: 'self', delta: -0.18 },
+          { stat: 'warPopularity', target: 'self', delta: 0.04 },
+        ],
+      },
+      {
+        label: 'Tap strategic petroleum reserves',
+        effects: [
+          { stat: 'treasuryPoints', target: 'self', delta: -8 },
+          { stat: 'globalOilShock', target: 'self', delta: -0.1 },
+        ],
+      },
+      {
+        label: 'Ride it out — absorb the shock domestically',
+        effects: [
+          { stat: 'gdpGrowth', target: 'self', delta: -0.012 },
+          { stat: 'moraleBase', target: 'self', delta: -0.06 },
+          { stat: 'relations', target: 'west_bloc', delta: -6 },
+        ],
+      },
+    ],
+    flavourOnly: false,
+  },
+  {
+    id: 'cyber_grid_attack',
+    title: 'Cyber Attack on Critical Infrastructure',
+    description: 'A sophisticated attack knocks out power grids and payment systems in several major cities. Attribution is disputed but public panic spreads.',
+    scope: 'national',
+    triggerConditions: { minTurn: 4, requiredState: [{ key: 'atWar', op: 'eq', value: true }] },
+    weight: 7,
+    choices: [
+      { label: 'Emergency infrastructure spend', effects: [{ stat: 'treasuryPoints', target: 'self', delta: -10 }, { stat: 'moraleBase', target: 'self', delta: 0.03 }] },
+      { label: 'Retaliate in kind (covert)', effects: [{ stat: 'relations', target: 'all', delta: -4 }, { stat: 'warPopularity', target: 'self', delta: 0.05 }] },
+      { label: 'Downplay and restore services slowly', effects: [{ stat: 'moraleBase', target: 'self', delta: -0.07 }, { stat: 'regimeSecurity', target: 'self', delta: -0.04 }] },
+    ],
+    flavourOnly: false,
+  },
+  {
+    id: 'refugee_crisis',
+    title: 'Refugee Crisis at the Border',
+    description: 'War next door sends hundreds of thousands of refugees toward your borders. Humanitarian groups demand action; hardliners demand closure.',
+    scope: 'national',
+    triggerConditions: { minTurn: 3, requiredState: [{ key: 'atWar', op: 'eq', value: true }] },
+    weight: 8,
+    choices: [
+      { label: 'Open camps and fund relief ($14B)', effects: [{ stat: 'treasuryPoints', target: 'self', delta: -14 }, { stat: 'relations', target: 'west_bloc', delta: 8 }, { stat: 'moraleBase', target: 'self', delta: 0.02 }] },
+      { label: 'Seal the border', effects: [{ stat: 'relations', target: 'west_bloc', delta: -12 }, { stat: 'unrest', target: 'self', delta: 12 }] },
+      { label: 'Selective asylum policy', effects: [{ stat: 'treasuryPoints', target: 'self', delta: -5 }, { stat: 'relations', target: 'all', delta: -2 }] },
+    ],
+    flavourOnly: false,
+  },
+  {
+    id: 'arms_embargo_push',
+    title: 'UN Arms Embargo Debate',
+    description: 'Rival powers push a Security Council resolution to embargo weapons shipments to belligerents. Your vote will have lasting consequences.',
+    scope: 'global',
+    triggerConditions: { minTurn: 6, requiredState: [{ key: 'atWar', op: 'eq', value: true }] },
+    weight: 6,
+    choices: [
+      { label: 'Support the embargo', effects: [{ stat: 'relations', target: 'west_bloc', delta: 10 }, { stat: 'troopQuality', target: 'self', delta: -0.03 }] },
+      { label: 'Veto / block', effects: [{ stat: 'relations', target: 'west_bloc', delta: -15 }, { stat: 'warPopularity', target: 'self', delta: 0.04 }] },
+      { label: 'Abstain', effects: [{ stat: 'relations', target: 'all', delta: -3 }] },
+    ],
+    flavourOnly: false,
+  },
+  {
+    id: 'insider_leak_scandal',
+    title: 'Classified War Plans Leaked',
+    description: 'Sensitive military documents appear on social media. Allies question your operational security; the opposition smells blood.',
+    scope: 'national',
+    triggerConditions: { minTurn: 5 },
+    weight: 5,
+    choices: [
+      { label: 'Full investigation + purge', effects: [{ stat: 'regimeSecurity', target: 'self', delta: 0.06 }, { stat: 'treasuryPoints', target: 'self', delta: -6 }] },
+      { label: 'Blame foreign intelligence', effects: [{ stat: 'relations', target: 'sender', delta: -12 }, { stat: 'warPopularity', target: 'self', delta: -0.04 }] },
+      { label: 'Ignore — deny authenticity', effects: [{ stat: 'moraleBase', target: 'self', delta: -0.05 }, { stat: 'relations', target: 'all', delta: -4 }] },
     ],
     flavourOnly: false,
   },

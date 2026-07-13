@@ -213,6 +213,25 @@ export interface CountryStats {
   propagandaSaturation: number;
 }
 
+export type StrikeType = 'artillery' | 'drone' | 'cruise' | 'ballistic' | 'icbm';
+
+export interface StrikeCampaign {
+  id: string;
+  attackerCountryId: string;
+  sourceRegionId: string;
+  targetRegionId: string;
+  strikeType: StrikeType;
+  startTurn: number;
+  /** First strike was unprovoked — used for escalation tracking */
+  unprovoked: boolean;
+}
+
+export interface GlobalOilShock {
+  turnsRemaining: number;
+  severity: number;
+  reason: string;
+}
+
 export interface MilitaryUpgradeOrder {
   id: string;
   category: keyof MilitaryDev;
@@ -300,6 +319,7 @@ export interface War {
   belligerents: string[];
   startTurn: number;
   isDefensive: Record<string, boolean>;
+  initiatorId: string;
 }
 
 export interface CovertOp {
@@ -447,6 +467,10 @@ export interface GameState {
   conflictBaselines: Record<string, number>;
   /** Single in-progress military development project */
   militaryUpgrade: MilitaryUpgradeOrder | null;
+  /** Active sustained strike campaigns */
+  strikeCampaigns: StrikeCampaign[];
+  /** Global oil supply disruption */
+  globalOilShock: GlobalOilShock | null;
   /** Event context nation for event effects (sender, ally, etc.) */
   eventContextNationId?: string;
 }

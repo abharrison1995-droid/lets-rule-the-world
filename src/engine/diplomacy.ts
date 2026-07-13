@@ -1,6 +1,7 @@
 import type { GameState, Alliance, AllianceTier } from '../types/game';
 import { getRelation, modifyRelation } from '../data/relations';
 import { recordConflictBaseline } from './conflictRelations';
+import { applyWarBelligerentRelations, tickWarRelations, triggerIranWarConsequences } from './warRelations';
 
 const TIER_WEIGHTS: Record<AllianceTier, number> = {
   informal: 0.2,
@@ -11,6 +12,8 @@ const TIER_WEIGHTS: Record<AllianceTier, number> = {
 
 export function tickDiplomacy(state: GameState): void {
   const countryIds = Object.keys(state.countries);
+
+  tickWarRelations(state);
 
   for (const npcId of countryIds) {
     if (npcId === state.playerCountryId) continue;
@@ -205,6 +208,7 @@ export function declareWar(state: GameState, attackerId: string, defenderId: str
     belligerents: [attackerId, defenderId],
     startTurn: state.turn,
     isDefensive: { [defenderId]: true },
+    initiatorId: attackerId,
   });
 
   const war = state.wars[state.wars.length - 1];
@@ -224,6 +228,7 @@ export function declareWar(state: GameState, attackerId: string, defenderId: str
   for (const ally of allies) {
     if (!war.belligerents.includes(ally)) {
       war.belligerents.push(ally);
+      war.isDefensive[ally] = true;
     }
   }
 
@@ -232,13 +237,17 @@ export function declareWar(state: GameState, attackerId: string, defenderId: str
   for (const ally of covertJoiners) {
     if (!war.belligerents.includes(ally)) {
       war.belligerents.push(ally);
+      war.isDefensive[ally] = true;
       state.history.push(
         `Turn ${state.turn}: ${state.countries[ally]?.name} covertly intervened on behalf of ${state.countries[defenderId]?.name}.`
       );
     }
   }
 
-  // Relation penalties for attacking
+  applyWarBelligerentRelations(state, war);
+  triggerIranWarConsequences(state, attackerId, defenderId);
+
+  // Secondary condemnation from nations friendly with defender
   for (const countryId of Object.keys(state.countries)) {
     if (countryId === attackerId) continue;
     const rel = getRelation(state.relations, countryId, defenderId);

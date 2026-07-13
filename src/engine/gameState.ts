@@ -11,10 +11,11 @@ import { checkWinConditions } from './winConditions';
 import { resolveCovertOps, runNpcCovertOps } from './covert';
 import { tickCovertAllianceExposure } from './covertAlliances';
 import { applyTurnIncome, checkTaxPoliticalPressure, getDefaultCorporateTaxRate, getDefaultIncomeTaxRate } from './taxation';
-import { resolveFacilityBuilds } from './facilities';
+import { resolveStrikeCampaigns } from './strikeCampaigns';
 import { resetActionEnergy } from './actionEnergy';
 import { resolveDiplomaticMissions } from './diplomaticMissions';
 import { resolveMilitaryUpgrades, scaleStartingMilitaryDev } from './militaryDevUpgrades';
+import { resolveFacilityBuilds } from './facilities';
 import {
   tickCounterIntel,
   applyDomesticPropagandaTick,
@@ -70,6 +71,8 @@ export function createInitialState(playerCountryId: string): GameState {
     taxPressureTurns: 0,
     conflictBaselines: {},
     militaryUpgrade: null,
+    strikeCampaigns: [],
+    globalOilShock: null,
     actionEnergy: 0,
   };
 
@@ -101,6 +104,7 @@ export function advanceTurn(state: GameState): GameState {
   resolveDiplomaticMissions(newState);
   resolveFacilityBuilds(newState);
   resolveMilitaryUpgrades(newState);
+  resolveStrikeCampaigns(newState);
   resetActionEnergy(newState);
 
   // Update fronts before economy (war exhaustion needs current front count)

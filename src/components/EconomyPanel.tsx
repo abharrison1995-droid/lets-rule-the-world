@@ -5,7 +5,7 @@ import { normalizeBudget } from '../engine/economy';
 import { normalizeDomesticSplit } from '../engine/propaganda';
 import { BottomSheet } from './BottomSheet';
 import { getFiscalHeadroom } from '../engine/fiscal';
-import { getProjectedPlayerIncome } from '../engine/taxation';
+import { getProjectedPlayerIncome, previewIncomeAtTaxRates } from '../engine/taxation';
 import {
   getPendingMilitaryUpgrade,
   getTurnsUntilMilitaryUpgrade,
@@ -70,9 +70,10 @@ export function EconomyPanel({
 
   const headroom = getFiscalHeadroom(country);
   const debt = country.debtToGdp ?? 0;
-  const projectedIncome = getProjectedPlayerIncome(state);
   const corporateTax = state.corporateTaxRate ?? 0.22;
   const incomeTax = state.incomeTaxRate ?? 0.25;
+  const projectedIncome = getProjectedPlayerIncome(state);
+  const taxPreview = previewIncomeAtTaxRates(state, corporateTax, incomeTax);
   const milUpgrade = getPendingMilitaryUpgrade(state);
   const milUpgradeBusy = milUpgrade !== null;
 
@@ -87,13 +88,6 @@ export function EconomyPanel({
       normalizeDomesticSplit({ ...state.domesticSplit, [key]: value / 100 })
     );
   };
-
-  const govLabel =
-    country.governmentType === 'democratic'
-      ? 'democratic'
-      : country.governmentType === 'autocratic'
-        ? 'autocratic'
-        : 'hybrid';
 
   return (
     <BottomSheet onClose={onClose} className="economy-panel">
@@ -133,10 +127,12 @@ export function EconomyPanel({
           <span className="stat-label">Morale</span>
           <span className="stat-value">{formatPercent(country.stats.moraleBase)}</span>
         </div>
-        {(state.taxPressureTurns ?? 0) > 0 && (
+        {state.globalOilShock && state.globalOilShock.turnsRemaining > 0 && (
           <div className="stat-item">
-            <span className="stat-label">Tax Pressure</span>
-            <span className="stat-value warning-text">{state.taxPressureTurns} turns</span>
+            <span className="stat-label">Oil Shock</span>
+            <span className="stat-value warning-text">
+              {state.globalOilShock.reason} · {state.globalOilShock.turnsRemaining}t
+            </span>
           </div>
         )}
       </div>
@@ -144,14 +140,14 @@ export function EconomyPanel({
       <section className="panel-section">
         <h4>Taxation</h4>
         <p className="muted small">
-          Corporate tax funds the treasury but slows growth when high. Income tax raises revenue but erodes morale and can trigger unrest in {govLabel} states.
+          Corporate tax drives treasury income and growth. Income tax raises revenue but hits morale, unrest, and diplomacy when pushed high.
         </p>
         <div className="budget-slider">
           <label>Corporate Tax</label>
           <input
             type="range"
-            min="5"
-            max="55"
+            min="0"
+            max="70"
             value={Math.round(corporateTax * 100)}
             onChange={e => onTaxChange(Number(e.target.value) / 100, incomeTax)}
           />
@@ -161,16 +157,26 @@ export function EconomyPanel({
           <label>Income Tax</label>
           <input
             type="range"
-            min="5"
-            max="55"
+            min="0"
+            max="70"
             value={Math.round(incomeTax * 100)}
             onChange={e => onTaxChange(corporateTax, Number(e.target.value) / 100)}
           />
           <span className="budget-pct">{Math.round(incomeTax * 100)}%</span>
         </div>
+        <div className="tax-breakdown muted small">
+          <p>Projected income at these rates: <strong className="positive-text">+{formatDisplayGDP(taxPreview.total)}/turn</strong></p>
+          <p>Corporate revenue: +{formatDisplayGDP(taxPreview.corporateRevenue)} · Income tax: +{formatDisplayGDP(taxPreview.incomeRevenue)} · Growth: +{formatDisplayGDP(taxPreview.organicGrowth)}</p>
+          {taxPreview.oilShockDrag > 0 && (
+            <p className="warning-text">Oil shock drag: −{formatDisplayGDP(taxPreview.oilShockDrag)}</p>
+          )}
+          {(state.taxPressureTurns ?? 0) > 0 && (
+            <p className="warning-text">High taxes are eroding morale and raising unrest.</p>
+          )}
+        </div>
       </section>
 
-      <section className="panel-section">
+      <section className="panel-section placeholder-tax-end">
         <h4>Budget Allocation {Math.abs(total - 1) > 0.01 && <span className="warning">({formatPercent(total)})</span>}</h4>
         {(Object.keys(BUDGET_LABELS) as Array<keyof BudgetAllocation>).map(key => (
           <div key={key} className="budget-slider">

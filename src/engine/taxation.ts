@@ -4,8 +4,18 @@ import { getRelation, modifyRelation } from '../data/relations';
 import { getRegionsForCountry } from '../data/regions';
 import { getFacilityIncomeBonus } from './facilities';
 
-const DEFAULT_CORPORATE_TAX = 0.22;
-const DEFAULT_INCOME_TAX = 0.25;
+const DEFAULT_CORPORATE_TAX = 0.20;
+const DEFAULT_INCOME_TAX = 0.22;
+
+export interface TaxBreakdown {
+  corporateRevenue: number;
+  incomeRevenue: number;
+  organicGrowth: number;
+  facilityBonus: number;
+  reserveBoost: number;
+  oilShockDrag: number;
+  total: number;
+}
 
 export function getDefaultCorporateTaxRate(): number {
   return DEFAULT_CORPORATE_TAX;
@@ -15,31 +25,58 @@ export function getDefaultIncomeTaxRate(): number {
   return DEFAULT_INCOME_TAX;
 }
 
-/** Per-turn treasury income from taxation (billions / TP) */
-export function computeTurnIncome(state: GameState, countryId: string): number {
+function getOilShockDrag(state: GameState, countryId: string): number {
+  const shock = state.globalOilShock;
+  if (!shock || shock.turnsRemaining <= 0) return 0;
   const country = state.countries[countryId];
   if (!country) return 0;
+  const importers = new Set(['usa', 'england', 'germany', 'france', 'japan', 'south_korea', 'india', 'china', 'turkey', 'pakistan']);
+  if (!importers.has(countryId)) return 0;
+  return country.stats.treasuryPoints * shock.severity * 0.018;
+}
+
+/** Per-turn treasury income from taxation (billions / TP) */
+export function computeTaxBreakdown(state: GameState, countryId: string): TaxBreakdown {
+  const country = state.countries[countryId];
+  if (!country) {
+    return { corporateRevenue: 0, incomeRevenue: 0, organicGrowth: 0, facilityBonus: 0, reserveBoost: 0, oilShockDrag: 0, total: 0 };
+  }
 
   const corporate = state.corporateTaxRate ?? DEFAULT_CORPORATE_TAX;
   const income = state.incomeTaxRate ?? DEFAULT_INCOME_TAX;
   const treasury = country.stats.treasuryPoints;
 
-  const corporateRevenue = treasury * corporate * 0.012;
-  const incomeRevenue = treasury * income * 0.009;
-  const organicGrowth = treasury * country.stats.baseGrowthRate * getGrowthMultiplier(state, corporate);
+  const corporateRevenue = treasury * corporate * 0.048;
+  const incomeRevenue = treasury * income * 0.042;
+  const organicGrowth = treasury * country.stats.baseGrowthRate * getGrowthMultiplier(corporate);
   const facilityBonus = countryId === state.playerCountryId ? getFacilityIncomeBonus(state) : 0;
-  const reserveBoost = countryId === state.playerCountryId ? treasury * state.budget.reserve * 0.004 : 0;
+  const reserveBoost = countryId === state.playerCountryId ? treasury * state.budget.reserve * 0.006 : 0;
+  const oilShockDrag = getOilShockDrag(state, countryId);
 
-  return corporateRevenue + incomeRevenue + organicGrowth + facilityBonus + reserveBoost;
+  const total = corporateRevenue + incomeRevenue + organicGrowth + facilityBonus + reserveBoost - oilShockDrag;
+  return { corporateRevenue, incomeRevenue, organicGrowth, facilityBonus, reserveBoost, oilShockDrag, total };
 }
 
-function getGrowthMultiplier(_state: GameState, corporateTax: number): number {
-  if (corporateTax <= 0.25) return 1;
-  const excess = corporateTax - 0.25;
-  return Math.max(0.35, 1 - excess * 1.8);
+export function computeTurnIncome(state: GameState, countryId: string): number {
+  return computeTaxBreakdown(state, countryId).total;
+}
+
+function getGrowthMultiplier(corporateTax: number): number {
+  if (corporateTax <= 0.18) return 1.08;
+  if (corporateTax <= 0.28) return 1;
+  const excess = corporateTax - 0.28;
+  return Math.max(0.25, 1 - excess * 2.4);
 }
 
 export function applyTurnIncome(state: GameState): void {
+  if (state.globalOilShock && state.globalOilShock.turnsRemaining > 0) {
+    state.globalOilShock.turnsRemaining -= 1;
+    if (state.globalOilShock.turnsRemaining <= 0) {
+      state.history.push(`Turn ${state.turn}: Global oil shock eased — shipping lanes stabilizing.`);
+      state.globalOilShock = null;
+    }
+  }
+
   for (const countryId of Object.keys(state.countries)) {
     const country = state.countries[countryId];
     if (!country) continue;
@@ -60,30 +97,28 @@ export function checkTaxPoliticalPressure(state: GameState): void {
   const corporateTax = state.corporateTaxRate ?? DEFAULT_CORPORATE_TAX;
   const gov = country.governmentType ?? 'hybrid';
 
-  const incomePressure = Math.max(0, incomeTax - 0.28);
-  const corporatePressure = Math.max(0, corporateTax - 0.32);
-  const totalPressure = incomePressure * 1.4 + corporatePressure * 0.5;
+  const incomePressure = Math.max(0, incomeTax - 0.20);
+  const corporatePressure = Math.max(0, corporateTax - 0.25);
+  const totalPressure = incomePressure * 2.2 + corporatePressure * 0.7;
 
-  if (totalPressure > 0.02) {
+  if (totalPressure > 0.01) {
     state.taxPressureTurns = (state.taxPressureTurns ?? 0) + 1;
-    const moraleHit = totalPressure * 0.08;
+    const moraleHit = totalPressure * 0.14;
     country.stats.moraleBase = Math.max(0.1, country.stats.moraleBase - moraleHit);
 
     const playerRegions = getRegionsForCountry(playerId).map(r => state.regions[r.id]).filter(Boolean);
-    const unrestBump = totalPressure * 6;
+    const unrestBump = totalPressure * 10;
     for (const region of playerRegions) {
       region.unrest = Math.min(100, region.unrest + unrestBump);
     }
 
-    if (incomeTax > 0.38) {
+    if (incomeTax > 0.32) {
       for (const otherId of Object.keys(state.countries)) {
         if (otherId === playerId) continue;
         const rel = getRelation(state.relations, playerId, otherId);
-        if (rel > 20) {
-          const penalty = Math.round(-totalPressure * 8);
-          if (penalty !== 0) {
-            modifyRelation(state.relations, playerId, otherId, penalty);
-          }
+        if (rel > 15) {
+          const penalty = Math.round(-totalPressure * 12);
+          if (penalty !== 0) modifyRelation(state.relations, playerId, otherId, penalty);
         }
       }
     }
@@ -95,7 +130,7 @@ export function checkTaxPoliticalPressure(state: GameState): void {
     getRegionsForCountry(playerId).reduce((s, r) => s + (state.regions[r.id]?.unrest ?? 0), 0) /
     Math.max(1, getRegionsForCountry(playerId).length);
 
-  const crisisThreshold = incomeTax > 0.42 && avgUnrest > 55 && (state.taxPressureTurns ?? 0) >= 3;
+  const crisisThreshold = incomeTax > 0.38 && avgUnrest > 48 && (state.taxPressureTurns ?? 0) >= 2;
   if (!crisisThreshold) return;
 
   if (gov === 'democratic') {
@@ -136,4 +171,17 @@ export function checkTaxPoliticalPressure(state: GameState): void {
 
 export function getProjectedPlayerIncome(state: GameState): number {
   return computeTurnIncome(state, state.playerCountryId);
+}
+
+export function previewIncomeAtTaxRates(
+  state: GameState,
+  corporateTax: number,
+  incomeTax: number
+): TaxBreakdown {
+  const snapshot = {
+    ...state,
+    corporateTaxRate: corporateTax,
+    incomeTaxRate: incomeTax,
+  };
+  return computeTaxBreakdown(snapshot, state.playerCountryId);
 }

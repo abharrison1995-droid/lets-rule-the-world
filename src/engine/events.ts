@@ -174,7 +174,12 @@ function filterEligibleEvents(state: GameState, countryId: string): GameEvent[] 
   });
 }
 
-function getStatValue(state: GameState, countryId: string, key: string): number | boolean {
+function getStatValue(
+  state: GameState,
+  countryId: string,
+  key: string,
+  contextValue?: string
+): number | boolean {
   const country = state.countries[countryId];
   if (!country) return 0;
 
@@ -187,6 +192,11 @@ function getStatValue(state: GameState, countryId: string, key: string): number 
     case 'propagandaSaturation': return country.stats.propagandaSaturation;
     case 'defenseBudget': return country.stats.defenseBudget;
     case 'atWar': return state.wars.some(w => w.belligerents.includes(countryId));
+    case 'notAtWar': return !state.wars.some(w => w.belligerents.includes(countryId));
+    case 'atWarWith':
+      return contextValue
+        ? state.wars.some(w => w.belligerents.includes(countryId) && w.belligerents.includes(contextValue))
+        : false;
     case 'avgRelationsMajor': {
       const majors = ['usa', 'china', 'germany', 'japan'];
       return majors.reduce((s, id) => s + getRelation(state.relations, countryId, id), 0) / majors.length;
@@ -207,7 +217,12 @@ function checkRequiredState(
   countryId: string,
   req: { key: string; op: string; value: number | string | boolean }
 ): boolean {
-  const actual = getStatValue(state, countryId, req.key);
+  const actual = getStatValue(
+    state,
+    countryId,
+    req.key,
+    typeof req.value === 'string' ? req.value : undefined
+  );
 
   switch (req.op) {
     case 'lt': return (actual as number) < (req.value as number);
@@ -310,6 +325,7 @@ function applyEffect(
     case 'moraleBase': stats.moraleBase = Math.max(0, Math.min(1, stats.moraleBase + delta)); break;
     case 'regimeSecurity': stats.regimeSecurity = Math.max(0, Math.min(1, stats.regimeSecurity + delta)); break;
     case 'warPopularity': stats.warPopularity = Math.max(0, Math.min(1, stats.warPopularity + delta)); break;
+    case 'warExhaustion': stats.warExhaustion = Math.max(0, Math.min(1, stats.warExhaustion + delta)); break;
     case 'propagandaSaturation': stats.propagandaSaturation = Math.max(0, Math.min(1, stats.propagandaSaturation + delta)); break;
     case 'defenseBudget': stats.defenseBudget = Math.max(0, stats.defenseBudget + delta); break;
     case 'techLevel': stats.techLevel = Math.max(0, Math.min(1, stats.techLevel + delta)); break;
@@ -326,6 +342,15 @@ function applyEffect(
     case 'reserve':
       country.stats.treasuryPoints += active?.contextAmount ?? delta;
       break;
+    case 'globalOilShock': {
+      if (state.globalOilShock) {
+        state.globalOilShock.severity = Math.max(0.08, state.globalOilShock.severity + delta);
+        if (state.globalOilShock.severity < 0.15) {
+          state.globalOilShock.turnsRemaining = Math.max(1, state.globalOilShock.turnsRemaining - 2);
+        }
+      }
+      break;
+    }
     case 'alliance': {
       const targetId = resolveRelationTarget(state, country, target);
       if (targetId) proposeAlliance(state, country.id, targetId, 'defensive_pact');
@@ -417,14 +442,13 @@ export function checkCollapseConditions(state: GameState): void {
 }
 
 export function triggerUnprovokedStrikeEvent(state: GameState): void {
-  const event = getEventById('unprovoked_strike_condemnation');
+  triggerEventById(state, 'unprovoked_strike_condemnation', state.playerCountryId);
+}
+
+export function triggerEventById(state: GameState, eventId: string, countryId: string): void {
+  const event = getEventById(eventId);
   if (!event) return;
-  const already = state.activeEvents.some(e => e.eventId === event.id && !e.resolved);
+  const already = state.activeEvents.some(e => e.eventId === eventId && !e.resolved);
   if (already) return;
-  state.activeEvents.push({
-    eventId: event.id,
-    turn: state.turn,
-    targetCountryId: state.playerCountryId,
-    resolved: false,
-  });
+  state.activeEvents.push(buildActiveEvent(state, event, countryId));
 }

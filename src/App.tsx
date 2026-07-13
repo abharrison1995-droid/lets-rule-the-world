@@ -19,6 +19,7 @@ import {
 import { dispatchTalkMission } from './engine/diplomaticMissions';
 import { playerDomesticPropaganda, playerForeignInfluence } from './engine/propaganda';
 import { playerStartFacilityBuild } from './engine/facilities';
+import { playerStartStrikeCampaign, playerCancelStrikeCampaign } from './engine/strikeCampaigns';
 import { NationSelect } from './components/NationSelect';
 import { GameHeader } from './components/GameHeader';
 import { WorldMap } from './components/WorldMap';
@@ -134,6 +135,26 @@ export default function App() {
     if (!state) return;
     const newState = structuredClone(state);
     const err = playerLaunchStrike(newState, regionId, strikeType);
+    if (err) showFeedback(err);
+    else updateState(newState);
+  }, [state, updateState]);
+
+  const handleStartCampaign = useCallback((
+    sourceRegionId: string,
+    targetRegionId: string,
+    strikeType: StrikeType
+  ) => {
+    if (!state) return;
+    const newState = structuredClone(state);
+    const err = playerStartStrikeCampaign(newState, sourceRegionId, targetRegionId, strikeType);
+    if (err) showFeedback(err);
+    else updateState(newState);
+  }, [state, updateState]);
+
+  const handleCancelCampaign = useCallback((campaignId: string) => {
+    if (!state) return;
+    const newState = structuredClone(state);
+    const err = playerCancelStrikeCampaign(newState, campaignId);
     if (err) showFeedback(err);
     else updateState(newState);
   }, [state, updateState]);
@@ -369,6 +390,8 @@ export default function App() {
               regionId={state.selectedRegionId}
               onClose={() => setState({ ...state, selectedRegionId: null })}
               onStrike={handleStrike}
+              onStartCampaign={handleStartCampaign}
+              onCancelCampaign={handleCancelCampaign}
               onBuildFacility={handleBuildFacility}
             />
           )}

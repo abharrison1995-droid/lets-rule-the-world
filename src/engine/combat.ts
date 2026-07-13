@@ -122,6 +122,7 @@ function getAllianceReinforcement(state: GameState, countryId: string): number {
 }
 
 const UNPROVOKED_DIRECT_PENALTY: Record<StrikeType, number> = {
+  artillery: 28,
   drone: 38,
   cruise: 48,
   ballistic: 58,

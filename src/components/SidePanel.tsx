@@ -1,7 +1,6 @@
 import type { GameState } from '../types/game';
 import { getPlayerWars } from '../engine/gameState';
-import { formatDisplayGDP } from '../engine/treasuryDisplay';
-import { getWinProgress } from '../engine/winConditions';
+import { formatDisplayCost, formatDisplayGDP } from '../engine/treasuryDisplay';
 import { getPendingMissions, getTurnsUntilResolution } from '../engine/diplomaticMissions';
 import {
   getPendingFacilityBuilds,
@@ -13,6 +12,8 @@ import {
   getTurnsUntilMilitaryUpgrade,
   MIL_CATEGORY_LABELS,
 } from '../engine/militaryDevUpgrades';
+import { getPlayerCampaigns, CAMPAIGN_DEFS } from '../engine/strikeCampaigns';
+import { getWinProgress } from '../engine/winConditions';
 
 interface SidePanelProps {
   state: GameState;
@@ -27,6 +28,7 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
   const pendingMissions = getPendingMissions(state);
   const pendingBuilds = getPendingFacilityBuilds(state);
   const milUpgrade = getPendingMilitaryUpgrade(state);
+  const strikeCampaigns = getPlayerCampaigns(state);
 
   return (
     <>
@@ -106,8 +108,8 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
           </section>
 
           <section className="side-section">
-            <h4>Construction ({pendingBuilds.length + (milUpgrade ? 1 : 0)})</h4>
-            {pendingBuilds.length === 0 && !milUpgrade ? (
+            <h4>Construction ({pendingBuilds.length + (milUpgrade ? 1 : 0) + strikeCampaigns.length})</h4>
+            {pendingBuilds.length === 0 && !milUpgrade && strikeCampaigns.length === 0 ? (
               <p className="muted">No projects in progress.</p>
             ) : (
               <>
@@ -118,6 +120,13 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
                     <span className="muted"> · {getTurnsUntilMilitaryUpgrade(state)}t left</span>
                   </div>
                 )}
+                {strikeCampaigns.map(c => (
+                  <div key={c.id} className="mission-entry">
+                    🎯 {state.regions[c.sourceRegionId]?.name} → {state.regions[c.targetRegionId]?.name}
+                    <span className="muted"> · {CAMPAIGN_DEFS[c.strikeType].label}</span>
+                    <span className="muted"> · {formatDisplayCost(CAMPAIGN_DEFS[c.strikeType].sustainCost)}/t</span>
+                  </div>
+                ))}
                 {pendingBuilds.map(b => (
                   <div key={b.id} className="mission-entry">
                     {FACILITY_DEFINITIONS[b.type].icon} {state.regions[b.regionId]?.name}

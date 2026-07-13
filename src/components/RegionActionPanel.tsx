@@ -1,6 +1,6 @@
-import type { GameState, FacilityType } from '../types/game';
+import { useState } from 'react';
+import type { GameState, FacilityType, StrikeType } from '../types/game';
 import { isAtWarWith } from '../engine/actions';
-import type { StrikeType } from '../engine/strikes';
 import { getStrikeOptions, getStrikeRange, getStrikeRangeLabel } from '../engine/strikes';
 import { formatDisplayCost } from '../engine/treasuryDisplay';
 import {
@@ -9,17 +9,40 @@ import {
   hasFacilityInRegion,
   hasPendingBuild,
 } from '../engine/facilities';
+import {
+  CAMPAIGN_DEFS,
+  getPlayerCampaigns,
+  hasCampaignOnTarget,
+} from '../engine/strikeCampaigns';
+import { getRegionsForCountry } from '../data/regions';
 
 interface RegionActionPanelProps {
   state: GameState;
   regionId: string;
   onClose: () => void;
   onStrike: (regionId: string, strikeType: StrikeType) => void;
+  onStartCampaign: (sourceRegionId: string, targetRegionId: string, strikeType: StrikeType) => void;
+  onCancelCampaign: (campaignId: string) => void;
   onBuildFacility: (regionId: string, type: FacilityType) => void;
 }
 
-export function RegionActionPanel({ state, regionId, onClose, onStrike, onBuildFacility }: RegionActionPanelProps) {
+const CAMPAIGN_TYPES: StrikeType[] = ['artillery', 'drone', 'cruise', 'ballistic', 'icbm'];
+
+export function RegionActionPanel({
+  state,
+  regionId,
+  onClose,
+  onStrike,
+  onStartCampaign,
+  onCancelCampaign,
+  onBuildFacility,
+}: RegionActionPanelProps) {
   const region = state.regions[regionId];
+  const playerRegions = getRegionsForCountry(state.playerCountryId);
+  const [sourceRegionId, setSourceRegionId] = useState(
+    () => playerRegions.find(r => r.id === regionId)?.id ?? playerRegions[0]?.id ?? ''
+  );
+
   if (!region) return null;
 
   const owner = state.countries[region.controlledBy];
@@ -31,6 +54,9 @@ export function RegionActionPanel({ state, regionId, onClose, onStrike, onBuildF
   const facilities = region.facilities ?? [];
   const pendingHere = (state.facilityBuilds ?? []).filter(
     b => b.regionId === regionId && b.completeTurn > state.turn
+  );
+  const activeCampaignsHere = getPlayerCampaigns(state).filter(
+    c => c.targetRegionId === regionId || c.sourceRegionId === regionId
   );
 
   return (
@@ -64,22 +90,71 @@ export function RegionActionPanel({ state, regionId, onClose, onStrike, onBuildF
           <>
             <p className="strike-range-label muted small">
               Strike range: <strong>{getStrikeRangeLabel(range)}</strong>
-              {!atWar && <span className="warning-text"> · Unprovoked</span>}
+              {!atWar && <span className="warning-text"> · Unprovoked strikes trigger war</span>}
             </p>
-            {strikeOptions.map(opt => (
-              <button
-                key={opt.type}
-                className={`btn-action strike ${opt.available ? '' : 'disabled-option'}`}
-                disabled={!opt.available}
-                title={opt.blockReason ?? opt.description}
-                onClick={() => onStrike(regionId, opt.type)}
+
+            <section className="strike-section">
+              <h4>Quick Strike (one-off)</h4>
+              {strikeOptions.map(opt => (
+                <button
+                  key={opt.type}
+                  className={`btn-action strike ${opt.available ? '' : 'disabled-option'}`}
+                  disabled={!opt.available}
+                  title={opt.blockReason ?? opt.description}
+                  onClick={() => onStrike(regionId, opt.type)}
+                >
+                  ⚡ {opt.label} — {formatDisplayCost(opt.cost)}
+                </button>
+              ))}
+            </section>
+
+            <section className="strike-section">
+              <h4>Sustained Campaign</h4>
+              <p className="muted small">Launch from your territory — pays upfront + upkeep each turn until you stand down or run out of funds.</p>
+              <select
+                className="target-select"
+                value={sourceRegionId}
+                onChange={e => setSourceRegionId(e.target.value)}
               >
-                ⚡ {opt.label} — {formatDisplayCost(opt.cost)}
-                {!opt.available && opt.blockReason && (
-                  <span className="strike-block-reason"> ({opt.blockReason})</span>
-                )}
-              </button>
-            ))}
+                {playerRegions.map(r => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+              {CAMPAIGN_TYPES.map(type => {
+                const def = CAMPAIGN_DEFS[type];
+                const opt = strikeOptions.find(o => o.type === type);
+                const busy = sourceRegionId && hasCampaignOnTarget(state, sourceRegionId, regionId);
+                const available = opt?.available ?? false;
+                const startCost = def.upfrontCost + def.sustainCost;
+                return (
+                  <button
+                    key={type}
+                    className="btn-action"
+                    disabled={!available || !!busy || !sourceRegionId}
+                    title={opt?.blockReason ?? def.description}
+                    onClick={() => sourceRegionId && onStartCampaign(sourceRegionId, regionId, type)}
+                  >
+                    🎯 {def.label} — {formatDisplayCost(startCost)} start · {formatDisplayCost(def.sustainCost)}/turn
+                  </button>
+                );
+              })}
+            </section>
+
+            {activeCampaignsHere.length > 0 && (
+              <section className="strike-section">
+                <h4>Active Campaigns</h4>
+                {activeCampaignsHere.map(c => (
+                  <div key={c.id} className="campaign-row">
+                    <span>
+                      {CAMPAIGN_DEFS[c.strikeType].label}: {state.regions[c.sourceRegionId]?.name} → {state.regions[c.targetRegionId]?.name}
+                    </span>
+                    <button type="button" className="btn-small" onClick={() => onCancelCampaign(c.id)}>
+                      Stand down
+                    </button>
+                  </div>
+                ))}
+              </section>
+            )}
           </>
         )}
         {isOwn && (

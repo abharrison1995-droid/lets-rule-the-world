@@ -1,9 +1,9 @@
-import type { GameState, Country } from '../types/game';
+import type { GameState, Country, StrikeType } from '../types/game';
 import { getDroneStrikeDiscount } from './facilities';
 import { REGIONS } from '../data/regions';
 import { getHemisphereForCountry } from '../data/hemispheres';
 
-export type StrikeType = 'drone' | 'cruise' | 'ballistic' | 'icbm';
+export type { StrikeType } from '../types/game';
 export type StrikeRange = 'adjacent' | 'regional' | 'theatre' | 'intercontinental';
 
 export interface StrikeOption {
@@ -94,6 +94,15 @@ const STRIKE_DEFS: Record<
     minStrikeCap?: number;
   }
 > = {
+  artillery: {
+    label: 'Artillery Strike',
+    description: 'Tube and rocket artillery — border regions only, cheapest option.',
+    baseCost: 4,
+    basePower: 1.5,
+    energyCost: 1,
+    minRange: 'adjacent',
+    maxRange: 'adjacent',
+  },
   drone: {
     label: 'Loitering Drone Strike',
     description: 'Cheap precision strike — best for nearby targets.',
