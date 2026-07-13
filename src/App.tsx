@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { GameState, BudgetAllocation, MilitaryDev, DomesticSplit, PeaceTermsType, TalkOptionId, CovertTalkOptionId, PressActionId } from './types/game';
+import type { GameState, BudgetAllocation, MilitaryDev, DomesticSplit, PeaceTermsType, TalkOptionId, CovertTalkOptionId, PressActionId, FacilityType } from './types/game';
 import { createInitialState, advanceTurn } from './engine/gameState';
 import { saveGame, loadGame, hasSavedGame, deleteSave } from './engine/saveLoad';
 import { resolveEventChoice } from './engine/events';
@@ -18,6 +18,7 @@ import {
 } from './engine/actions';
 import { dispatchTalkMission } from './engine/diplomaticMissions';
 import { playerDomesticPropaganda, playerForeignInfluence } from './engine/propaganda';
+import { playerStartFacilityBuild } from './engine/facilities';
 import { NationSelect } from './components/NationSelect';
 import { GameHeader } from './components/GameHeader';
 import { WorldMap } from './components/WorldMap';
@@ -74,7 +75,7 @@ export default function App() {
     setShowDiplomacy(false);
     setShowEconomy(false);
     setFeedback(null);
-    setShowNationIntro(true);
+    setShowNationIntro(false);
     setMobileWorldView('chooser');
     setLastHemisphere(getHemisphereForCountry(countryId));
   }, []);
@@ -263,6 +264,19 @@ export default function App() {
     setState({ ...state, budget });
   }, [state]);
 
+  const handleTaxChange = useCallback((corporateTaxRate: number, incomeTaxRate: number) => {
+    if (!state) return;
+    setState({ ...state, corporateTaxRate, incomeTaxRate });
+  }, [state]);
+
+  const handleBuildFacility = useCallback((regionId: string, type: FacilityType) => {
+    if (!state) return;
+    const newState = structuredClone(state);
+    const err = playerStartFacilityBuild(newState, regionId, type);
+    if (err) showFeedback(err);
+    else updateState(newState);
+  }, [state, updateState]);
+
   const pendingEvent = state?.activeEvents.find(e => !e.resolved);
   const pendingEventData = pendingEvent ? getEventById(pendingEvent.eventId) : null;
 
@@ -355,6 +369,7 @@ export default function App() {
               regionId={state.selectedRegionId}
               onClose={() => setState({ ...state, selectedRegionId: null })}
               onStrike={handleStrike}
+              onBuildFacility={handleBuildFacility}
             />
           )}
         </main>
@@ -391,6 +406,7 @@ export default function App() {
         <EconomyPanel
           state={state}
           onBudgetChange={handleBudgetChange}
+          onTaxChange={handleTaxChange}
           onDomesticSplitChange={handleDomesticSplitChange}
           onInvestMilitary={handleInvestMilitary}
           onDomesticPropaganda={handleDomesticPropaganda}

@@ -3,6 +3,11 @@ import { getPlayerWars } from '../engine/gameState';
 import { formatDisplayGDP } from '../engine/treasuryDisplay';
 import { getWinProgress } from '../engine/winConditions';
 import { getPendingMissions, getTurnsUntilResolution } from '../engine/diplomaticMissions';
+import {
+  getPendingFacilityBuilds,
+  getTurnsUntilFacilityComplete,
+  FACILITY_DEFINITIONS,
+} from '../engine/facilities';
 
 interface SidePanelProps {
   state: GameState;
@@ -15,6 +20,7 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
   const player = state.countries[state.playerCountryId];
   const winProgress = getWinProgress(state);
   const pendingMissions = getPendingMissions(state);
+  const pendingBuilds = getPendingFacilityBuilds(state);
 
   return (
     <>
@@ -36,8 +42,7 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
 
           <section className="side-section">
             <h4>Status</h4>
-            <p>GDP (est.): {formatDisplayGDP(player?.stats.treasuryPoints ?? 0)}</p>
-            <p>Treasury: {player?.stats.treasuryPoints ?? 0} TP</p>
+            <p>Treasury: {formatDisplayGDP(player?.stats.treasuryPoints ?? 0)}</p>
             <p>Counter-Intel: {((state.counterIntelLevel) * 100).toFixed(0)}%</p>
             <p>Morale: {((player?.stats.moraleBase ?? 0) * 100).toFixed(0)}%</p>
             <p>War Exhaustion: {((player?.stats.warExhaustion ?? 0) * 100).toFixed(0)}%</p>
@@ -89,6 +94,21 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
                   {state.countries[m.targetNationId]?.name}
                   <span className="muted"> · {m.type.replace(/_/g, ' ')}</span>
                   <span className="muted"> · {getTurnsUntilResolution(state, m)}t left</span>
+                </div>
+              ))
+            )}
+          </section>
+
+          <section className="side-section">
+            <h4>Construction ({pendingBuilds.length})</h4>
+            {pendingBuilds.length === 0 ? (
+              <p className="muted">No projects in progress.</p>
+            ) : (
+              pendingBuilds.map(b => (
+                <div key={b.id} className="mission-entry">
+                  {FACILITY_DEFINITIONS[b.type].icon} {state.regions[b.regionId]?.name}
+                  <span className="muted"> · {FACILITY_DEFINITIONS[b.type].label}</span>
+                  <span className="muted"> · {getTurnsUntilFacilityComplete(state, b)}t left</span>
                 </div>
               ))
             )}

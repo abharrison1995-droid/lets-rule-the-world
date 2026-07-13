@@ -1,6 +1,7 @@
 import type { GameState, Region, Front, LayerCategory } from '../types/game';
 import { getRegionsForCountry, getNeighbourStrip } from '../data/regions';
 import { getDefenseSystemRating } from '../engine/economy';
+import { FACILITY_DEFINITIONS } from '../engine/facilities';
 import { useMobileLayout } from '../hooks/useMobileLayout';
 import { getNationalViewBox, shortRegionName } from '../utils/mapUtils';
 import { PanZoomMap, useMapInteraction } from './PanZoomMap';
@@ -187,11 +188,46 @@ function NationalMapSvg({
           </g>
         ))}
 
-      {layers.includes('economic') && regions.map(region => (
-        <g key={`eco_${region.id}`} pointerEvents="none">
-          <rect x={region.center[0] - 10} y={region.center[1] + 12} width="20" height="5" fill="#22c55e" opacity={Math.min(1, region.industryValue / 1000)} rx="1" />
-        </g>
-      ))}
+      {layers.includes('economic') && regions.map(region => {
+        const built = region.facilities ?? [];
+        const pending = (state.facilityBuilds ?? []).filter(
+          b => b.regionId === region.id && b.completeTurn > state.turn
+        );
+        if (built.length === 0 && pending.length === 0) {
+          return (
+            <g key={`eco_${region.id}`} pointerEvents="none">
+              <rect x={region.center[0] - 10} y={region.center[1] + 12} width="20" height="5" fill="#22c55e" opacity={Math.min(1, region.industryValue / 1000)} rx="1" />
+            </g>
+          );
+        }
+        return (
+          <g key={`fac_${region.id}`} pointerEvents="none">
+            {built.map((f, i) => (
+              <text
+                key={f.id}
+                x={region.center[0] - 6 + i * 10}
+                y={region.center[1] + 18}
+                fontSize={isMobile ? 9 : 8}
+                textAnchor="middle"
+              >
+                {FACILITY_DEFINITIONS[f.type].icon}
+              </text>
+            ))}
+            {pending.map((b, i) => (
+              <text
+                key={b.id}
+                x={region.center[0] + built.length * 10 + i * 8}
+                y={region.center[1] + 18}
+                fontSize={isMobile ? 8 : 7}
+                fill="#fbbf24"
+                textAnchor="middle"
+              >
+                🏗
+              </text>
+            ))}
+          </g>
+        );
+      })}
 
       {regions.filter(r => r.unrest > 20).map(region => (
         <g key={`unrest_${region.id}`} pointerEvents="none">

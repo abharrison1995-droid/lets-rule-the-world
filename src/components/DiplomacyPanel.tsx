@@ -13,6 +13,7 @@ import { TalksScreen } from './TalksScreen';
 import { PressConferenceScreen } from './PressConferenceScreen';
 import { BottomSheet } from './BottomSheet';
 import { getActiveCovertAlliances } from '../engine/covertAlliances';
+import { getInvokeUsSupportChance } from '../engine/diplomaticMissions';
 
 interface DiplomacyPanelProps {
   state: GameState;
@@ -260,12 +261,16 @@ export function DiplomacyPanel({
           {mechanics.map(m => {
             const lastUsed = state.mechanicCooldowns[m.id] ?? 0;
             const cdRemaining = Math.max(0, m.cooldown - (state.turn - lastUsed));
-            const needsTarget = m.category === 'covert' || m.category === 'military';
+            const needsTarget = m.category === 'covert' || m.category === 'military' || m.category === 'strategic';
+            const successHint =
+              m.id === 'invoke_us_support' && mechanicTarget
+                ? ` · ~${Math.round(getInvokeUsSupportChance(state, mechanicTarget) * 100)}% success`
+                : '';
             return (
               <div key={m.id} className="mechanic-row">
                 <strong>{m.name}</strong>
                 <span className="muted">{m.description}</span>
-                <span className="mechanic-cost">${m.cost}B · CD: {cdRemaining > 0 ? `${cdRemaining}t` : 'ready'}</span>
+                <span className="mechanic-cost">${m.cost}B · CD: {cdRemaining > 0 ? `${cdRemaining}t` : 'ready'}{successHint}</span>
                 <button
                   className="btn-action"
                   disabled={cdRemaining > 0 || (needsTarget && !mechanicTarget)}

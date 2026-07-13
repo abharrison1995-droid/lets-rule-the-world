@@ -5,6 +5,7 @@ import { normalizeBudget } from '../engine/economy';
 import { normalizeDomesticSplit } from '../engine/propaganda';
 import { BottomSheet } from './BottomSheet';
 import { getFiscalHeadroom } from '../engine/fiscal';
+import { getProjectedPlayerIncome } from '../engine/taxation';
 import {
   formatDisplayGDP,
   formatDisplayDebt,
@@ -16,6 +17,7 @@ interface EconomyPanelProps {
   state: GameState;
   onBudgetChange: (budget: BudgetAllocation) => void;
   onDomesticSplitChange: (split: DomesticSplit) => void;
+  onTaxChange: (corporateTax: number, incomeTax: number) => void;
   onInvestMilitary: (category: keyof MilitaryDev) => void;
   onDomesticPropaganda: () => void;
   onForeignInfluence: (targetId: string) => void;
@@ -49,6 +51,7 @@ export function EconomyPanel({
   state,
   onBudgetChange,
   onDomesticSplitChange,
+  onTaxChange,
   onInvestMilitary,
   onDomesticPropaganda,
   onForeignInfluence,
@@ -61,6 +64,9 @@ export function EconomyPanel({
 
   const headroom = getFiscalHeadroom(country);
   const debt = country.debtToGdp ?? 0;
+  const projectedIncome = getProjectedPlayerIncome(state);
+  const corporateTax = state.corporateTaxRate ?? 0.22;
+  const incomeTax = state.incomeTaxRate ?? 0.25;
 
   const total = Object.values(state.budget).reduce((s, v) => s + v, 0);
 
@@ -74,6 +80,13 @@ export function EconomyPanel({
     );
   };
 
+  const govLabel =
+    country.governmentType === 'democratic'
+      ? 'democratic'
+      : country.governmentType === 'autocratic'
+        ? 'autocratic'
+        : 'hybrid';
+
   return (
     <BottomSheet onClose={onClose} className="economy-panel">
       <div className="panel-header">
@@ -85,16 +98,16 @@ export function EconomyPanel({
 
       <div className="stat-grid">
         <div className="stat-item">
-          <span className="stat-label">GDP (est.)</span>
+          <span className="stat-label">Treasury</span>
           <span className="stat-value">{formatDisplayGDP(country.stats.treasuryPoints)}</span>
         </div>
         <div className="stat-item">
-          <span className="stat-label">Treasury</span>
-          <span className="stat-value">{country.stats.treasuryPoints} TP</span>
+          <span className="stat-label">Income / Turn</span>
+          <span className="stat-value positive-text">+{formatDisplayGDP(projectedIncome)}</span>
         </div>
         <div className="stat-item">
           <span className="stat-label">Spendable</span>
-          <span className="stat-value">{Math.round(headroom)} TP</span>
+          <span className="stat-value">{formatDisplayGDP(headroom)}</span>
         </div>
         {debt > 0 && (
           <div className="stat-item">
@@ -109,18 +122,45 @@ export function EconomyPanel({
           <span className="stat-value">{formatPercent(state.counterIntelLevel)}</span>
         </div>
         <div className="stat-item">
-          <span className="stat-label">Propaganda Sat.</span>
-          <span className="stat-value">{formatPercent(country.stats.propagandaSaturation)}</span>
-        </div>
-        <div className="stat-item">
-          <span className="stat-label">War Popularity</span>
-          <span className="stat-value">{formatPercent(country.stats.warPopularity)}</span>
-        </div>
-        <div className="stat-item">
           <span className="stat-label">Morale</span>
           <span className="stat-value">{formatPercent(country.stats.moraleBase)}</span>
         </div>
+        {(state.taxPressureTurns ?? 0) > 0 && (
+          <div className="stat-item">
+            <span className="stat-label">Tax Pressure</span>
+            <span className="stat-value warning-text">{state.taxPressureTurns} turns</span>
+          </div>
+        )}
       </div>
+
+      <section className="panel-section">
+        <h4>Taxation</h4>
+        <p className="muted small">
+          Corporate tax funds the treasury but slows growth when high. Income tax raises revenue but erodes morale and can trigger unrest in {govLabel} states.
+        </p>
+        <div className="budget-slider">
+          <label>Corporate Tax</label>
+          <input
+            type="range"
+            min="5"
+            max="55"
+            value={Math.round(corporateTax * 100)}
+            onChange={e => onTaxChange(Number(e.target.value) / 100, incomeTax)}
+          />
+          <span className="budget-pct">{Math.round(corporateTax * 100)}%</span>
+        </div>
+        <div className="budget-slider">
+          <label>Income Tax</label>
+          <input
+            type="range"
+            min="5"
+            max="55"
+            value={Math.round(incomeTax * 100)}
+            onChange={e => onTaxChange(corporateTax, Number(e.target.value) / 100)}
+          />
+          <span className="budget-pct">{Math.round(incomeTax * 100)}%</span>
+        </div>
+      </section>
 
       <section className="panel-section">
         <h4>Budget Allocation {Math.abs(total - 1) > 0.01 && <span className="warning">({formatPercent(total)})</span>}</h4>
@@ -148,7 +188,7 @@ export function EconomyPanel({
       <section className="panel-section">
         <h4>Propaganda Actions</h4>
         <button className="btn-action" onClick={onDomesticPropaganda}>
-          📢 Domestic Propaganda Campaign ({formatDisplayCost(15)})
+          📢 Domestic Propaganda Campaign ({formatDisplayCost(3)})
         </button>
         <p className="muted small">Boosts war popularity & morale. Diminishing returns when saturation is high.</p>
         <select className="target-select" value={influenceTarget} onChange={e => setInfluenceTarget(e.target.value)}>
@@ -158,12 +198,12 @@ export function EconomyPanel({
             .map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         <button className="btn-action" disabled={!influenceTarget} onClick={() => influenceTarget && onForeignInfluence(influenceTarget)}>
-          🌐 Foreign Influence Campaign ({formatDisplayCost(20)})
+          🌐 Foreign Influence Campaign ({formatDisplayCost(3)})
         </button>
       </section>
 
       <section className="panel-section">
-        <h4>Military Development ({formatDisplayCost(40)} per upgrade)</h4>
+        <h4>Military Development ({formatDisplayCost(7)} per upgrade)</h4>
         <div className="mil-dev-grid">
           {(Object.keys(MIL_LABELS) as Array<keyof MilitaryDev>).map(key => {
             const val = country.militaryDev[key];

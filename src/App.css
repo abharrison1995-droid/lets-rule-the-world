@@ -1852,6 +1852,26 @@ body {
   width: 100%;
 }
 
+.nation-intro-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nation-intro-back {
+  width: 100%;
+}
+
+.nation-select-hint {
+  text-align: center;
+  font-size: 0.85rem;
+  margin: -0.5rem 0 1rem;
+}
+
+.nation-card.selected {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
 @keyframes pulse-war {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.35; }

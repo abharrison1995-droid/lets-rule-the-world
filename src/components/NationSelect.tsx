@@ -1,5 +1,8 @@
+import { useState, useMemo } from 'react';
 import { COUNTRIES } from '../data/countries';
 import { getWinCondition } from '../data/winConditions';
+import { createInitialState } from '../engine/gameState';
+import { NationIntroModal } from './NationIntroModal';
 
 interface NationSelectProps {
   onSelect: (countryId: string) => void;
@@ -9,6 +12,12 @@ interface NationSelectProps {
 
 export function NationSelect({ onSelect, onLoad, hasSave }: NationSelectProps) {
   const playable = Object.values(COUNTRIES).filter(c => c.playable);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+
+  const previewState = useMemo(
+    () => (previewId ? createInitialState(previewId) : null),
+    [previewId]
+  );
 
   return (
     <div className="nation-select">
@@ -21,12 +30,14 @@ export function NationSelect({ onSelect, onLoad, hasSave }: NationSelectProps) {
         )}
 
         <h2>Choose Your Nation</h2>
+        <p className="muted nation-select-hint">Tap a nation to preview — you can browse as many as you like before committing.</p>
         <div className="nation-grid">
           {playable.map(country => (
             <button
               key={country.id}
-              className="nation-card"
-              onClick={() => onSelect(country.id)}
+              type="button"
+              className={`nation-card ${previewId === country.id ? 'selected' : ''}`}
+              onClick={() => setPreviewId(country.id)}
               style={{ borderColor: country.color }}
             >
               <span className="nation-card-name" style={{ color: country.color }}>
@@ -43,6 +54,15 @@ export function NationSelect({ onSelect, onLoad, hasSave }: NationSelectProps) {
           ))}
         </div>
       </div>
+
+      {previewState && previewId && (
+        <NationIntroModal
+          state={previewState}
+          mode="preview"
+          onBack={() => setPreviewId(null)}
+          onContinue={() => onSelect(previewId)}
+        />
+      )}
     </div>
   );
 }

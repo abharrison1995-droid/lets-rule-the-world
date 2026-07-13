@@ -13,6 +13,7 @@ import type { NegotiationResult } from './talks';
 import {
   dispatchTalkMission,
   dispatchCovertMission,
+  dispatchInvokeUsSupportMission,
 } from './diplomaticMissions';
 import { executePressAction } from './pressActions';
 import type { PressActionId } from '../types/game';
@@ -120,7 +121,7 @@ export function playerProbeCovertPacts(state: GameState, targetNationId: string)
     return actionEnergyBlockReason(state, energyCost)!;
   }
 
-  const baseCost = 40;
+  const baseCost = 7;
   const targetCI = (target.stats.regimeSecurity ?? 0.5) * 25;
   const discoveryRisk = Math.max(
     10,
@@ -195,7 +196,7 @@ export function playerLaunchCovertOp(state: GameState, targetNationId: string): 
     return actionEnergyBlockReason(state, energyCost)!;
   }
 
-  const baseCost = 35;
+  const baseCost = 6;
   const targetCI = (target.stats.regimeSecurity ?? 0.5) * 20;
   const discoveryRisk = Math.max(5, 25 + (1 - state.budget.covert) * 20 + targetCI - state.counterIntelLevel * 5);
 
@@ -229,6 +230,10 @@ export function playerExecuteMechanic(
   const mechanic = mechanics.find(m => m.id === mechanicId);
   if (!mechanic) return 'Unknown action.';
 
+  if (mechanic.requiresTarget && !targetNationId) {
+    return 'Select a target nation first.';
+  }
+
   const lastUsed = state.mechanicCooldowns[mechanicId] ?? 0;
   if (state.turn - lastUsed < mechanic.cooldown) {
     return `On cooldown (${mechanic.cooldown - (state.turn - lastUsed)} turns remaining).`;
@@ -245,6 +250,24 @@ export function playerExecuteMechanic(
   }
 
   const player = state.countries[state.playerCountryId];
+
+  if (mechanic.category === 'strategic' && mechanic.id === 'invoke_us_support' && targetNationId) {
+    const duration = mechanic.missionTurns ?? 7;
+    const result = dispatchInvokeUsSupportMission(
+      state,
+      targetNationId,
+      mechanic.cost,
+      energyCost,
+      duration
+    );
+    if (!result.success) {
+      state.actionEnergy += energyCost;
+      if (player) player.stats.treasuryPoints += getEffectiveSpendCost(player, mechanic.cost);
+      return result.message;
+    }
+    state.mechanicCooldowns[mechanicId] = state.turn;
+    return null;
+  }
 
   if (mechanic.category === 'covert' && targetNationId) {
     const target = state.countries[targetNationId];
@@ -324,7 +347,7 @@ export function playerInvestMilitary(
     return actionEnergyBlockReason(state, energyCost)!;
   }
 
-  const cost = 40;
+  const cost = 7;
   if (!deductCost(state, cost)) {
     state.actionEnergy += energyCost;
     return `Insufficient funds (need ${formatDisplayCost(cost)}).`;

@@ -66,7 +66,7 @@ export function getNationStandingBullets(state: GameState, countryId: string): s
   const debt = country.debtToGdp ?? 0;
 
   bullets.push(
-    `GDP (est.): ${formatDisplayGDP(country.stats.treasuryPoints)} · Treasury: ${country.stats.treasuryPoints} TP · Spendable: ${Math.round(headroom)} TP`
+    `Treasury: ${formatDisplayGDP(country.stats.treasuryPoints)} · Spendable: ${formatDisplayGDP(headroom)}`
   );
   if (debt > 0) {
     bullets.push(`National debt: ${formatDebtRatio(debt)} — servicing limits spending power`);

@@ -1,6 +1,7 @@
 import type { GameState } from '../types/game';
 import { getRelation } from '../data/relations';
 import { getWinCondition } from '../data/winConditions';
+import { formatDisplayGDP } from './treasuryDisplay';
 
 export interface WinProgress {
   description: string;
@@ -46,7 +47,7 @@ export function getWinProgress(state: GameState): WinProgress {
   if (win.minTreasury !== undefined) {
     const met = player.stats.treasuryPoints >= win.minTreasury;
     checks.push(met);
-    details.push(`Economy: ${player.stats.treasuryPoints} TP / ${win.minTreasury} TP`);
+    details.push(`Economy: ${formatDisplayGDP(player.stats.treasuryPoints)} / ${formatDisplayGDP(win.minTreasury)}`);
   }
 
   if (win.minRegimeSecurity !== undefined) {

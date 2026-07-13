@@ -198,7 +198,7 @@ export const EVENTS: GameEvent[] = [
     title: 'IMF Bailout Offer',
     description: 'The IMF offers emergency financing with structural reform conditions attached.',
     scope: 'national',
-    triggerConditions: { minTurn: 5, requiredState: [{ key: 'treasuryPoints', op: 'lt', value: 220 }] },
+    triggerConditions: { minTurn: 5, requiredState: [{ key: 'treasuryPoints', op: 'lt', value: 37 }] },
     weight: 8,
     choices: [
       { label: 'Accept bailout', effects: [{ stat: 'gdp', target: 'self', delta: 80 }, { stat: 'regimeSecurity', target: 'self', delta: -0.05 }] },
@@ -322,7 +322,7 @@ export const EVENTS: GameEvent[] = [
     title: 'Currency in Freefall',
     description: 'The Pakistani rupee collapses. IMF talks stall. Military factions grow restless.',
     scope: 'national',
-    triggerConditions: { targetCountry: 'pakistan', requiredState: [{ key: 'treasuryPoints', op: 'lt', value: 185 }] },
+    triggerConditions: { targetCountry: 'pakistan', requiredState: [{ key: 'treasuryPoints', op: 'lt', value: 31 }] },
     weight: 18,
     telegraph: true,
     choices: [
@@ -336,7 +336,7 @@ export const EVENTS: GameEvent[] = [
     title: 'Sanctions Squeeze Tightens',
     description: 'SWIFT restrictions and oil export blocks devastate the Iranian economy.',
     scope: 'national',
-    triggerConditions: { targetCountry: 'iran', requiredState: [{ key: 'treasuryPoints', op: 'lt', value: 190 }] },
+    triggerConditions: { targetCountry: 'iran', requiredState: [{ key: 'treasuryPoints', op: 'lt', value: 32 }] },
     weight: 16,
     telegraph: true,
     choices: [

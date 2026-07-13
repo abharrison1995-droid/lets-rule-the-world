@@ -14,11 +14,11 @@ const TIER_ORDER: AllianceTier[] = ['informal', 'defensive_pact', 'full_alliance
 
 /** Raised costs — consequential diplomacy is expensive */
 export const TALK_COSTS: Record<TalkOptionId, number> = {
-  peace: 25,
-  military_pact: 120,
-  trade_deal: 65,
-  intel_sharing: 50,
-  ultimatum: 40,
+  peace: 4,
+  military_pact: 20,
+  trade_deal: 11,
+  intel_sharing: 8,
+  ultimatum: 7,
 };
 
 export const TALK_DURATIONS: Record<TalkOptionId, number> = {

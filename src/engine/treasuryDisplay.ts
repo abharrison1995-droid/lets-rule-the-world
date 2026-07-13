@@ -1,5 +1,5 @@
-/** Cosmetic only — never use in engine formulas */
-export const TP_TO_DISPLAY_BILLIONS = 2.5;
+/** 1 treasury point = $1B liquid reserves */
+export const TP_TO_DISPLAY_BILLIONS = 1;
 
 export function getDisplayGDP(tp: number): number {
   return tp * TP_TO_DISPLAY_BILLIONS;
@@ -12,7 +12,8 @@ export function formatDisplayDebt(tp: number, debtRatio: number): string {
 export function formatDisplayGDP(tp: number): string {
   const billions = getDisplayGDP(tp);
   if (billions >= 1000) return `$${(billions / 1000).toFixed(1)}T`;
-  return `$${billions.toFixed(0)}B`;
+  if (billions >= 100) return `$${billions.toFixed(0)}B`;
+  return `$${billions.toFixed(1)}B`;
 }
 
 export function formatDisplayCost(tpCost: number): string {

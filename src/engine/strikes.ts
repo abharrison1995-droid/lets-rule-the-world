@@ -1,4 +1,5 @@
 import type { GameState, Country } from '../types/game';
+import { getDroneStrikeDiscount } from './facilities';
 import { REGIONS } from '../data/regions';
 import { getHemisphereForCountry } from '../data/hemispheres';
 
@@ -180,7 +181,11 @@ export function getStrikeOptions(
     }
 
     const capDiscount = (5 - strikeCap) * (type === 'drone' ? 1.5 : 3);
-    const cost = Math.round(def.baseCost + capDiscount);
+    let cost = Math.round(def.baseCost + capDiscount);
+    if (type === 'drone' && attackerId === state.playerCountryId) {
+      const discount = getDroneStrikeDiscount(state);
+      cost = Math.max(1, Math.round(cost * (1 - discount)));
+    }
 
     const power =
       def.basePower +

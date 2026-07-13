@@ -43,7 +43,7 @@ export function playerDomesticPropaganda(state: GameState): string | null {
   const player = state.countries[state.playerCountryId];
   if (!player) return 'Invalid player.';
 
-  const cost = 15;
+  const cost = 3;
   if (!deductCost(state, cost)) return `Insufficient funds (need ${formatDisplayCost(cost)}).`;
 
   const saturation = player.stats.propagandaSaturation;
@@ -68,7 +68,7 @@ export function playerForeignInfluence(state: GameState, targetNationId: string)
   const target = state.countries[targetNationId];
   if (!target) return 'Invalid target.';
 
-  const cost = 20;
+  const cost = 3;
   if (!deductCost(state, cost)) return `Insufficient funds (need ${formatDisplayCost(cost)}).`;
 
   const covertBonus = state.budget.covert * 5;

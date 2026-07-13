@@ -30,6 +30,30 @@ export type CollapseType =
   | 'soft'
   | 'none';
 
+export type GovernmentType = 'democratic' | 'autocratic' | 'hybrid';
+
+export type FacilityType =
+  | 'drone_factory'
+  | 'missile_defense'
+  | 'oil_gas'
+  | 'arms_plant';
+
+export interface RegionFacility {
+  id: string;
+  type: FacilityType;
+  builtTurn: number;
+}
+
+export interface FacilityBuildOrder {
+  id: string;
+  regionId: string;
+  countryId: string;
+  type: FacilityType;
+  startTurn: number;
+  completeTurn: number;
+  costPaid: number;
+}
+
 export interface DefenseSystem {
   id: string;
   type: 'patriot' | 'iron_dome' | 's300' | 'thaad' | 'ciws' | 'generic';
@@ -53,6 +77,7 @@ export interface Region {
   controlledBy: string;
   unrest: number;
   fortificationLevel: number;
+  facilities: RegionFacility[];
   /** SVG path for national map rendering */
   mapPath: string;
   /** Center point for icon placement [x, y] */
@@ -114,7 +139,8 @@ export type DiplomaticMissionType =
   | 'summit'
   | 'covert_trade'
   | 'covert_military'
-  | 'covert_intel';
+  | 'covert_intel'
+  | 'invoke_us_support';
 
 export interface DiplomaticMission {
   id: string;
@@ -201,6 +227,7 @@ export interface Country {
   playable: boolean;
   /** Sovereign debt as ratio of GDP (e.g. 1.22 = 122%) */
   debtToGdp: number;
+  governmentType: GovernmentType;
   stats: CountryStats;
   militaryDev: MilitaryDev;
   startingAlliances: string[];
@@ -400,7 +427,13 @@ export interface GameState {
   actionEnergy: number;
   /** Envoys / summits in progress */
   diplomaticMissions: DiplomaticMission[];
-  /** Contextual nation for event effects (sender, ally, etc.) */
+  /** Regional construction projects in progress */
+  facilityBuilds: FacilityBuildOrder[];
+  corporateTaxRate: number;
+  incomeTaxRate: number;
+  /** Turns of elevated unrest from tax pressure */
+  taxPressureTurns: number;
+  /** Event context nation for event effects (sender, ally, etc.) */
   eventContextNationId?: string;
 }
 
@@ -411,7 +444,9 @@ export interface NationMechanic {
   description: string;
   cost: number;
   cooldown: number;
-  category: 'covert' | 'diplomacy' | 'military';
+  category: 'covert' | 'diplomacy' | 'military' | 'strategic';
   effects: Record<string, number>;
   discoveryRiskBonus?: number;
+  requiresTarget?: boolean;
+  missionTurns?: number;
 }

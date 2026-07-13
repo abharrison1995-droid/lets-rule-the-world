@@ -11,9 +11,9 @@ import { hasBilateralAgreement } from './talks';
 import { actionEnergyBlockReason } from './actionEnergy';
 
 export const COVERT_TALK_COSTS: Record<CovertTalkOptionId, number> = {
-  covert_trade: 85,
-  covert_military: 150,
-  covert_intel: 95,
+  covert_trade: 14,
+  covert_military: 25,
+  covert_intel: 16,
 };
 
 export const COVERT_DURATIONS: Record<CovertTalkOptionId, number> = {

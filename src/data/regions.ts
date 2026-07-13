@@ -18,6 +18,7 @@ function r(
     controlledBy: countryId,
     unrest: 0,
     fortificationLevel: 0,
+    facilities: [],
     mapPath: path,
     center,
   };

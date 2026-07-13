@@ -10,7 +10,8 @@ import { rollEvents, checkCollapseConditions } from './events';
 import { checkWinConditions } from './winConditions';
 import { resolveCovertOps, runNpcCovertOps } from './covert';
 import { tickCovertAllianceExposure } from './covertAlliances';
-import { accumulateTreasury } from './actions';
+import { applyTurnIncome, checkTaxPoliticalPressure, getDefaultCorporateTaxRate, getDefaultIncomeTaxRate } from './taxation';
+import { resolveFacilityBuilds } from './facilities';
 import { resetActionEnergy } from './actionEnergy';
 import { resolveDiplomaticMissions } from './diplomaticMissions';
 import {
@@ -59,6 +60,10 @@ export function createInitialState(playerCountryId: string): GameState {
     talksAttemptedThisTurn: [],
     covertTalksAttemptedThisTurn: [],
     diplomaticMissions: [],
+    facilityBuilds: [],
+    corporateTaxRate: getDefaultCorporateTaxRate(),
+    incomeTaxRate: getDefaultIncomeTaxRate(),
+    taxPressureTurns: 0,
     actionEnergy: 0,
   };
 
@@ -88,6 +93,7 @@ export function advanceTurn(state: GameState): GameState {
   newState.covertTalksAttemptedThisTurn = [];
 
   resolveDiplomaticMissions(newState);
+  resolveFacilityBuilds(newState);
   resetActionEnergy(newState);
 
   // Update fronts before economy (war exhaustion needs current front count)
@@ -101,7 +107,8 @@ export function advanceTurn(state: GameState): GameState {
   applyBudgetEffects(newState);
   tickCounterIntel(newState);
   applyDomesticPropagandaTick(newState);
-  accumulateTreasury(newState);
+  applyTurnIncome(newState);
+  checkTaxPoliticalPressure(newState);
   runNpcCovertOps(newState);
   resolveCovertOps(newState);
   tickCovertAllianceExposure(newState);
