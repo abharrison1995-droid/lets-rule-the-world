@@ -134,7 +134,10 @@ export function checkTaxPoliticalPressure(state: GameState): void {
     Math.max(1, getRegionsForCountry(playerId).length);
 
   const crisisThreshold = incomeTax > 0.38 && avgUnrest > 48 && (state.taxPressureTurns ?? 0) >= 2;
-  if (!crisisThreshold) return;
+  if (!crisisThreshold) {
+    state.telegraphedTaxCrisis = false;
+    return;
+  }
 
   if (gov === 'democratic') {
     country.stats.regimeSecurity = Math.max(0, country.stats.regimeSecurity - 0.12);
@@ -143,8 +146,8 @@ export function checkTaxPoliticalPressure(state: GameState): void {
       state.gameOverReason =
         'Vote of no confidence — crushing income taxes and public unrest forced your government from office.';
       state.history.push(`Turn ${state.turn}: Government collapsed after vote of no confidence.`);
-    } else if (!state.telegraphedCollapse) {
-      state.telegraphedCollapse = true;
+    } else if (!state.telegraphedTaxCrisis) {
+      state.telegraphedTaxCrisis = true;
       state.history.push(`Turn ${state.turn}: Parliament threatens vote of no confidence over tax burden.`);
     }
   } else if (gov === 'autocratic') {
@@ -154,8 +157,8 @@ export function checkTaxPoliticalPressure(state: GameState): void {
       state.gameOverReason =
         'Peoples\' revolt — mass unrest over punitive taxes toppled the regime.';
       state.history.push(`Turn ${state.turn}: Regime overthrown by popular revolt.`);
-    } else if (!state.telegraphedCollapse) {
-      state.telegraphedCollapse = true;
+    } else if (!state.telegraphedTaxCrisis) {
+      state.telegraphedTaxCrisis = true;
       state.history.push(`Turn ${state.turn}: Street protests spread — regime stability at risk.`);
     }
   } else {
@@ -165,8 +168,8 @@ export function checkTaxPoliticalPressure(state: GameState): void {
       state.gameOverReason =
         'Coalition crisis — your government fell amid tax revolt and collapsing public trust.';
       state.history.push(`Turn ${state.turn}: Coalition collapsed under tax pressure.`);
-    } else if (!state.telegraphedCollapse) {
-      state.telegraphedCollapse = true;
+    } else if (!state.telegraphedTaxCrisis) {
+      state.telegraphedTaxCrisis = true;
       state.history.push(`Turn ${state.turn}: Coalition partners demand tax relief or face collapse.`);
     }
   }

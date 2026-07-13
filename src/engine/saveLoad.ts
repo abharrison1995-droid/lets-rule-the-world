@@ -1,4 +1,5 @@
 import type { GameState, StrikeCampaign } from '../types/game';
+import { COUNTRIES } from '../data/countries';
 import {
   getDefaultCorporateTaxRate,
   getDefaultIncomeTaxRate,
@@ -7,7 +8,7 @@ import { DEFAULT_DOMESTIC_SPLIT } from './propaganda';
 import { defaultBudget } from './economy';
 
 const SAVE_KEY = 'lrw_save';
-export const SAVE_VERSION = 14;
+export const SAVE_VERSION = 15;
 
 interface SavePayload {
   version: number;
@@ -58,6 +59,16 @@ function migrateState(state: GameState, fromVersion: number): GameState {
     }
   }
 
+  if (fromVersion < 15) {
+    migrated.telegraphedTaxCrisis ??= false;
+    for (const [id, country] of Object.entries(migrated.countries ?? {})) {
+      const defaultDebt = COUNTRIES[id]?.debtToGdp;
+      if (defaultDebt !== undefined && (country.debtToGdp === undefined || country.debtToGdp === 0)) {
+        country.debtToGdp = defaultDebt;
+      }
+    }
+  }
+
   return fillMissingSaveFields(migrated);
 }
 
@@ -98,6 +109,7 @@ function fillMissingSaveFields(state: GameState): GameState {
   state.showDefenseRanges ??= false;
   state.declineMode ??= false;
   state.telegraphedCollapse ??= false;
+  state.telegraphedTaxCrisis ??= false;
   state.collapseTelegraphedNations ??= [];
   state.gameOver ??= false;
   state.playerWon ??= false;
@@ -106,8 +118,10 @@ function fillMissingSaveFields(state: GameState): GameState {
     campaign.startedUnprovoked ??= false;
   }
 
-  for (const country of Object.values(state.countries)) {
-    country.debtToGdp ??= 0;
+  for (const [id, country] of Object.entries(state.countries)) {
+    if (country.debtToGdp === undefined) {
+      country.debtToGdp = COUNTRIES[id]?.debtToGdp ?? 0;
+    }
     country.stats.warReadiness ??= 1;
   }
 

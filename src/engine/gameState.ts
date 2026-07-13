@@ -59,6 +59,7 @@ export function createInitialState(playerCountryId: string): GameState {
     playerWon: false,
     declineMode: false,
     telegraphedCollapse: false,
+    telegraphedTaxCrisis: false,
     collapseTelegraphedNations: [],
     selectedMapTier: 1,
     selectedCountryId: null,

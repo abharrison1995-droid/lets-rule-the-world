@@ -1,6 +1,32 @@
 import type { GameState, War } from '../types/game';
 import { getRelation, modifyRelation } from '../data/relations';
-import { triggerEventById } from './events';
+import { getEventById } from '../data/events';
+import { applyEventSilentlyForNpc, triggerEventById } from './events';
+
+/** Nations whose economies are heavily exposed to Gulf shipping / Hormuz disruption */
+const HORMUZ_ENERGY_EXPOSED = [
+  'usa',
+  'england',
+  'france',
+  'germany',
+  'japan',
+  'china',
+  'india',
+  'south_korea',
+  'turkey',
+  'israel',
+  'egypt',
+  'pakistan',
+  'saudi_arabia',
+] as const;
+
+export function getHormuzAffectedNations(initiatorId: string, otherId: string): string[] {
+  const affected = new Set<string>([initiatorId, otherId]);
+  for (const id of HORMUZ_ENERGY_EXPOSED) {
+    affected.add(id);
+  }
+  return [...affected];
+}
 
 function isAtWar(state: GameState, a: string, b: string): boolean {
   return state.wars.some(w => w.belligerents.includes(a) && w.belligerents.includes(b));
@@ -84,5 +110,21 @@ export function triggerIranWarConsequences(state: GameState, initiatorId: string
     `Turn ${state.turn}: Iran threatens to close the Strait of Hormuz — global oil markets spike.`
   );
 
-  triggerEventById(state, 'strait_of_hormuz', state.playerCountryId);
+  const hormuzEvent = getEventById('strait_of_hormuz');
+  if (!hormuzEvent) return;
+
+  for (const nationId of getHormuzAffectedNations(initiatorId, otherId)) {
+    if (!state.countries[nationId]) continue;
+
+    if (nationId === state.playerCountryId) {
+      triggerEventById(state, 'strait_of_hormuz', nationId);
+      continue;
+    }
+
+    applyEventSilentlyForNpc(state, hormuzEvent, nationId);
+    const name = state.countries[nationId]?.name ?? nationId;
+    state.history.push(
+      `Turn ${state.turn}: ${name} responds to Hormuz disruption — energy markets adjust.`
+    );
+  }
 }

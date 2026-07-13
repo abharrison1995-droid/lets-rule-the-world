@@ -44,7 +44,7 @@ export function rollEvents(state: GameState): ActiveEvent[] {
     const npcEligible = filterEligibleEvents(state, npcId);
     const npcEvent = weightedRandomSelect(npcEligible, 1);
     for (const event of npcEvent) {
-      resolveEventSilently(state, event, npcId);
+      applyEventSilentlyForNpc(state, event, npcId);
     }
   }
 
@@ -379,7 +379,7 @@ function applyEffect(
   }
 }
 
-function resolveEventSilently(state: GameState, event: GameEvent, countryId: string): void {
+export function applyEventSilentlyForNpc(state: GameState, event: GameEvent, countryId: string): void {
   if (event.choices.length > 0) {
     const choice = event.choices[Math.floor(Math.random() * event.choices.length)];
     const country = state.countries[countryId];

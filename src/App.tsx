@@ -311,10 +311,10 @@ export default function App() {
     else updateState(newState);
   }, [state, updateState]);
 
-  const handleEventChoice = useCallback((eventId: string, choiceIndex: number) => {
+  const handleEventChoice = useCallback((eventId: string, choiceIndex: number, targetCountryId: string) => {
     if (!state) return;
     const newState = structuredClone(state);
-    resolveEventChoice(newState, eventId, choiceIndex, state.playerCountryId);
+    resolveEventChoice(newState, eventId, choiceIndex, targetCountryId);
     updateState(newState);
   }, [state, updateState]);
 
@@ -336,7 +336,9 @@ export default function App() {
     else updateState(newState);
   }, [state, updateState]);
 
-  const pendingEvent = state?.activeEvents.find(e => !e.resolved);
+  const pendingEvent = state?.activeEvents.find(
+    e => !e.resolved && (!e.targetCountryId || e.targetCountryId === state.playerCountryId)
+  );
   const pendingEventData = pendingEvent ? getEventById(pendingEvent.eventId) : null;
 
   if (screen === 'menu') {
@@ -512,7 +514,7 @@ export default function App() {
         <EventModal
           event={pendingEventData}
           activeEvent={pendingEvent}
-          onChoice={(i) => handleEventChoice(pendingEvent.eventId, i)}
+          onChoice={(i) => handleEventChoice(pendingEvent.eventId, i, pendingEvent.targetCountryId ?? state.playerCountryId)}
         />
       )}
 
