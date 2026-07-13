@@ -1,6 +1,7 @@
 import type { GameState, PeaceTermsType } from '../types/game';
 import { getRelation, modifyRelation } from '../data/relations';
 import { isAtWarWith } from './actions';
+import { recordConflictBaseline, applyPeaceReconciliation } from './conflictRelations';
 
 export interface PeaceResult {
   accepted: boolean;
@@ -93,16 +94,15 @@ export function proposePeace(
   player.stats.warExhaustion = Math.max(0, player.stats.warExhaustion - 0.25);
   target.stats.warExhaustion = Math.max(0, target.stats.warExhaustion - 0.25);
 
-  if (terms === 'ceasefire') {
-    modifyRelation(state.relations, state.playerCountryId, targetId, 5);
-  } else if (terms === 'reparations') {
+  recordConflictBaseline(state, state.playerCountryId, targetId);
+
+  if (terms === 'reparations') {
     const payment = Math.min(target.stats.treasuryPoints * 0.05, 50);
     target.stats.treasuryPoints -= payment;
     player.stats.treasuryPoints += payment * 0.8;
-    modifyRelation(state.relations, state.playerCountryId, targetId, -10);
-  } else {
-    modifyRelation(state.relations, state.playerCountryId, targetId, 2);
   }
+
+  applyPeaceReconciliation(state, state.playerCountryId, targetId, terms);
 
   state.history.push(
     `Turn ${state.turn}: Peace with ${target.name} (${terms.replace('_', ' ')}). War ended.`

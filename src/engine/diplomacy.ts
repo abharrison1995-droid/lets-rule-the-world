@@ -1,5 +1,6 @@
 import type { GameState, Alliance, AllianceTier } from '../types/game';
 import { getRelation, modifyRelation } from '../data/relations';
+import { recordConflictBaseline } from './conflictRelations';
 
 const TIER_WEIGHTS: Record<AllianceTier, number> = {
   informal: 0.2,
@@ -189,6 +190,8 @@ export function declareWar(state: GameState, attackerId: string, defenderId: str
     w.belligerents.includes(attackerId) && w.belligerents.includes(defenderId)
   );
   if (existing) return;
+
+  recordConflictBaseline(state, attackerId, defenderId);
 
   // Expel attacker from alliances shared with defender (e.g. attacking a NATO ally)
   for (const alliance of [...state.alliances]) {

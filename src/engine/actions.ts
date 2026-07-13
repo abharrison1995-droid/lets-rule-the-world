@@ -2,11 +2,13 @@ import type { GameState, MilitaryDev } from '../types/game';
 import { getMechanicsForNation } from '../data/mechanics';
 import { modifyRelation } from '../data/relations';
 import { declareWar, applyGlobalCondemnation } from './diplomacy';
+import { recordConflictBaseline } from './conflictRelations';
 import {
   getWarDeclarationPreview,
   wouldTriggerGlobalCondemnation,
 } from './warDeclaration';
 import { executeStrike } from './combat';
+import { playerStartMilitaryUpgrade } from './militaryDevUpgrades';
 import { getRegionsForCountry } from '../data/regions';
 import type { TalkOptionId, PeaceTermsType, CovertTalkOptionId } from '../types/game';
 import type { NegotiationResult } from './talks';
@@ -64,6 +66,7 @@ export function playerDeclareWar(state: GameState, targetId: string): string | n
   }
 
   declareWar(state, state.playerCountryId, targetId);
+  recordConflictBaseline(state, state.playerCountryId, targetId);
   state.warsDeclaredThisTurn += 1;
 
   const condemnation = wouldTriggerGlobalCondemnation(
@@ -179,7 +182,7 @@ export function playerLaunchStrike(
 
   const strikePower = computeStrikePower(attacker, strikeType, option.power);
 
-  executeStrike(state, state.playerCountryId, targetRegionId, strikePower);
+  executeStrike(state, state.playerCountryId, targetRegionId, strikePower, strikeType);
   state.history.push(
     `Turn ${state.turn}: ${option.label} launched at ${region.name} (${state.countries[region.controlledBy]?.name}).`
   );
@@ -339,45 +342,7 @@ export function playerInvestMilitary(
   state: GameState,
   category: keyof MilitaryDev
 ): string | null {
-  const country = state.countries[state.playerCountryId];
-  if (!country) return 'Invalid player.';
-
-  const energyCost = ACTION_ENERGY_COSTS.military_invest;
-  if (!spendActionEnergy(state, energyCost)) {
-    return actionEnergyBlockReason(state, energyCost)!;
-  }
-
-  const cost = 7;
-  if (!deductCost(state, cost)) {
-    state.actionEnergy += energyCost;
-    return `Insufficient funds (need ${formatDisplayCost(cost)}).`;
-  }
-
-  const current = country.militaryDev[category];
-  if (current >= 5) {
-    state.actionEnergy += energyCost;
-    return `${category} is already maxed out.`;
-  }
-
-  country.militaryDev[category] = Math.min(5, current + 1);
-
-  if (category === 'missileDefense') {
-    for (const region of getRegionsForCountry(state.playerCountryId)) {
-      if (region.garrison.defenseSystems.length > 0) {
-        region.garrison.defenseSystems[0].rating += 1;
-      } else {
-        region.garrison.defenseSystems.push({ id: `${region.id}-ads`, type: 'generic', rating: 1 });
-      }
-    }
-  }
-  if (category === 'fortification') {
-    for (const region of getRegionsForCountry(state.playerCountryId)) {
-      region.fortificationLevel = Math.min(5, region.fortificationLevel + 1);
-    }
-  }
-
-  state.history.push(`Turn ${state.turn}: Invested in ${category} (now level ${country.militaryDev[category]}).`);
-  return null;
+  return playerStartMilitaryUpgrade(state, category);
 }
 
 export function accumulateTreasury(state: GameState): void {

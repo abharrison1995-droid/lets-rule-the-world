@@ -1,6 +1,10 @@
 import type { GameState, Front, StrikeAnimation } from '../types/game';
 import { computeAttackPower, computeDefensePower, getDefenseSystemRating } from './economy';
 import { triggerUnprovokedStrikeEvent } from './events';
+import { getRelation, modifyRelation } from '../data/relations';
+import { declareWar } from './diplomacy';
+import { recordConflictBaseline } from './conflictRelations';
+import type { StrikeType } from './strikes';
 
 const PRESSURE_THRESHOLD = 100;
 const PRESSURE_SHIFT_BASE = 15;
@@ -117,11 +121,19 @@ function getAllianceReinforcement(state: GameState, countryId: string): number {
   return reinforcement;
 }
 
+const UNPROVOKED_DIRECT_PENALTY: Record<StrikeType, number> = {
+  drone: 38,
+  cruise: 48,
+  ballistic: 58,
+  icbm: 68,
+};
+
 export function executeStrike(
   state: GameState,
   attackerId: string,
   targetRegionId: string,
-  strikePower: number
+  strikePower: number,
+  strikeType: StrikeType = 'cruise'
 ): StrikeAnimation {
   const targetRegion = state.regions[targetRegionId];
   const defenseRating = getDefenseSystemRating(targetRegion);
@@ -148,18 +160,33 @@ export function executeStrike(
   const atWar = state.wars.some(w =>
     w.belligerents.includes(attackerId) && w.belligerents.includes(targetOwner)
   );
-  if (!atWar && attackerId === state.playerCountryId) {
-    state.history.push(`Turn ${state.turn}: Unprovoked strike on ${state.countries[targetOwner]?.name} — escalation risk!`);
+  if (!atWar) {
+    recordConflictBaseline(state, attackerId, targetOwner);
+
+    const directPenalty = UNPROVOKED_DIRECT_PENALTY[strikeType] ?? 45;
+    modifyRelation(state.relations, attackerId, targetOwner, -directPenalty);
+
+    const victim = state.countries[targetOwner];
+    const victimName = victim?.name ?? targetOwner;
+    state.history.push(
+      `Turn ${state.turn}: Unprovoked ${strikeType} strike on ${victimName} — relations cratered (−${directPenalty}).`
+    );
+
     for (const countryId of Object.keys(state.countries)) {
-      if (countryId === attackerId) continue;
-      const key = [countryId, targetOwner].sort().join('|');
-      const rel = state.relations[key] ?? 0;
-      if (rel > 20) {
-        const penaltyKey = [countryId, attackerId].sort().join('|');
-        state.relations[penaltyKey] = Math.max(-100, (state.relations[penaltyKey] ?? 0) - rel * 0.2);
+      if (countryId === attackerId || countryId === targetOwner) continue;
+      const allyToVictim = getRelation(state.relations, countryId, targetOwner);
+      if (allyToVictim > 25) {
+        const spillover = Math.round(8 + allyToVictim * 0.12);
+        modifyRelation(state.relations, countryId, attackerId, -spillover);
       }
     }
-    triggerUnprovokedStrikeEvent(state);
+
+    if (attackerId === state.playerCountryId) {
+      triggerUnprovokedStrikeEvent(state);
+    }
+
+    declareWar(state, targetOwner, attackerId);
+    state.history.push(`Turn ${state.turn}: ${victimName} declared war in response to the attack.`);
   }
 
   return animation;

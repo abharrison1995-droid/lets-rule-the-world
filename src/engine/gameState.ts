@@ -14,6 +14,7 @@ import { applyTurnIncome, checkTaxPoliticalPressure, getDefaultCorporateTaxRate,
 import { resolveFacilityBuilds } from './facilities';
 import { resetActionEnergy } from './actionEnergy';
 import { resolveDiplomaticMissions } from './diplomaticMissions';
+import { resolveMilitaryUpgrades, scaleStartingMilitaryDev } from './militaryDevUpgrades';
 import {
   tickCounterIntel,
   applyDomesticPropagandaTick,
@@ -22,6 +23,9 @@ import {
 
 export function createInitialState(playerCountryId: string): GameState {
   const countries = structuredClone(COUNTRIES);
+  for (const c of Object.values(countries)) {
+    c.militaryDev = scaleStartingMilitaryDev(c.militaryDev);
+  }
   const regions = structuredClone(REGIONS);
   const relations = buildRelationsMatrix();
   const alliances = ALLIANCES_DATA.map(a => ({ ...a, members: [...a.members] }));
@@ -64,6 +68,8 @@ export function createInitialState(playerCountryId: string): GameState {
     corporateTaxRate: getDefaultCorporateTaxRate(),
     incomeTaxRate: getDefaultIncomeTaxRate(),
     taxPressureTurns: 0,
+    conflictBaselines: {},
+    militaryUpgrade: null,
     actionEnergy: 0,
   };
 
@@ -94,6 +100,7 @@ export function advanceTurn(state: GameState): GameState {
 
   resolveDiplomaticMissions(newState);
   resolveFacilityBuilds(newState);
+  resolveMilitaryUpgrades(newState);
   resetActionEnergy(newState);
 
   // Update fronts before economy (war exhaustion needs current front count)

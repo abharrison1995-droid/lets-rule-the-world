@@ -8,6 +8,11 @@ import {
   getTurnsUntilFacilityComplete,
   FACILITY_DEFINITIONS,
 } from '../engine/facilities';
+import {
+  getPendingMilitaryUpgrade,
+  getTurnsUntilMilitaryUpgrade,
+  MIL_CATEGORY_LABELS,
+} from '../engine/militaryDevUpgrades';
 
 interface SidePanelProps {
   state: GameState;
@@ -21,6 +26,7 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
   const winProgress = getWinProgress(state);
   const pendingMissions = getPendingMissions(state);
   const pendingBuilds = getPendingFacilityBuilds(state);
+  const milUpgrade = getPendingMilitaryUpgrade(state);
 
   return (
     <>
@@ -100,17 +106,26 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
           </section>
 
           <section className="side-section">
-            <h4>Construction ({pendingBuilds.length})</h4>
-            {pendingBuilds.length === 0 ? (
+            <h4>Construction ({pendingBuilds.length + (milUpgrade ? 1 : 0)})</h4>
+            {pendingBuilds.length === 0 && !milUpgrade ? (
               <p className="muted">No projects in progress.</p>
             ) : (
-              pendingBuilds.map(b => (
-                <div key={b.id} className="mission-entry">
-                  {FACILITY_DEFINITIONS[b.type].icon} {state.regions[b.regionId]?.name}
-                  <span className="muted"> · {FACILITY_DEFINITIONS[b.type].label}</span>
-                  <span className="muted"> · {getTurnsUntilFacilityComplete(state, b)}t left</span>
-                </div>
-              ))
+              <>
+                {milUpgrade && (
+                  <div className="mission-entry">
+                    ⚙ {MIL_CATEGORY_LABELS[milUpgrade.category]}
+                    <span className="muted"> · military dev</span>
+                    <span className="muted"> · {getTurnsUntilMilitaryUpgrade(state)}t left</span>
+                  </div>
+                )}
+                {pendingBuilds.map(b => (
+                  <div key={b.id} className="mission-entry">
+                    {FACILITY_DEFINITIONS[b.type].icon} {state.regions[b.regionId]?.name}
+                    <span className="muted"> · {FACILITY_DEFINITIONS[b.type].label}</span>
+                    <span className="muted"> · {getTurnsUntilFacilityComplete(state, b)}t left</span>
+                  </div>
+                ))}
+              </>
             )}
           </section>
 

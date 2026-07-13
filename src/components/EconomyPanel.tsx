@@ -7,6 +7,12 @@ import { BottomSheet } from './BottomSheet';
 import { getFiscalHeadroom } from '../engine/fiscal';
 import { getProjectedPlayerIncome } from '../engine/taxation';
 import {
+  getPendingMilitaryUpgrade,
+  getTurnsUntilMilitaryUpgrade,
+  MIL_UPGRADE_TURNS,
+  MIL_CATEGORY_LABELS,
+} from '../engine/militaryDevUpgrades';
+import {
   formatDisplayGDP,
   formatDisplayDebt,
   formatDebtRatio,
@@ -67,6 +73,8 @@ export function EconomyPanel({
   const projectedIncome = getProjectedPlayerIncome(state);
   const corporateTax = state.corporateTaxRate ?? 0.22;
   const incomeTax = state.incomeTaxRate ?? 0.25;
+  const milUpgrade = getPendingMilitaryUpgrade(state);
+  const milUpgradeBusy = milUpgrade !== null;
 
   const total = Object.values(state.budget).reduce((s, v) => s + v, 0);
 
@@ -203,19 +211,32 @@ export function EconomyPanel({
       </section>
 
       <section className="panel-section">
-        <h4>Military Development ({formatDisplayCost(7)} per upgrade)</h4>
+        <h4>Military Development ({formatDisplayCost(7)} · {MIL_UPGRADE_TURNS} turns each)</h4>
+        <p className="muted small">One upgrade at a time. Higher tiers take several turns to complete.</p>
+        {milUpgrade && (
+          <p className="warning-text">
+            🏗 {MIL_CATEGORY_LABELS[milUpgrade.category]} in progress — {getTurnsUntilMilitaryUpgrade(state)} turn(s) left
+          </p>
+        )}
         <div className="mil-dev-grid">
           {(Object.keys(MIL_LABELS) as Array<keyof MilitaryDev>).map(key => {
             const val = country.militaryDev[key];
+            const isUpgrading = milUpgrade?.category === key;
             return (
               <div key={key} className="mil-dev-item">
                 <span>{MIL_LABELS[key]}</span>
                 <div className="mil-dev-bar">
                   {Array.from({ length: 5 }, (_, i) => (
-                    <div key={i} className={`mil-dev-pip ${i < val ? 'filled' : ''}`} />
+                    <div key={i} className={`mil-dev-pip ${i < val ? 'filled' : ''} ${isUpgrading && i === val ? 'pending' : ''}`} />
                   ))}
                 </div>
-                <button className="btn-small" disabled={val >= 5} onClick={() => onInvestMilitary(key)}>+1</button>
+                <button
+                  className="btn-small"
+                  disabled={val >= 5 || milUpgradeBusy}
+                  onClick={() => onInvestMilitary(key)}
+                >
+                  {isUpgrading ? '…' : '+1'}
+                </button>
               </div>
             );
           })}

@@ -213,6 +213,14 @@ export interface CountryStats {
   propagandaSaturation: number;
 }
 
+export interface MilitaryUpgradeOrder {
+  id: string;
+  category: keyof MilitaryDev;
+  startTurn: number;
+  completeTurn: number;
+  costPaid: number;
+}
+
 export interface MilitaryDev {
   troopQuality: number; // 1-5
   missileDefense: number;
@@ -433,6 +441,10 @@ export interface GameState {
   incomeTaxRate: number;
   /** Turns of elevated unrest from tax pressure */
   taxPressureTurns: number;
+  /** Bilateral relation snapshot before first strike / war in a dispute */
+  conflictBaselines: Record<string, number>;
+  /** Single in-progress military development project */
+  militaryUpgrade: MilitaryUpgradeOrder | null;
   /** Event context nation for event effects (sender, ally, etc.) */
   eventContextNationId?: string;
 }
