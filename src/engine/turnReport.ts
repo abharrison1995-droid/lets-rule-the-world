@@ -4,7 +4,7 @@ export type { TurnReportCategory, TurnReportEntry };
 
 function categorizeHistoryLine(line: string): TurnReportCategory {
   const lower = line.toLowerCase();
-  if (lower.includes('strike') || lower.includes('bombardment') || lower.includes('campaign')) {
+  if (lower.includes('strike') || lower.includes('bombardment') || lower.includes('campaign') || lower.includes('grey-zone')) {
     return 'strike';
   }
   if (lower.includes('war') || lower.includes('belligerent') || lower.includes('declared')) {
@@ -93,6 +93,7 @@ function filterPlayerRelevant(
   const playerName = state.countries[playerId]?.name ?? '';
   if (line.includes(playerName)) return true;
   if (line.includes('YOUR TERRITORY')) return true;
+  if (line.includes('grey-zone') && line.includes(playerName)) return true;
   if (line.includes('Global') || line.includes('global')) return true;
   if (line.includes('Oil shock') || line.includes('oil shock')) return true;
 

@@ -134,6 +134,11 @@ export function getUnprovokedStrikePenalty(strikeType: StrikeType): number {
   return UNPROVOKED_DIRECT_PENALTY[strikeType] ?? 45;
 }
 
+export interface StrikeEscalationOptions {
+  /** Limited bombardment without formal war declaration */
+  greyZone?: boolean;
+}
+
 export function estimateUnprovokedSpillover(
   state: GameState,
   attackerId: string,
@@ -160,14 +165,16 @@ export function executeStrike(
   attackerId: string,
   targetRegionId: string,
   strikePower: number,
-  strikeType: StrikeType = 'cruise'
+  strikeType: StrikeType = 'cruise',
+  options: StrikeEscalationOptions = {}
 ): StrikeAnimation {
   const targetRegion = state.regions[targetRegionId];
   const defenseRating = getDefenseSystemRating(targetRegion);
 
   const attacker = state.countries[attackerId];
   const readinessMult = attacker ? getReadinessStrikeMultiplier(attacker) : 1;
-  const effectivePower = strikePower * readinessMult;
+  let effectivePower = strikePower * readinessMult;
+  if (options.greyZone) effectivePower *= 0.78;
 
   const animation: StrikeAnimation = {
     id: `strike_${state.turn}_${targetRegionId}`,
@@ -201,29 +208,48 @@ export function executeStrike(
     recordConflictBaseline(state, attackerId, targetOwner);
 
     const directPenalty = getUnprovokedStrikePenalty(strikeType);
-    modifyRelation(state.relations, attackerId, targetOwner, -directPenalty);
-
     const victim = state.countries[targetOwner];
     const victimName = victim?.name ?? targetOwner;
-    state.history.push(
-      `Turn ${state.turn}: Unprovoked ${strikeType} strike on ${victimName} — relations cratered (−${directPenalty}).`
-    );
 
-    for (const countryId of Object.keys(state.countries)) {
-      if (countryId === attackerId || countryId === targetOwner) continue;
-      const allyToVictim = getRelation(state.relations, countryId, targetOwner);
-      if (allyToVictim > 25) {
-        const spillover = Math.round(8 + allyToVictim * 0.12);
-        modifyRelation(state.relations, countryId, attackerId, -spillover);
+    if (options.greyZone) {
+      const penalty = Math.round(directPenalty * 0.32);
+      modifyRelation(state.relations, attackerId, targetOwner, -penalty);
+      state.history.push(
+        `Turn ${state.turn}: Grey-zone ${strikeType} strike on ${victimName} — tensions spike (−${penalty})${
+          targetOwner === state.playerCountryId ? ' — YOUR TERRITORY HIT' : ''
+        }.`
+      );
+
+      for (const countryId of Object.keys(state.countries)) {
+        if (countryId === attackerId || countryId === targetOwner) continue;
+        const allyToVictim = getRelation(state.relations, countryId, targetOwner);
+        if (allyToVictim > 25) {
+          const spillover = Math.round((8 + allyToVictim * 0.12) * 0.45);
+          modifyRelation(state.relations, countryId, attackerId, -spillover);
+        }
       }
-    }
+    } else {
+      modifyRelation(state.relations, attackerId, targetOwner, -directPenalty);
+      state.history.push(
+        `Turn ${state.turn}: Unprovoked ${strikeType} strike on ${victimName} — relations cratered (−${directPenalty}).`
+      );
 
-    if (attackerId === state.playerCountryId) {
-      triggerUnprovokedStrikeEvent(state);
-    }
+      for (const countryId of Object.keys(state.countries)) {
+        if (countryId === attackerId || countryId === targetOwner) continue;
+        const allyToVictim = getRelation(state.relations, countryId, targetOwner);
+        if (allyToVictim > 25) {
+          const spillover = Math.round(8 + allyToVictim * 0.12);
+          modifyRelation(state.relations, countryId, attackerId, -spillover);
+        }
+      }
 
-    declareWar(state, targetOwner, attackerId);
-    state.history.push(`Turn ${state.turn}: ${victimName} declared war in response to the attack.`);
+      if (attackerId === state.playerCountryId) {
+        triggerUnprovokedStrikeEvent(state);
+      }
+
+      declareWar(state, targetOwner, attackerId);
+      state.history.push(`Turn ${state.turn}: ${victimName} declared war in response to the attack.`);
+    }
   }
 
   return animation;

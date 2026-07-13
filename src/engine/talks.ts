@@ -7,6 +7,7 @@ import {
   upgradeAlliance,
 } from './diplomacy';
 import { proposePeace, getPeaceOptions, calculatePeaceAcceptance } from './peace';
+import { formatRelationValue, previewPeaceReconciliation } from './conflictRelations';
 import { actionEnergyBlockReason } from './actionEnergy';
 import { getRegionsForCountry } from '../data/regions';
 
@@ -231,7 +232,11 @@ export function getNegotiationPreview(
 
   if (option === 'peace' && peaceTerms) {
     acceptanceChance = Math.round(calculatePeaceAcceptance(state, targetId, peaceTerms) * 100);
-    effects = [`Ends war on ${peaceTerms.replace('_', ' ')} terms`];
+    const recon = previewPeaceReconciliation(state, playerId, targetId, peaceTerms);
+    effects = [
+      `Ends war on ${peaceTerms.replace('_', ' ')} terms`,
+      `Relations after peace: ${formatRelationValue(recon.current)} → ~${formatRelationValue(recon.projected)}`,
+    ];
     description = 'Send a peace envoy for back-channel talks.';
   } else if (option === 'peace') {
     description = 'Select peace terms to see acceptance odds.';

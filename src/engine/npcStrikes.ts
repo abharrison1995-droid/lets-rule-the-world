@@ -1,5 +1,6 @@
 import type { GameState } from '../types/game';
 import type { StrikeType } from '../types/game';
+import { getRelation } from '../data/relations';
 import { getStrikeOptions, computeStrikePower } from './strikes';
 import { executeStrike } from './combat';
 import {
@@ -9,6 +10,8 @@ import {
 import { formatDisplayCost } from './treasuryDisplay';
 
 const MAX_NPC_STRIKE_ACTIONS_PER_TURN = 4;
+const MAX_NPC_GREY_ZONE_ACTIONS_PER_TURN = 2;
+const GREY_ZONE_RELATION_THRESHOLD = -45;
 
 const ONE_OFF_WEIGHTS: Array<{ type: StrikeType; weight: number }> = [
   { type: 'artillery', weight: 35 },
@@ -23,6 +26,13 @@ const CAMPAIGN_WEIGHTS: Array<{ type: StrikeType; weight: number }> = [
   { type: 'drone', weight: 35 },
   { type: 'cruise', weight: 20 },
   { type: 'ballistic', weight: 5 },
+];
+
+const GREY_ZONE_WEIGHTS: Array<{ type: StrikeType; weight: number }> = [
+  { type: 'artillery', weight: 42 },
+  { type: 'drone', weight: 38 },
+  { type: 'cruise', weight: 18 },
+  { type: 'ballistic', weight: 2 },
 ];
 
 interface StrikePair {
@@ -67,11 +77,16 @@ function npcCanAfford(attacker: { stats: { treasuryPoints: number } }, cost: num
   return attacker.stats.treasuryPoints >= cost + 8;
 }
 
+function isAtWarBetween(state: GameState, a: string, b: string): boolean {
+  return state.wars.some(w => w.belligerents.includes(a) && w.belligerents.includes(b));
+}
+
 function npcLaunchOneOff(
   state: GameState,
   attackerId: string,
   pair: StrikePair,
-  strikeType: StrikeType
+  strikeType: StrikeType,
+  greyZone = false
 ): boolean {
   const attacker = state.countries[attackerId];
   const target = state.regions[pair.targetRegionId];
@@ -84,14 +99,16 @@ function npcLaunchOneOff(
 
   attacker.stats.treasuryPoints -= option.cost;
   const strikePower = computeStrikePower(attacker, strikeType, option.power);
-  executeStrike(state, attackerId, pair.targetRegionId, strikePower, strikeType);
+  executeStrike(state, attackerId, pair.targetRegionId, strikePower, strikeType, { greyZone });
 
   const attackerName = attacker.name;
   const targetName = target.name;
   const playerHit = target.controlledBy === state.playerCountryId;
-  state.history.push(
-    `Turn ${state.turn}: ${attackerName} ${strikeType} strike on ${targetName}${playerHit ? ' — YOUR TERRITORY HIT' : ''}.`
-  );
+  if (!greyZone) {
+    state.history.push(
+      `Turn ${state.turn}: ${attackerName} ${strikeType} strike on ${targetName}${playerHit ? ' — YOUR TERRITORY HIT' : ''}.`
+    );
+  }
   return true;
 }
 
@@ -147,6 +164,55 @@ function npcStrikeChance(attackerId: string, warAge: number): number {
   if (warAge > 8) chance += 0.08;
   if (warAge > 20) chance += 0.05;
   return Math.min(0.85, chance);
+}
+
+function greyZoneStrikeChance(attackerId: string, relation: number): number {
+  let chance = 0.14;
+  if (attackerId === 'israel' || attackerId === 'iran') chance = 0.24;
+  if (attackerId === 'russia') chance = 0.2;
+  if (relation <= -70) chance += 0.08;
+  if (relation <= -85) chance += 0.05;
+  return Math.min(0.34, chance);
+}
+
+/** Limited NPC strikes during extreme hostility without a declared war */
+export function runNpcGreyZoneStrikes(state: GameState): void {
+  let actions = 0;
+  const countryIds = Object.keys(state.countries);
+
+  for (const attackerId of countryIds) {
+    if (actions >= MAX_NPC_GREY_ZONE_ACTIONS_PER_TURN) break;
+    if (attackerId === state.playerCountryId) continue;
+
+    const attacker = state.countries[attackerId];
+    if (!attacker || attacker.stats.treasuryPoints < 20) continue;
+    if ((attacker.stats.warReadiness ?? 1) < 0.3) continue;
+
+    for (const defenderId of countryIds) {
+      if (actions >= MAX_NPC_GREY_ZONE_ACTIONS_PER_TURN) break;
+      if (defenderId === attackerId) continue;
+      if (isAtWarBetween(state, attackerId, defenderId)) continue;
+
+      const relation = getRelation(state.relations, attackerId, defenderId);
+      if (relation > GREY_ZONE_RELATION_THRESHOLD) continue;
+      if (Math.random() > greyZoneStrikeChance(attackerId, relation)) continue;
+
+      const pairs = findStrikePairs(state, attackerId, defenderId);
+      if (pairs.length === 0) continue;
+
+      const pair = pairs[Math.floor(Math.random() * pairs.length)];
+      const affordable = GREY_ZONE_WEIGHTS.filter(w => {
+        const opt = getStrikeOptions(state, attackerId, pair.targetRegionId).find(o => o.type === w.type);
+        return opt?.available && npcCanAfford(attacker, opt.cost);
+      });
+      if (affordable.length === 0) continue;
+
+      const pick = pickWeighted(affordable);
+      if (npcLaunchOneOff(state, attackerId, pair, pick.type, true)) {
+        actions++;
+      }
+    }
+  }
 }
 
 /** NPC belligerents launch strikes and sustained campaigns during active wars. */

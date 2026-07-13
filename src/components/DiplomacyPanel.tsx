@@ -2,7 +2,8 @@ import { useState } from 'react';
 import type { GameState, PeaceTermsType, TalkOptionId, CovertTalkOptionId, PressActionId } from '../types/game';
 import { getAllRelationsForCountry } from '../engine/diplomacy';
 import { getMechanicsForNation } from '../data/mechanics';
-import { getPeaceOptions } from '../engine/peace';
+import { getPeaceOptions, calculatePeaceAcceptance } from '../engine/peace';
+import { formatRelationValue, previewPeaceReconciliation } from '../engine/conflictRelations';
 import {
   categorizeRelation,
   RELATION_GROUP_LABELS,
@@ -138,15 +139,22 @@ export function DiplomacyPanel({
               <option key={r.countryId} value={r.countryId}>{r.name}</option>
             ))}
           </select>
-          {peaceTarget && getPeaceOptions(state, peaceTarget).map(terms => (
-            <button
-              key={terms}
-              className="btn-action peace"
-              onClick={() => onProposePeace(peaceTarget, terms)}
-            >
-              🤝 {PEACE_LABELS[terms]}
-            </button>
-          ))}
+          {peaceTarget && getPeaceOptions(state, peaceTarget).map(terms => {
+            const recon = previewPeaceReconciliation(state, state.playerCountryId, peaceTarget, terms);
+            const acceptance = Math.round(calculatePeaceAcceptance(state, peaceTarget, terms) * 100);
+            return (
+              <button
+                key={terms}
+                className="btn-action peace"
+                onClick={() => onProposePeace(peaceTarget, terms)}
+              >
+                <span>🤝 {PEACE_LABELS[terms]}</span>
+                <span className="peace-preview-hint">
+                  ~{acceptance}% accept · ties {formatRelationValue(recon.current)} → ~{formatRelationValue(recon.projected)}
+                </span>
+              </button>
+            );
+          })}
         </section>
       )}
 

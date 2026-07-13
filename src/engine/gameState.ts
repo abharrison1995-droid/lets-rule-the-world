@@ -13,7 +13,7 @@ import { tickCovertAllianceExposure } from './covertAlliances';
 import { applyTurnIncome, checkTaxPoliticalPressure, getDefaultCorporateTaxRate, getDefaultIncomeTaxRate } from './taxation';
 import { tickFiscalDebt } from './fiscal';
 import { resolveStrikeCampaigns } from './strikeCampaigns';
-import { runNpcWartimeStrikes } from './npcStrikes';
+import { runNpcGreyZoneStrikes, runNpcWartimeStrikes } from './npcStrikes';
 import { tickWarReadiness, forceHaltCampaignsFromWeariness } from './warReadiness';
 import { buildTurnReport } from './turnReport';
 import { resetActionEnergy } from './actionEnergy';
@@ -113,6 +113,7 @@ export function advanceTurn(state: GameState): GameState {
   resolveDiplomaticMissions(newState);
   resolveFacilityBuilds(newState);
   resolveMilitaryUpgrades(newState);
+  runNpcGreyZoneStrikes(newState);
   runNpcWartimeStrikes(newState);
   resolveStrikeCampaigns(newState);
   tickWarReadiness(newState);
