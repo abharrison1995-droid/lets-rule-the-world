@@ -7,7 +7,7 @@ import { DEFAULT_DOMESTIC_SPLIT } from './propaganda';
 import { defaultBudget } from './economy';
 
 const SAVE_KEY = 'lrw_save';
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 
 interface SavePayload {
   version: number;
@@ -51,6 +51,13 @@ function migrateState(state: GameState, fromVersion: number): GameState {
     migrated.collapseTelegraphedNations ??= [];
   }
 
+  if (fromVersion < 14) {
+    migrated.lastTurnReport ??= [];
+    for (const country of Object.values(migrated.countries ?? {})) {
+      country.stats.warReadiness ??= 1;
+    }
+  }
+
   return fillMissingSaveFields(migrated);
 }
 
@@ -77,6 +84,7 @@ function fillMissingSaveFields(state: GameState): GameState {
   state.militaryUpgrade ??= null;
   state.strikeCampaigns ??= [];
   state.globalOilShock ??= null;
+  state.lastTurnReport ??= [];
   state.actionEnergy ??= 3;
   state.wars ??= [];
   state.fronts ??= [];
@@ -100,7 +108,10 @@ function fillMissingSaveFields(state: GameState): GameState {
 
   for (const country of Object.values(state.countries)) {
     country.debtToGdp ??= 0;
+    country.stats.warReadiness ??= 1;
   }
+
+  state.lastTurnReport ??= [];
 
   return state;
 }

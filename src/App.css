@@ -783,6 +783,21 @@ body {
   overflow-y: auto;
 }
 
+.region-panel-header {
+  padding-right: 0.25rem;
+}
+
+.region-panel-close {
+  flex-shrink: 0;
+  margin-left: 0.75rem;
+  padding: 0 0.35rem;
+}
+
+/* Keep close button clear of Intel side tab */
+.side-panel-toggle {
+  top: 32%;
+}
+
 .region-info p {
   font-size: 0.85rem;
   margin-bottom: 0.25rem;
@@ -1343,6 +1358,39 @@ body {
   flex-wrap: wrap;
 }
 
+.turn-summary-modal {
+  max-width: 520px;
+  max-height: 85dvh;
+  overflow-y: auto;
+}
+
+.turn-summary-sections {
+  margin: 1rem 0;
+}
+
+.turn-summary-section {
+  margin-bottom: 1rem;
+}
+
+.turn-summary-section h4 {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.35rem;
+}
+
+.turn-summary-section ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.turn-summary-section li {
+  font-size: 0.85rem;
+  margin-bottom: 0.3rem;
+  line-height: 1.35;
+}
+
 .war-confirm-modal {
   max-width: 480px;
   max-height: 85dvh;
@@ -1797,6 +1845,13 @@ body {
 
   .side-panel-toggle {
     z-index: 130;
+    top: auto;
+    bottom: calc(48dvh + 0.75rem);
+    transform: none;
+  }
+
+  .region-panel-header {
+    padding-right: 0;
   }
 
   .hemisphere-chooser {

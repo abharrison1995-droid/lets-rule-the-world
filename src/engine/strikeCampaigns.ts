@@ -12,6 +12,12 @@ import { getRegionsForCountry } from '../data/regions';
 import { isAtWarWith } from './actions';
 import { getRelation, modifyRelation } from '../data/relations';
 import { triggerUnprovokedStrikeEvent } from './events';
+import {
+  drainReadinessForCampaignSustain,
+  getReadinessBlockReason,
+  getWarReadiness,
+  READINESS_CAMPAIGN_HALT,
+} from './warReadiness';
 
 export interface CampaignDefinition {
   type: StrikeType;
@@ -169,6 +175,9 @@ export function playerStartStrikeCampaign(
     return 'A campaign is already active from this region against that target.';
   }
 
+  const readinessBlock = getReadinessBlockReason(state, state.playerCountryId);
+  if (readinessBlock) return readinessBlock;
+
   if (!spendActionEnergy(state, def.energyCost)) {
     return actionEnergyBlockReason(state, def.energyCost)!;
   }
@@ -246,6 +255,13 @@ export function resolveStrikeCampaigns(state: GameState): void {
     const def = CAMPAIGN_DEFS[campaign.strikeType];
     const isPlayer = campaign.attackerCountryId === state.playerCountryId;
 
+    if (isPlayer && getWarReadiness(attacker) < READINESS_CAMPAIGN_HALT) {
+      state.history.push(
+        `Turn ${state.turn}: ${def.label} against ${target.name} halted — war weariness (${Math.round(getWarReadiness(attacker) * 100)}% readiness).`
+      );
+      continue;
+    }
+
     if (isPlayer && !deductCost(state, def.sustainCost)) {
       state.history.push(
         `Turn ${state.turn}: ${def.label} against ${target.name} halted — insufficient funds (${formatDisplayCost(def.sustainCost)}/turn).`
@@ -265,6 +281,7 @@ export function resolveStrikeCampaigns(state: GameState): void {
 
     const strikePower = computeStrikePower(attacker, campaign.strikeType, option.power * def.powerScale * 0.85);
     executeStrike(state, campaign.attackerCountryId, campaign.targetRegionId, strikePower, campaign.strikeType);
+    drainReadinessForCampaignSustain(attacker, campaign.strikeType);
 
     if (campaign.startedUnprovoked && !isAtWarWith(state, campaign.attackerCountryId, target.controlledBy)) {
       applyUnprovokedCampaignEscalation(state, campaign);

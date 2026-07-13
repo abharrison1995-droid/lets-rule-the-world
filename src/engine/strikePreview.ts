@@ -6,6 +6,7 @@ import { getUnprovokedStrikePenalty, estimateUnprovokedSpillover } from './comba
 import { getRelation } from '../data/relations';
 import { formatDisplayCost } from './treasuryDisplay';
 import { canSpendActionEnergy } from './actionEnergy';
+import { getReadinessBlockReason } from './warReadiness';
 
 export interface StrikeConfirmPreview {
   kind: 'strike' | 'campaign';
@@ -58,6 +59,11 @@ export function getStrikeConfirmPreview(
   if (canExecute && !canAfford(state, option.cost)) {
     canExecute = false;
     blockReason = `Insufficient funds (need ${formatDisplayCost(option.cost)}).`;
+  }
+  const readinessBlock = getReadinessBlockReason(state, playerId);
+  if (canExecute && readinessBlock) {
+    canExecute = false;
+    blockReason = readinessBlock;
   }
 
   return {
@@ -112,6 +118,11 @@ export function getCampaignConfirmPreview(
   if (canExecute && !canAfford(state, totalStart)) {
     canExecute = false;
     blockReason = `Insufficient funds (need ${formatDisplayCost(totalStart)}).`;
+  }
+  const readinessBlock = getReadinessBlockReason(state, playerId);
+  if (canExecute && readinessBlock) {
+    canExecute = false;
+    blockReason = readinessBlock;
   }
 
   const currentRel = getRelation(state.relations, playerId, targetOwnerId);

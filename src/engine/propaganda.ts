@@ -4,6 +4,7 @@ import { deductCost } from './actions';
 import { formatDisplayCost } from './treasuryDisplay';
 import { computeIntelAgreementBonus } from './talks';
 import { computeCovertIntelBonus } from './covertAlliances';
+import { setWarReadiness, getWarReadiness } from './warReadiness';
 
 export function tickCounterIntel(state: GameState): void {
   const player = state.countries[state.playerCountryId];
@@ -36,6 +37,7 @@ export function applyDomesticPropagandaTick(state: GameState): void {
 
   player.stats.warPopularity = Math.min(1, player.stats.warPopularity + effect * 0.15);
   player.stats.moraleBase = Math.min(1, player.stats.moraleBase + effect * 0.08);
+  setWarReadiness(player, getWarReadiness(player) + effect * 0.12);
   player.stats.propagandaSaturation = Math.min(1, player.stats.propagandaSaturation + domestic * propShare * 0.03);
 }
 
@@ -52,6 +54,7 @@ export function playerDomesticPropaganda(state: GameState): string | null {
   player.stats.warPopularity = Math.min(1, player.stats.warPopularity + 0.1 * effectiveness);
   player.stats.moraleBase = Math.min(1, player.stats.moraleBase + 0.05 * effectiveness);
   player.stats.regimeSecurity = Math.min(1, player.stats.regimeSecurity + 0.02 * effectiveness);
+  setWarReadiness(player, getWarReadiness(player) + 0.08 * effectiveness);
   player.stats.propagandaSaturation = Math.min(1, saturation + 0.12);
 
   if (saturation > 0.6) {

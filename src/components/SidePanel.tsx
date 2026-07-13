@@ -55,7 +55,11 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
             <p>Counter-Intel: {((state.counterIntelLevel) * 100).toFixed(0)}%</p>
             <p>Morale: {((player?.stats.moraleBase ?? 0) * 100).toFixed(0)}%</p>
             <p>War Support: {((player?.stats.warPopularity ?? 0) * 100).toFixed(0)}%</p>
+            <p>War Readiness: {((player?.stats.warReadiness ?? 1) * 100).toFixed(0)}%</p>
             <p>War Exhaustion: {((player?.stats.warExhaustion ?? 0) * 100).toFixed(0)}%</p>
+            {(player?.stats.warReadiness ?? 1) < 0.35 && (
+              <p className="warning-text">Low readiness — stand down campaigns or rally support</p>
+            )}
             {(player?.stats.propagandaSaturation ?? 0) > 0.15 && (
               <p>Propaganda Saturation: {((player?.stats.propagandaSaturation ?? 0) * 100).toFixed(0)}%</p>
             )}

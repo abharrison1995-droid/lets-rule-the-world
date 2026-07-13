@@ -31,6 +31,7 @@ import {
 import { formatDisplayCost } from './treasuryDisplay';
 import type { StrikeType } from './strikes';
 import { getStrikeOptions, computeStrikePower } from './strikes';
+import { getReadinessBlockReason } from './warReadiness';
 
 export function isAtWarWith(state: GameState, a: string, b: string): boolean {
   return state.wars.some(w => w.belligerents.includes(a) && w.belligerents.includes(b));
@@ -169,6 +170,9 @@ export function playerLaunchStrike(
   const option = options.find(o => o.type === strikeType);
   if (!option) return 'Unknown strike type.';
   if (!option.available) return option.blockReason ?? 'Strike unavailable.';
+
+  const readinessBlock = getReadinessBlockReason(state, state.playerCountryId);
+  if (readinessBlock) return readinessBlock;
 
   if (!spendActionEnergy(state, option.energyCost)) {
     return actionEnergyBlockReason(state, option.energyCost)!;

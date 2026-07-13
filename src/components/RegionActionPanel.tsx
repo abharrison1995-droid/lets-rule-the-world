@@ -58,12 +58,13 @@ export function RegionActionPanel({
   const activeCampaignsHere = getPlayerCampaigns(state).filter(
     c => c.targetRegionId === regionId || c.sourceRegionId === regionId
   );
+  const warReadiness = state.countries[state.playerCountryId]?.stats.warReadiness ?? 1;
 
   return (
     <div className="region-action-panel">
-      <div className="panel-header">
+      <div className="panel-header region-panel-header">
         <h3>{region.name}</h3>
-        <button className="btn-close" onClick={onClose}>×</button>
+        <button className="btn-close region-panel-close" onClick={onClose} aria-label="Close">×</button>
       </div>
 
       <div className="region-info">
@@ -92,6 +93,11 @@ export function RegionActionPanel({
               Strike range: <strong>{getStrikeRangeLabel(range)}</strong>
               {!atWar && <span className="warning-text"> · Unprovoked strikes trigger war</span>}
             </p>
+            {warReadiness < 0.35 && (
+              <p className="warning-text small">
+                War readiness {Math.round(warReadiness * 100)}% — strikes and campaigns drain public support. Use propaganda or stand down.
+              </p>
+            )}
 
             <section className="strike-section">
               <h4>Quick Strike (one-off)</h4>

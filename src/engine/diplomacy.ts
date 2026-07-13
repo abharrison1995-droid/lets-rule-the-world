@@ -2,6 +2,7 @@ import type { GameState, Alliance, AllianceTier } from '../types/game';
 import { getRelation, modifyRelation } from '../data/relations';
 import { recordConflictBaseline } from './conflictRelations';
 import { applyWarBelligerentRelations, tickWarRelations, triggerIranWarConsequences } from './warRelations';
+import { onNationEntersWar } from './warReadiness';
 
 const TIER_WEIGHTS: Record<AllianceTier, number> = {
   informal: 0.2,
@@ -246,6 +247,11 @@ export function declareWar(state: GameState, attackerId: string, defenderId: str
 
   applyWarBelligerentRelations(state, war);
   triggerIranWarConsequences(state, attackerId, defenderId);
+
+  const attackerCountry = state.countries[attackerId];
+  const defenderCountry = state.countries[defenderId];
+  if (attackerCountry) onNationEntersWar(attackerCountry);
+  if (defenderCountry) onNationEntersWar(defenderCountry);
 
   // Secondary condemnation from nations friendly with defender
   for (const countryId of Object.keys(state.countries)) {

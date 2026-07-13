@@ -210,6 +210,8 @@ export interface CountryStats {
   regimeSecurity: number;
   warPopularity: number;
   warExhaustion: number;
+  /** Capacity to sustain military operations (0–1). Drops with weariness; recover via support. */
+  warReadiness?: number;
   propagandaSaturation: number;
 }
 
@@ -230,6 +232,21 @@ export interface GlobalOilShock {
   turnsRemaining: number;
   severity: number;
   reason: string;
+}
+
+export type TurnReportCategory =
+  | 'war'
+  | 'strike'
+  | 'diplomacy'
+  | 'alliance'
+  | 'economy'
+  | 'combat'
+  | 'readiness'
+  | 'other';
+
+export interface TurnReportEntry {
+  category: TurnReportCategory;
+  message: string;
 }
 
 export interface MilitaryUpgradeOrder {
@@ -476,6 +493,8 @@ export interface GameState {
   strikeCampaigns: StrikeCampaign[];
   /** Global oil supply disruption */
   globalOilShock: GlobalOilShock | null;
+  /** Report generated at end of previous turn */
+  lastTurnReport: TurnReportEntry[];
   /** Event context nation for event effects (sender, ally, etc.) */
   eventContextNationId?: string;
 }

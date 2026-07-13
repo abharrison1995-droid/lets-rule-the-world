@@ -97,26 +97,26 @@ const STRIKE_DEFS: Record<
   artillery: {
     label: 'Artillery Strike',
     description: 'Tube and rocket artillery — border regions only, cheapest option.',
-    baseCost: 4,
-    basePower: 1.5,
+    baseCost: 3,
+    basePower: 2.2,
     energyCost: 1,
     minRange: 'adjacent',
     maxRange: 'adjacent',
   },
   drone: {
     label: 'Loitering Drone Strike',
-    description: 'Cheap precision strike — best for nearby targets.',
-    baseCost: 8,
-    basePower: 2,
+    description: 'Cheap precision strike — solid damage on nearby targets.',
+    baseCost: 6,
+    basePower: 2.8,
     energyCost: 1,
     minRange: 'adjacent',
     maxRange: 'regional',
   },
   cruise: {
     label: 'Cruise Missile (Tomahawk-class)',
-    description: 'Long-range conventional missile — moderate cost and damage.',
-    baseCost: 28,
-    basePower: 4,
+    description: 'Long-range conventional missile — strong damage for the cost.',
+    baseCost: 20,
+    basePower: 5.2,
     energyCost: 1,
     minRange: 'adjacent',
     maxRange: 'theatre',
@@ -124,8 +124,8 @@ const STRIKE_DEFS: Record<
   ballistic: {
     label: 'Ballistic Missile Strike',
     description: 'Heavy theatre-range strike — breaks hardened targets.',
-    baseCost: 52,
-    basePower: 6.5,
+    baseCost: 40,
+    basePower: 7.5,
     energyCost: 2,
     minRange: 'regional',
     maxRange: 'intercontinental',
@@ -134,8 +134,8 @@ const STRIKE_DEFS: Record<
   icbm: {
     label: 'ICBM Strike',
     description: 'Intercontinental strike — devastating, ruinously expensive.',
-    baseCost: 95,
-    basePower: 9,
+    baseCost: 70,
+    basePower: 10,
     energyCost: 2,
     minRange: 'theatre',
     maxRange: 'intercontinental',
@@ -189,7 +189,7 @@ export function getStrikeOptions(
       blockReason = `Out of range (${rangeLabels[range]} — needs ${rangeLabels[def.minRange]} to ${rangeLabels[def.maxRange]}).`;
     }
 
-    const capDiscount = (5 - strikeCap) * (type === 'drone' ? 1.5 : 3);
+    const capDiscount = (5 - strikeCap) * (type === 'drone' ? 1.2 : 2.2);
     let cost = Math.round(def.baseCost + capDiscount);
     if (type === 'drone' && attackerId === state.playerCountryId) {
       const discount = getDroneStrikeDiscount(state);

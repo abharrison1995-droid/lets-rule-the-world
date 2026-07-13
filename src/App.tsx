@@ -1,5 +1,16 @@
 import { useState, useCallback } from 'react';
-import type { GameState, BudgetAllocation, MilitaryDev, DomesticSplit, PeaceTermsType, TalkOptionId, CovertTalkOptionId, PressActionId, FacilityType } from './types/game';
+import type {
+  GameState,
+  TurnReportEntry,
+  BudgetAllocation,
+  MilitaryDev,
+  DomesticSplit,
+  PeaceTermsType,
+  TalkOptionId,
+  CovertTalkOptionId,
+  PressActionId,
+  FacilityType,
+} from './types/game';
 import { createInitialState, advanceTurn } from './engine/gameState';
 import { saveGame, loadGame, hasSavedGame, deleteSave } from './engine/saveLoad';
 import { resolveEventChoice } from './engine/events';
@@ -34,6 +45,7 @@ import { EconomyPanel } from './components/EconomyPanel';
 import { EventModal } from './components/EventModal';
 import { RegionActionPanel } from './components/RegionActionPanel';
 import { SidePanel } from './components/SidePanel';
+import { TurnSummaryModal } from './components/TurnSummaryModal';
 import { NationIntroModal } from './components/NationIntroModal';
 import type { StrikeType } from './engine/strikes';
 import { useMobileLayout } from './hooks/useMobileLayout';
@@ -58,6 +70,7 @@ export default function App() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [warConfirmTarget, setWarConfirmTarget] = useState<string | null>(null);
   const [strikeConfirm, setStrikeConfirm] = useState<StrikeConfirmRequest | null>(null);
+  const [turnSummary, setTurnSummary] = useState<TurnReportEntry[] | null>(null);
   const [talksResult, setTalksResult] = useState<string | null>(null);
   const [showNationIntro, setShowNationIntro] = useState(false);
   const isMobile = useMobileLayout();
@@ -101,6 +114,7 @@ export default function App() {
   const endTurn = useCallback(() => {
     if (!state || state.gameOver || state.playerWon) return;
     const next = advanceTurn(state);
+    setTurnSummary(next.lastTurnReport?.length ? next.lastTurnReport : null);
     updateState(next);
   }, [state, updateState]);
 
@@ -440,6 +454,13 @@ export default function App() {
           onExecuteMechanic={handleMechanic}
           feedback={feedback}
           talksResult={talksResult}
+        />
+      )}
+      {turnSummary && state && (
+        <TurnSummaryModal
+          turn={state.turn}
+          entries={turnSummary}
+          onClose={() => setTurnSummary(null)}
         />
       )}
       {strikeConfirm && state && (() => {

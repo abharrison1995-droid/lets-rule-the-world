@@ -14,6 +14,8 @@ import { applyTurnIncome, checkTaxPoliticalPressure, getDefaultCorporateTaxRate,
 import { tickFiscalDebt } from './fiscal';
 import { resolveStrikeCampaigns } from './strikeCampaigns';
 import { runNpcWartimeStrikes } from './npcStrikes';
+import { tickWarReadiness, forceHaltCampaignsFromWeariness } from './warReadiness';
+import { buildTurnReport } from './turnReport';
 import { resetActionEnergy } from './actionEnergy';
 import { resolveDiplomaticMissions } from './diplomaticMissions';
 import { resolveMilitaryUpgrades, scaleStartingMilitaryDev } from './militaryDevUpgrades';
@@ -28,6 +30,7 @@ export function createInitialState(playerCountryId: string): GameState {
   const countries = structuredClone(COUNTRIES);
   for (const c of Object.values(countries)) {
     c.militaryDev = scaleStartingMilitaryDev(c.militaryDev);
+    c.stats.warReadiness = c.stats.warReadiness ?? 1;
   }
   const regions = structuredClone(REGIONS);
   const relations = buildRelationsMatrix();
@@ -76,6 +79,7 @@ export function createInitialState(playerCountryId: string): GameState {
     militaryUpgrade: null,
     strikeCampaigns: [],
     globalOilShock: null,
+    lastTurnReport: [],
     actionEnergy: 0,
   };
 
@@ -98,6 +102,7 @@ function seedOpeningScenario(state: GameState): void {
 export function advanceTurn(state: GameState): GameState {
   if (state.gameOver || state.playerWon) return state;
 
+  const historyFrom = state.history.length;
   const newState = structuredClone(state);
   newState.turn += 1;
   newState.warsDeclaredThisTurn = 0;
@@ -109,6 +114,8 @@ export function advanceTurn(state: GameState): GameState {
   resolveMilitaryUpgrades(newState);
   runNpcWartimeStrikes(newState);
   resolveStrikeCampaigns(newState);
+  tickWarReadiness(newState);
+  forceHaltCampaignsFromWeariness(newState);
   resetActionEnergy(newState);
 
   // Update fronts before economy (war exhaustion needs current front count)
@@ -134,6 +141,7 @@ export function advanceTurn(state: GameState): GameState {
   checkCollapseConditions(newState);
   checkWinConditions(newState);
 
+  newState.lastTurnReport = buildTurnReport(state, newState, historyFrom);
   newState.history.push(`Turn ${newState.turn} complete.`);
 
   return newState;

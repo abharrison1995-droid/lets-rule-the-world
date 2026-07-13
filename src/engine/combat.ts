@@ -5,6 +5,7 @@ import { getRelation, modifyRelation } from '../data/relations';
 import { declareWar } from './diplomacy';
 import { recordConflictBaseline } from './conflictRelations';
 import type { StrikeType } from './strikes';
+import { getReadinessStrikeMultiplier, drainReadinessForStrike } from './warReadiness';
 
 const PRESSURE_THRESHOLD = 100;
 const PRESSURE_SHIFT_BASE = 15;
@@ -163,20 +164,30 @@ export function executeStrike(
 ): StrikeAnimation {
   const targetRegion = state.regions[targetRegionId];
   const defenseRating = getDefenseSystemRating(targetRegion);
-  const intercepted = strikePower < defenseRating * 2;
+
+  const attacker = state.countries[attackerId];
+  const readinessMult = attacker ? getReadinessStrikeMultiplier(attacker) : 1;
+  const effectivePower = strikePower * readinessMult;
 
   const animation: StrikeAnimation = {
     id: `strike_${state.turn}_${targetRegionId}`,
     sourceRegionId: '',
     targetRegionId,
-    intercepted,
+    intercepted: effectivePower < defenseRating * 2,
     turn: state.turn,
   };
 
-  if (!intercepted) {
-    targetRegion.garrison.troops = Math.max(0, targetRegion.garrison.troops * 0.7);
-    targetRegion.industryValue *= 0.85;
-    targetRegion.unrest = Math.min(100, targetRegion.unrest + 15);
+  if (!animation.intercepted) {
+    const damageScale = Math.min(1, 0.35 + effectivePower / 9);
+    const troopRetention = 1 - damageScale * 0.38;
+    const industryRetention = 1 - damageScale * 0.18;
+    targetRegion.garrison.troops = Math.max(0, targetRegion.garrison.troops * troopRetention);
+    targetRegion.industryValue *= industryRetention;
+    targetRegion.unrest = Math.min(100, targetRegion.unrest + 8 + damageScale * 12);
+  }
+
+  if (attacker) {
+    drainReadinessForStrike(attacker, strikeType);
   }
 
   state.strikeAnimations.push(animation);
