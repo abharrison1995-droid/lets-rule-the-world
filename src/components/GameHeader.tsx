@@ -1,5 +1,6 @@
 import type { GameState } from '../types/game';
 import { formatGDP } from '../engine/gameState';
+import { getActionEnergy } from '../engine/actionEnergy';
 
 interface GameHeaderProps {
   state: GameState;
@@ -12,6 +13,7 @@ interface GameHeaderProps {
 export function GameHeader({ state, onEndTurn, onOpenDiplomacy, onOpenEconomy, onSave }: GameHeaderProps) {
   const country = state.countries[state.playerCountryId];
   const atWar = state.wars.some(w => w.belligerents.includes(state.playerCountryId));
+  const energy = getActionEnergy(state);
 
   return (
     <header className="game-header">
@@ -23,6 +25,9 @@ export function GameHeader({ state, onEndTurn, onOpenDiplomacy, onOpenEconomy, o
       <div className="header-center">
         <span className="nation-name" style={{ color: country?.color }}>{country?.name}</span>
         <span className="gdp-display">{formatGDP(country?.stats.gdp ?? 0)}</span>
+        <span className="energy-display" title="Action energy — consequential moves cost energy each turn">
+          ⚡ {energy.current}/{energy.max}
+        </span>
         {atWar && <span className="war-badge">AT WAR</span>}
       </div>
 

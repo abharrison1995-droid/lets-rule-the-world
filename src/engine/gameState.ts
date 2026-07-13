@@ -11,6 +11,8 @@ import { checkWinConditions } from './winConditions';
 import { resolveCovertOps, runNpcCovertOps } from './covert';
 import { tickCovertAllianceExposure } from './covertAlliances';
 import { accumulateReserve } from './actions';
+import { resetActionEnergy } from './actionEnergy';
+import { resolveDiplomaticMissions } from './diplomaticMissions';
 import {
   tickCounterIntel,
   applyDomesticPropagandaTick,
@@ -57,7 +59,11 @@ export function createInitialState(playerCountryId: string): GameState {
     internationalPariahTurns: 0,
     talksAttemptedThisTurn: [],
     covertTalksAttemptedThisTurn: [],
+    diplomaticMissions: [],
+    actionEnergy: 0,
   };
+
+  resetActionEnergy(state);
 
   // Seed opening scenario: Russia-Ukraine war
   seedOpeningScenario(state);
@@ -81,6 +87,9 @@ export function advanceTurn(state: GameState): GameState {
   newState.warsDeclaredThisTurn = 0;
   newState.talksAttemptedThisTurn = [];
   newState.covertTalksAttemptedThisTurn = [];
+
+  resolveDiplomaticMissions(newState);
+  resetActionEnergy(newState);
 
   // Update fronts before economy (war exhaustion needs current front count)
   newState.fronts = detectFronts(newState);

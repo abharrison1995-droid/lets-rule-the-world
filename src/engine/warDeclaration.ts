@@ -1,5 +1,6 @@
 import type { GameState, WarDeclarationPreview } from '../types/game';
 import { getRelation } from '../data/relations';
+import { actionEnergyBlockReason, ACTION_ENERGY_COSTS } from './actionEnergy';
 
 function isAtWarWith(state: GameState, a: string, b: string): boolean {
   return state.wars.some(w => w.belligerents.includes(a) && w.belligerents.includes(b));
@@ -171,6 +172,12 @@ export function getWarDeclarationPreview(
   } else if (warsRemaining <= 0) {
     canDeclare = false;
     blockReason = `War declaration limit reached (${warCap} per turn).`;
+  } else {
+    const energyReason = actionEnergyBlockReason(state, ACTION_ENERGY_COSTS.declare_war);
+    if (energyReason) {
+      canDeclare = false;
+      blockReason = energyReason;
+    }
   }
 
   return {

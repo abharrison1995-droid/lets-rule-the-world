@@ -12,6 +12,7 @@ import {
   getCovertAlliancesWithNation,
   COVERT_OPTION_ORDER,
 } from '../engine/covertAlliances';
+import { getPendingMissions, getTurnsUntilResolution } from '../engine/diplomaticMissions';
 
 interface TalksScreenProps {
   state: GameState;
@@ -67,8 +68,7 @@ export function TalksScreen({
   );
   const bilateralAgreements = getAgreementsWithNation(state, state.playerCountryId, targetId);
   const covertAgreements = getCovertAlliancesWithNation(state, state.playerCountryId, targetId);
-  const talkedThisTurn = state.talksAttemptedThisTurn.includes(targetId);
-  const covertTalkedThisTurn = state.covertTalksAttemptedThisTurn.includes(targetId);
+  const pendingMissions = getPendingMissions(state).filter(m => m.targetNationId === targetId);
 
   const preview = selectedOption
     ? getNegotiationPreview(
@@ -184,8 +184,18 @@ export function TalksScreen({
         </section>
       )}
 
-      {talkedThisTurn && (
-        <p className="muted talks-used">Public talks already held with {target.name} this turn.</p>
+      {pendingMissions.length > 0 && (
+        <section className="panel-section talks-pending">
+          <h4>Envoys en route</h4>
+          {pendingMissions.map(m => (
+            <div key={m.id} className="mission-pending-row">
+              <span>{m.type.replace(/_/g, ' ')}</span>
+              <span className="muted">
+                Returns turn {m.resolveTurn} ({getTurnsUntilResolution(state, m)}t left)
+              </span>
+            </div>
+          ))}
+        </section>
       )}
 
       <section className="panel-section talks-options">
@@ -241,7 +251,9 @@ export function TalksScreen({
                   : `${preview.acceptanceChance}%`}
               </strong>
             </span>
-            {preview.cost > 0 && <span>Cost: ${preview.cost}B</span>}
+            <span>⚡ {preview.energyCost} energy</span>
+            <span>{preview.durationTurns} turn{preview.durationTurns !== 1 ? 's' : ''}</span>
+            {preview.cost > 0 && <span>${preview.cost}B</span>}
           </div>
 
           <ul className="preview-effects">
@@ -257,18 +269,14 @@ export function TalksScreen({
             disabled={!preview.canAttempt || (selectedOption === 'peace' && !peaceTerms)}
             onClick={handleSubmit}
           >
-            Submit proposal
+            Dispatch envoy
           </button>
         </section>
       )}
 
-      {covertTalkedThisTurn && (
-        <p className="muted talks-used">Covert backchannel already used with {target.name} this turn.</p>
-      )}
-
       <section className="panel-section talks-options covert-section">
         <h4>Covert backchannel 🔒</h4>
-        <p className="muted covert-lead">Secret pacts — invisible to rivals unless exposed by spy ops or leaks.</p>
+        <p className="muted covert-lead">Secret envoys take time. Invisible unless exposed.</p>
         <div className="talks-option-grid">
           {COVERT_OPTION_ORDER.map(opt => {
             const optPreview = getCovertNegotiationPreview(state, state.playerCountryId, targetId, opt);
@@ -295,8 +303,10 @@ export function TalksScreen({
 
           <div className="preview-stats">
             <span>Acceptance: <strong>{covertPreview.acceptanceChance}%</strong></span>
-            <span>Cost: ${covertPreview.cost}B</span>
-            <span className="warning">Leak risk: {covertPreview.exposureRisk}%/turn</span>
+            <span>⚡ {covertPreview.energyCost} energy</span>
+            <span>{covertPreview.durationTurns} turns</span>
+            <span>${covertPreview.cost}B</span>
+            <span className="warning">Leak: {covertPreview.exposureRisk}%/turn</span>
           </div>
 
           <ul className="preview-effects">
@@ -312,7 +322,7 @@ export function TalksScreen({
             disabled={!covertPreview.canAttempt}
             onClick={handleCovertSubmit}
           >
-            🔒 Establish secret pact
+            🔒 Send covert envoy
           </button>
         </section>
       )}

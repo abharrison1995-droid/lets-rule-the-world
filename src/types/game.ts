@@ -98,9 +98,31 @@ export interface CovertNegotiationPreview {
   canAttempt: boolean;
   blockReason?: string;
   cost: number;
+  energyCost: number;
+  durationTurns: number;
   acceptanceChance: number;
   exposureRisk: number;
   effects: string[];
+}
+
+export type DiplomaticMissionType =
+  | 'peace'
+  | 'military_pact'
+  | 'trade_deal'
+  | 'intel_sharing'
+  | 'covert_trade'
+  | 'covert_military'
+  | 'covert_intel';
+
+export interface DiplomaticMission {
+  id: string;
+  type: DiplomaticMissionType;
+  targetNationId: string;
+  dispatchedTurn: number;
+  resolveTurn: number;
+  energyCost: number;
+  goldCost: number;
+  peaceTerms?: PeaceTermsType;
 }
 
 export type TalkOptionId = 'peace' | 'military_pact' | 'trade_deal' | 'intel_sharing';
@@ -112,6 +134,8 @@ export interface NegotiationPreview {
   canAttempt: boolean;
   blockReason?: string;
   cost: number;
+  energyCost: number;
+  durationTurns: number;
   acceptanceChance: number;
   effects: string[];
 }
@@ -343,6 +367,10 @@ export interface GameState {
   talksAttemptedThisTurn: string[];
   /** Target nation IDs the player has used covert backchannel with this turn */
   covertTalksAttemptedThisTurn: string[];
+  /** Remaining consequential-action energy this turn */
+  actionEnergy: number;
+  /** Envoys / summits in progress */
+  diplomaticMissions: DiplomaticMission[];
   /** Contextual nation for event effects (sender, ally, etc.) */
   eventContextNationId?: string;
 }

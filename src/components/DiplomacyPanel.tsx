@@ -126,6 +126,7 @@ export function DiplomacyPanel({
       {atWarNations.length > 0 && (
         <section className="panel-section peace-section">
           <h4>Peace Negotiations</h4>
+          <p className="muted">Dispatches a peace envoy — results return in 2 turns.</p>
           <select className="target-select" value={peaceTarget} onChange={e => setPeaceTarget(e.target.value)}>
             <option value="">Select wartime opponent...</option>
             {atWarNations.map(r => (

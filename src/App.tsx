@@ -15,7 +15,7 @@ import {
   playerCovertNegotiate,
   playerProbeCovertPacts,
 } from './engine/actions';
-import { proposePeace } from './engine/peace';
+import { dispatchTalkMission } from './engine/diplomaticMissions';
 import { playerDomesticPropaganda, playerForeignInfluence } from './engine/propaganda';
 import { NationSelect } from './components/NationSelect';
 import { GameHeader } from './components/GameHeader';
@@ -188,9 +188,9 @@ export default function App() {
   const handleProposePeace = useCallback((targetId: string, terms: PeaceTermsType) => {
     if (!state) return;
     const newState = structuredClone(state);
-    const result = proposePeace(newState, targetId, terms);
+    const result = dispatchTalkMission(newState, targetId, 'peace', terms);
     showFeedback(result.message);
-    if (result.accepted) updateState(newState);
+    if (result.success) updateState(newState);
   }, [state, updateState]);
 
   const handleDomesticPropaganda = useCallback(() => {

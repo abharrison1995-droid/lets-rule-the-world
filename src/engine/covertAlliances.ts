@@ -8,11 +8,24 @@ import type {
 import { getRelation, modifyRelation } from '../data/relations';
 import { computeAllianceScore } from './diplomacy';
 import { hasBilateralAgreement } from './talks';
+import { actionEnergyBlockReason } from './actionEnergy';
 
 export const COVERT_TALK_COSTS: Record<CovertTalkOptionId, number> = {
-  covert_trade: 20,
-  covert_military: 35,
-  covert_intel: 25,
+  covert_trade: 85,
+  covert_military: 150,
+  covert_intel: 95,
+};
+
+export const COVERT_DURATIONS: Record<CovertTalkOptionId, number> = {
+  covert_trade: 3,
+  covert_military: 4,
+  covert_intel: 3,
+};
+
+export const COVERT_ENERGY_COSTS: Record<CovertTalkOptionId, number> = {
+  covert_trade: 2,
+  covert_military: 2,
+  covert_intel: 2,
 };
 
 const COVERT_LABELS: Record<CovertTalkOptionId, string> = {
@@ -66,8 +79,10 @@ export function hasCovertAlliance(
   );
 }
 
-function hasCovertTalkedThisTurn(state: GameState, targetId: string): boolean {
-  return state.covertTalksAttemptedThisTurn.includes(targetId);
+function hasPendingCovertMission(state: GameState, targetId: string, option: CovertTalkOptionId): boolean {
+  return state.diplomaticMissions.some(
+    m => m.targetNationId === targetId && m.type === option && m.resolveTurn > state.turn
+  );
 }
 
 function calculateCovertAcceptance(
@@ -112,9 +127,12 @@ function getBlockReason(
   targetId: string,
   option: CovertTalkOptionId
 ): string | undefined {
-  if (hasCovertTalkedThisTurn(state, targetId)) {
-    return 'Covert backchannel already used with this nation this turn.';
+  if (hasPendingCovertMission(state, targetId, option)) {
+    return 'A covert envoy is already en route for this negotiation.';
   }
+
+  const energyReason = actionEnergyBlockReason(state, COVERT_ENERGY_COSTS[option]);
+  if (energyReason) return energyReason;
 
   const type = COVERT_TO_TYPE[option];
   if (hasCovertAlliance(state, playerId, targetId, type)) {
@@ -155,29 +173,26 @@ export function getCovertNegotiationPreview(
     calculateCovertAcceptance(state, playerId, targetId, option) * 100
   );
   const exposureRisk = BASE_EXPOSURE_RISK[type] + Math.max(0, 3 - state.budget.covert * 30);
+  const durationTurns = COVERT_DURATIONS[option];
 
   return {
     optionId: option,
     label: COVERT_LABELS[option],
-    description: 'Secret pact — the world will not acknowledge it unless exposed.',
+    description: 'Secret envoy — the world will not acknowledge it unless exposed.',
     canAttempt: !blockReason,
     blockReason,
     cost: COVERT_TALK_COSTS[option],
+    energyCost: COVERT_ENERGY_COSTS[option],
+    durationTurns,
     acceptanceChance,
     exposureRisk: Math.round(exposureRisk),
-    effects: getCovertEffects(option),
+    effects: [...getCovertEffects(option), `Backchannel envoy returns in ${durationTurns} turns`],
   };
 }
 
 export interface CovertNegotiationResult {
   success: boolean;
   message: string;
-}
-
-function markCovertTalkAttempted(state: GameState, targetId: string): void {
-  if (!state.covertTalksAttemptedThisTurn.includes(targetId)) {
-    state.covertTalksAttemptedThisTurn.push(targetId);
-  }
 }
 
 function formCovertAlliance(
@@ -200,40 +215,26 @@ function formCovertAlliance(
   return alliance;
 }
 
-export function executeCovertNegotiation(
+/** Resolve when covert envoy returns */
+export function resolveCovertNegotiationMission(
   state: GameState,
   playerId: string,
   targetId: string,
   option: CovertTalkOptionId
 ): CovertNegotiationResult {
-  const preview = getCovertNegotiationPreview(state, playerId, targetId, option);
-  if (!preview.canAttempt) {
-    return { success: false, message: preview.blockReason ?? 'Cannot negotiate covertly.' };
-  }
-
   const acceptance = calculateCovertAcceptance(state, playerId, targetId, option);
   const targetName = state.countries[targetId]?.name ?? targetId;
-  const playerName = state.countries[playerId]?.name ?? playerId;
   const type = COVERT_TO_TYPE[option];
 
   if (Math.random() > acceptance) {
-    markCovertTalkAttempted(state, targetId);
-    // Failed backchannel — small leak risk
     if (Math.random() < 0.15) {
       modifyRelation(state.relations, playerId, targetId, -5);
-      state.history.push(
-        `Turn ${state.turn}: Rumours of secret talks between ${playerName} and ${targetName} surfaced.`
-      );
       return { success: false, message: `${targetName} rebuffed the backchannel — rumours leaked.` };
     }
     return { success: false, message: `${targetName} rebuffed the covert proposal.` };
   }
 
-  markCovertTalkAttempted(state, targetId);
   formCovertAlliance(state, playerId, targetId, type);
-  state.history.push(
-    `Turn ${state.turn}: ${playerName} formed a secret ${type} pact with ${targetName}. 🔒`
-  );
   return {
     success: true,
     message: `Secret ${type} pact with ${targetName} established. 🔒`,

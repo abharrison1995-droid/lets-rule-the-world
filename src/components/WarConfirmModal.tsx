@@ -1,4 +1,5 @@
 import type { WarDeclarationPreview } from '../types/game';
+import { ACTION_ENERGY_COSTS } from '../engine/actionEnergy';
 
 interface WarConfirmModalProps {
   preview: WarDeclarationPreview;
@@ -25,6 +26,7 @@ export function WarConfirmModal({ preview, onConfirm, onCancel }: WarConfirmModa
         <div className="war-preview-stats">
           <span>Wars declared this turn: {preview.warsDeclaredThisTurn} / {preview.warCap}</span>
           <span>Remaining after: {Math.max(0, preview.warsRemaining - 1)}</span>
+          <span>Cost: ⚡ {ACTION_ENERGY_COSTS.declare_war} energy (instant)</span>
         </div>
 
         {!preview.canDeclare && (

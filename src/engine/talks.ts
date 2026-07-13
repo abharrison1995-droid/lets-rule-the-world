@@ -1,4 +1,4 @@
-import type { GameState, AllianceTier, TalkOptionId, NegotiationPreview, PeaceTermsType } from '../types/game';
+import type { GameState, AllianceTier, TalkOptionId, NegotiationPreview, PeaceTermsType, DiplomaticMissionType } from '../types/game';
 import { getRelation, modifyRelation } from '../data/relations';
 import {
   computeAllianceScore,
@@ -7,14 +7,30 @@ import {
   upgradeAlliance,
 } from './diplomacy';
 import { proposePeace, getPeaceOptions, calculatePeaceAcceptance } from './peace';
+import { actionEnergyBlockReason } from './actionEnergy';
 
 const TIER_ORDER: AllianceTier[] = ['informal', 'defensive_pact', 'full_alliance', 'bloc'];
 
+/** Raised costs — consequential diplomacy is expensive */
 export const TALK_COSTS: Record<TalkOptionId, number> = {
-  peace: 0,
-  military_pact: 30,
-  trade_deal: 15,
-  intel_sharing: 20,
+  peace: 25,
+  military_pact: 120,
+  trade_deal: 65,
+  intel_sharing: 50,
+};
+
+export const TALK_DURATIONS: Record<TalkOptionId, number> = {
+  peace: 2,
+  military_pact: 4,
+  trade_deal: 2,
+  intel_sharing: 3,
+};
+
+export const TALK_ENERGY_COSTS: Record<TalkOptionId, number> = {
+  peace: 1,
+  military_pact: 2,
+  trade_deal: 1,
+  intel_sharing: 1,
 };
 
 const TALK_LABELS: Record<TalkOptionId, string> = {
@@ -30,6 +46,12 @@ function isAtWarWith(state: GameState, a: string, b: string): boolean {
 
 function agreementKey(a: string, b: string): string {
   return [a, b].sort().join('|');
+}
+
+function hasPendingMission(state: GameState, targetId: string, type: DiplomaticMissionType): boolean {
+  return state.diplomaticMissions.some(
+    m => m.targetNationId === targetId && m.type === type && m.resolveTurn > state.turn
+  );
 }
 
 export function hasBilateralAgreement(
@@ -49,10 +71,6 @@ export function getAgreementsWithNation(state: GameState, playerId: string, othe
   return state.bilateralAgreements.filter(
     ag => agreementKey(ag.a, ag.b) === key
   );
-}
-
-function hasTalkedThisTurn(state: GameState, targetId: string): boolean {
-  return state.talksAttemptedThisTurn.includes(targetId);
 }
 
 function calculateNegotiationAcceptance(
@@ -116,9 +134,12 @@ function getBlockReason(
   targetId: string,
   option: TalkOptionId
 ): string | undefined {
-  if (hasTalkedThisTurn(state, targetId)) {
-    return 'Already held talks with this nation this turn.';
+  if (hasPendingMission(state, targetId, option)) {
+    return 'An envoy is already en route for this negotiation.';
   }
+
+  const energyReason = actionEnergyBlockReason(state, TALK_ENERGY_COSTS[option]);
+  if (energyReason) return energyReason;
 
   const atWar = isAtWarWith(state, playerId, targetId);
 
@@ -165,6 +186,8 @@ export function getNegotiationPreview(
 ): NegotiationPreview {
   const blockReason = getBlockReason(state, playerId, targetId, option);
   const cost = TALK_COSTS[option];
+  const energyCost = TALK_ENERGY_COSTS[option];
+  const durationTurns = TALK_DURATIONS[option];
 
   let acceptanceChance = 0;
   let effects: string[] = [];
@@ -173,21 +196,21 @@ export function getNegotiationPreview(
   if (option === 'peace' && peaceTerms) {
     acceptanceChance = Math.round(calculatePeaceAcceptance(state, targetId, peaceTerms) * 100);
     effects = [`Ends war on ${peaceTerms.replace('_', ' ')} terms`];
-    description = 'Private back-channel peace proposal.';
+    description = 'Send a peace envoy for back-channel talks.';
   } else if (option === 'peace') {
     description = 'Select peace terms to see acceptance odds.';
-    effects = ['Ends active war'];
+    effects = ['Ends active war', `Envoy returns in ${durationTurns} turns`];
   } else {
     acceptanceChance = Math.round(calculateNegotiationAcceptance(state, playerId, targetId, option) * 100);
     if (option === 'military_pact') {
-      effects = getMilitaryPactEffects(state, playerId, targetId);
-      description = 'Propose a formal military partnership.';
+      effects = [...getMilitaryPactEffects(state, playerId, targetId), `Summit lasts ${durationTurns} turns`];
+      description = 'Host a diplomatic summit for a formal military partnership.';
     } else if (option === 'trade_deal') {
-      effects = ['+0.8% GDP growth for both nations', '+5 relations'];
-      description = 'Bilateral trade liberalization.';
+      effects = ['+0.8% GDP growth for both nations', '+5 relations', `Envoy returns in ${durationTurns} turns`];
+      description = 'Send a trade delegation to negotiate liberalization.';
     } else if (option === 'intel_sharing') {
-      effects = ['+5% counter-intelligence effectiveness', '+5 relations'];
-      description = 'Coordinate intelligence against shared threats.';
+      effects = ['+5% counter-intelligence effectiveness', '+5 relations', `Envoy returns in ${durationTurns} turns`];
+      description = 'Dispatch intelligence liaisons for coordination.';
     }
   }
 
@@ -198,6 +221,8 @@ export function getNegotiationPreview(
     canAttempt: !blockReason,
     blockReason,
     cost,
+    energyCost,
+    durationTurns,
     acceptanceChance,
     effects,
   };
@@ -215,12 +240,6 @@ export function getAllNegotiationPreviews(
 export interface NegotiationResult {
   success: boolean;
   message: string;
-}
-
-function markTalkAttempted(state: GameState, targetId: string): void {
-  if (!state.talksAttemptedThisTurn.includes(targetId)) {
-    state.talksAttemptedThisTurn.push(targetId);
-  }
 }
 
 function formBilateralAgreement(
@@ -278,37 +297,28 @@ function resolveMilitaryPact(
   return { success: false, message: 'Alliance cannot be upgraded further.' };
 }
 
-export function executeNegotiation(
+/** Resolve when envoy returns — called from diplomaticMissions tick */
+export function resolveNegotiationMission(
   state: GameState,
   playerId: string,
   targetId: string,
   option: TalkOptionId,
   peaceTerms?: PeaceTermsType
 ): NegotiationResult {
-  const preview = getNegotiationPreview(state, playerId, targetId, option, peaceTerms);
-  if (!preview.canAttempt) {
-    return { success: false, message: preview.blockReason ?? 'Cannot negotiate.' };
-  }
+  const targetName = state.countries[targetId]?.name ?? targetId;
 
   if (option === 'peace') {
-    if (!peaceTerms) return { success: false, message: 'Select peace terms first.' };
-    markTalkAttempted(state, targetId);
+    if (!peaceTerms) return { success: false, message: 'Peace mission lacked terms.' };
     const result = proposePeace(state, targetId, peaceTerms);
     return { success: result.accepted, message: result.message };
   }
 
   const acceptance = calculateNegotiationAcceptance(state, playerId, targetId, option);
-  const targetName = state.countries[targetId]?.name ?? targetId;
-  const playerName = state.countries[playerId]?.name ?? playerId;
 
   if (Math.random() > acceptance) {
-    markTalkAttempted(state, targetId);
     modifyRelation(state.relations, playerId, targetId, -8);
-    state.history.push(`Turn ${state.turn}: ${targetName} rejected ${playerName}'s ${TALK_LABELS[option].toLowerCase()}.`);
-    return { success: false, message: `${targetName} rejected the proposal.` };
+    return { success: false, message: `${targetName} rejected the ${TALK_LABELS[option].toLowerCase()}.` };
   }
-
-  markTalkAttempted(state, targetId);
 
   if (option === 'military_pact') {
     return resolveMilitaryPact(state, playerId, targetId, acceptance);
@@ -317,18 +327,16 @@ export function executeNegotiation(
   if (option === 'trade_deal') {
     formBilateralAgreement(state, playerId, targetId, 'trade');
     modifyRelation(state.relations, playerId, targetId, 5);
-    state.history.push(`Turn ${state.turn}: ${playerName} and ${targetName} signed a trade agreement.`);
     return { success: true, message: `Trade agreement signed with ${targetName}.` };
   }
 
   if (option === 'intel_sharing') {
     formBilateralAgreement(state, playerId, targetId, 'intel');
     modifyRelation(state.relations, playerId, targetId, 5);
-    state.history.push(`Turn ${state.turn}: ${playerName} and ${targetName} established intel sharing.`);
     return { success: true, message: `Intel sharing pact established with ${targetName}.` };
   }
 
-  return { success: false, message: 'Unknown negotiation option.' };
+  return { success: false, message: 'Unknown negotiation.' };
 }
 
 export function computeTradeAgreementBonus(state: GameState, countryId: string): number {

@@ -166,6 +166,15 @@ body {
   color: var(--success);
 }
 
+.energy-display {
+  font-size: 0.8rem;
+  color: var(--warning);
+  background: rgba(245, 158, 11, 0.12);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
 .war-badge {
   background: var(--danger);
   color: white;
@@ -1024,9 +1033,23 @@ body {
 
 .preview-stats {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
   font-size: 0.8rem;
   margin: 0.5rem 0;
+}
+
+.mission-entry, .mission-pending-row {
+  font-size: 0.8rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.talks-pending {
+  background: rgba(59, 130, 246, 0.08);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  margin-bottom: 0.75rem;
 }
 
 .preview-effects {

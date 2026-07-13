@@ -8,10 +8,17 @@ import {
 } from './warDeclaration';
 import { executeStrike } from './combat';
 import { getRegionsForCountry } from '../data/regions';
-import { executeNegotiation, TALK_COSTS } from './talks';
 import type { TalkOptionId, PeaceTermsType, CovertTalkOptionId } from '../types/game';
 import type { NegotiationResult } from './talks';
-import { executeCovertNegotiation, COVERT_TALK_COSTS } from './covertAlliances';
+import {
+  dispatchTalkMission,
+  dispatchCovertMission,
+} from './diplomaticMissions';
+import {
+  spendActionEnergy,
+  actionEnergyBlockReason,
+  ACTION_ENERGY_COSTS,
+} from './actionEnergy';
 
 export function isAtWarWith(state: GameState, a: string, b: string): boolean {
   return state.wars.some(w => w.belligerents.includes(a) && w.belligerents.includes(b));
@@ -44,6 +51,11 @@ export function playerDeclareWar(state: GameState, targetId: string): string | n
   const preview = getWarDeclarationPreview(state, state.playerCountryId, targetId);
   if (!preview.canDeclare) return preview.blockReason ?? 'Cannot declare war.';
 
+  const energyCost = ACTION_ENERGY_COSTS.declare_war;
+  if (!spendActionEnergy(state, energyCost)) {
+    return actionEnergyBlockReason(state, energyCost)!;
+  }
+
   declareWar(state, state.playerCountryId, targetId);
   state.warsDeclaredThisTurn += 1;
 
@@ -71,15 +83,8 @@ export function playerNegotiate(
   option: TalkOptionId,
   peaceTerms?: PeaceTermsType
 ): NegotiationResult {
-  if (!state.countries[targetId]) return { success: false, message: 'Invalid target.' };
-  if (targetId === state.playerCountryId) return { success: false, message: 'Cannot negotiate with yourself.' };
-
-  const cost = TALK_COSTS[option];
-  if (cost > 0 && !deductCost(state, cost)) {
-    return { success: false, message: `Insufficient funds (need $${cost}B).` };
-  }
-
-  return executeNegotiation(state, state.playerCountryId, targetId, option, peaceTerms);
+  const result = dispatchTalkMission(state, targetId, option, peaceTerms);
+  return { success: result.success, message: result.message };
 }
 
 export function playerCovertNegotiate(
@@ -87,15 +92,8 @@ export function playerCovertNegotiate(
   targetId: string,
   option: CovertTalkOptionId
 ): NegotiationResult {
-  if (!state.countries[targetId]) return { success: false, message: 'Invalid target.' };
-  if (targetId === state.playerCountryId) return { success: false, message: 'Cannot negotiate with yourself.' };
-
-  const cost = COVERT_TALK_COSTS[option];
-  if (!deductCost(state, cost)) {
-    return { success: false, message: `Insufficient funds (need $${cost}B).` };
-  }
-
-  return executeCovertNegotiation(state, state.playerCountryId, targetId, option);
+  const result = dispatchCovertMission(state, targetId, option);
+  return { success: result.success, message: result.message };
 }
 
 export function playerProbeCovertPacts(state: GameState, targetNationId: string): string | null {
@@ -103,14 +101,22 @@ export function playerProbeCovertPacts(state: GameState, targetNationId: string)
   const target = state.countries[targetNationId];
   if (!target) return 'Invalid target.';
 
-  const baseCost = 25;
+  const energyCost = ACTION_ENERGY_COSTS.probe_pacts;
+  if (!spendActionEnergy(state, energyCost)) {
+    return actionEnergyBlockReason(state, energyCost)!;
+  }
+
+  const baseCost = 40;
   const targetCI = (target.stats.regimeSecurity ?? 0.5) * 25;
   const discoveryRisk = Math.max(
     10,
     30 + (1 - state.budget.covert) * 15 + targetCI - state.counterIntelLevel * 8
   );
 
-  if (!deductCost(state, baseCost)) return `Insufficient funds (need $${baseCost}B).`;
+  if (!deductCost(state, baseCost)) {
+    state.actionEnergy += energyCost;
+    return `Insufficient funds (need $${baseCost}B).`;
+  }
 
   state.activeCovertOps.push({
     id: `probe_${state.turn}_${targetNationId}`,
@@ -138,8 +144,16 @@ export function playerLaunchStrike(state: GameState, targetRegionId: string): st
   const attacker = state.countries[state.playerCountryId];
   if (!attacker) return 'Invalid player.';
 
+  const energyCost = ACTION_ENERGY_COSTS.strike;
+  if (!spendActionEnergy(state, energyCost)) {
+    return actionEnergyBlockReason(state, energyCost)!;
+  }
+
   const strikeCost = 20 + (5 - attacker.militaryDev.strikeCapability) * 5;
-  if (!deductCost(state, strikeCost)) return `Insufficient funds (need $${strikeCost}B).`;
+  if (!deductCost(state, strikeCost)) {
+    state.actionEnergy += energyCost;
+    return `Insufficient funds (need $${strikeCost}B).`;
+  }
 
   const strikePower =
     attacker.militaryDev.strikeCapability * 2 +
@@ -158,11 +172,19 @@ export function playerLaunchCovertOp(state: GameState, targetNationId: string): 
   const target = state.countries[targetNationId];
   if (!target) return 'Invalid target.';
 
-  const baseCost = 20;
+  const energyCost = ACTION_ENERGY_COSTS.covert_op;
+  if (!spendActionEnergy(state, energyCost)) {
+    return actionEnergyBlockReason(state, energyCost)!;
+  }
+
+  const baseCost = 35;
   const targetCI = (target.stats.regimeSecurity ?? 0.5) * 20;
   const discoveryRisk = Math.max(5, 25 + (1 - state.budget.covert) * 20 + targetCI - state.counterIntelLevel * 5);
 
-  if (!deductCost(state, baseCost)) return `Insufficient funds (need $${baseCost}B).`;
+  if (!deductCost(state, baseCost)) {
+    state.actionEnergy += energyCost;
+    return `Insufficient funds (need $${baseCost}B).`;
+  }
 
   state.activeCovertOps.push({
     id: `covert_${state.turn}_${targetNationId}`,
@@ -194,7 +216,13 @@ export function playerExecuteMechanic(
     return `On cooldown (${mechanic.cooldown - (state.turn - lastUsed)} turns remaining).`;
   }
 
+  const energyCost = ACTION_ENERGY_COSTS.nation_mechanic;
+  if (!spendActionEnergy(state, energyCost)) {
+    return actionEnergyBlockReason(state, energyCost)!;
+  }
+
   if (!deductCost(state, mechanic.cost)) {
+    state.actionEnergy += energyCost;
     return `Insufficient funds (need $${mechanic.cost}B).`;
   }
 
@@ -273,11 +301,22 @@ export function playerInvestMilitary(
   const country = state.countries[state.playerCountryId];
   if (!country) return 'Invalid player.';
 
+  const energyCost = ACTION_ENERGY_COSTS.military_invest;
+  if (!spendActionEnergy(state, energyCost)) {
+    return actionEnergyBlockReason(state, energyCost)!;
+  }
+
   const cost = 40;
-  if (!deductCost(state, cost)) return `Insufficient funds (need $${cost}B).`;
+  if (!deductCost(state, cost)) {
+    state.actionEnergy += energyCost;
+    return `Insufficient funds (need $${cost}B).`;
+  }
 
   const current = country.militaryDev[category];
-  if (current >= 5) return `${category} is already maxed out.`;
+  if (current >= 5) {
+    state.actionEnergy += energyCost;
+    return `${category} is already maxed out.`;
+  }
 
   country.militaryDev[category] = Math.min(5, current + 1);
 

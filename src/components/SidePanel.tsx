@@ -2,6 +2,7 @@ import type { GameState } from '../types/game';
 import { getPlayerWars } from '../engine/gameState';
 import { formatGDP } from '../engine/gameState';
 import { getWinProgress } from '../engine/winConditions';
+import { getPendingMissions, getTurnsUntilResolution } from '../engine/diplomaticMissions';
 
 interface SidePanelProps {
   state: GameState;
@@ -13,6 +14,7 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
   const wars = getPlayerWars(state);
   const player = state.countries[state.playerCountryId];
   const winProgress = getWinProgress(state);
+  const pendingMissions = getPendingMissions(state);
 
   return (
     <>
@@ -75,6 +77,21 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
                 </div>
               </div>
             ))}
+          </section>
+
+          <section className="side-section">
+            <h4>Envoys ({pendingMissions.length})</h4>
+            {pendingMissions.length === 0 ? (
+              <p className="muted">No missions in progress.</p>
+            ) : (
+              pendingMissions.map(m => (
+                <div key={m.id} className="mission-entry">
+                  {state.countries[m.targetNationId]?.name}
+                  <span className="muted"> · {m.type.replace(/_/g, ' ')}</span>
+                  <span className="muted"> · {getTurnsUntilResolution(state, m)}t left</span>
+                </div>
+              ))
+            )}
           </section>
 
           <section className="side-section">
