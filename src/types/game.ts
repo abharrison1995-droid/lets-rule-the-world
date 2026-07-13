@@ -239,6 +239,60 @@ export interface StrikeCampaign {
   startedUnprovoked: boolean;
 }
 
+export interface VassalRegion {
+  regionId: string;
+  overlordId: string;
+  subjectNationId: string;
+  formedTurn: number;
+}
+
+export type HexTerrain = 'urban' | 'plains' | 'forest' | 'river' | 'fort';
+
+export type TheaterUnitTag = 'infantry' | 'armor' | 'artillery' | 'air' | 'drone';
+
+export type TheaterDoctrine = 'attack' | 'hold' | 'withdraw';
+
+export type TheaterResolveMode = 'play_out' | 'quick_resolve';
+
+export interface TheaterStack {
+  countryId: string;
+  /** Combat power points */
+  strength: number;
+  tags: TheaterUnitTag[];
+  /** Visible facility / specialist markers when intel allows */
+  specialists: string[];
+}
+
+export interface TheaterHexRuntime {
+  ownerId: string;
+  stack: TheaterStack | null;
+  contested: boolean;
+  fortLevel: number;
+  /** Revealed this turn by strike / adjacency for fog */
+  revealedUntilTurn: number;
+}
+
+export interface PendingRegionFate {
+  theaterId: string;
+  regionId: string;
+  conquerorId: string;
+  subjectNationId: string;
+}
+
+export interface WarTheaterState {
+  id: string;
+  warId: string;
+  defId: string;
+  name: string;
+  /** Runtime hex ownership / stacks keyed by hex def id */
+  hexes: Record<string, TheaterHexRuntime>;
+  doctrineByCountry: Record<string, TheaterDoctrine>;
+  resolveMode: TheaterResolveMode;
+  impulsesThisWorldTurn: number;
+  pendingFate: PendingRegionFate | null;
+  closed: boolean;
+}
+
 export interface GlobalOilShock {
   turnsRemaining: number;
   severity: number;
@@ -524,6 +578,10 @@ export interface GameState {
   eventContextNationId?: string;
   /** Passive automated mechanics for non-playable nations */
   npcMechanicState: Record<string, NpcMechanicRuntime>;
+  /** Active operational war theaters (hex boards) */
+  warTheaters: WarTheaterState[];
+  /** Regions held as vassals rather than fully absorbed */
+  vassalRegions: VassalRegion[];
 }
 
 /** Per-NPC runtime state for automated world-power mechanics */

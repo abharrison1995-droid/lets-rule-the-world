@@ -7,9 +7,10 @@ import {
 import { DEFAULT_DOMESTIC_SPLIT } from './propaganda';
 import { defaultBudget } from './economy';
 import { createDefaultNpcMechanicState } from './npcMechanics';
+import { syncWarTheaters } from './warTheater';
 
 const SAVE_KEY = 'lrw_save';
-export const SAVE_VERSION = 16;
+export const SAVE_VERSION = 17;
 
 interface SavePayload {
   version: number;
@@ -74,6 +75,12 @@ function migrateState(state: GameState, fromVersion: number): GameState {
     migrated.npcMechanicState ??= createDefaultNpcMechanicState();
   }
 
+  if (fromVersion < 17) {
+    migrated.warTheaters ??= [];
+    migrated.vassalRegions ??= [];
+    syncWarTheaters(migrated);
+  }
+
   return fillMissingSaveFields(migrated);
 }
 
@@ -119,6 +126,8 @@ function fillMissingSaveFields(state: GameState): GameState {
   state.gameOver ??= false;
   state.playerWon ??= false;
   state.npcMechanicState ??= createDefaultNpcMechanicState();
+  state.warTheaters ??= [];
+  state.vassalRegions ??= [];
 
   for (const campaign of state.strikeCampaigns) {
     campaign.startedUnprovoked ??= false;

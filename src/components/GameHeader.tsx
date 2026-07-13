@@ -7,12 +7,14 @@ interface GameHeaderProps {
   onEndTurn: () => void;
   onOpenDiplomacy: () => void;
   onOpenEconomy: () => void;
+  onOpenTheater?: () => void;
   onSave: () => void;
 }
 
-export function GameHeader({ state, onEndTurn, onOpenDiplomacy, onOpenEconomy, onSave }: GameHeaderProps) {
+export function GameHeader({ state, onEndTurn, onOpenDiplomacy, onOpenEconomy, onOpenTheater, onSave }: GameHeaderProps) {
   const country = state.countries[state.playerCountryId];
   const atWar = state.wars.some(w => w.belligerents.includes(state.playerCountryId));
+  const hasTheater = (state.warTheaters ?? []).some(t => !t.closed);
   const energy = getActionEnergy(state);
 
   return (
@@ -32,6 +34,9 @@ export function GameHeader({ state, onEndTurn, onOpenDiplomacy, onOpenEconomy, o
       </div>
 
       <div className="header-right">
+        {hasTheater && onOpenTheater && (
+          <button className="btn-header theater-btn" onClick={onOpenTheater}>Theater</button>
+        )}
         <button className="btn-header" onClick={onOpenEconomy}>Economy</button>
         <button className="btn-header" onClick={onOpenDiplomacy}>Diplomacy</button>
         <button className="btn-header" onClick={onSave}>Save</button>

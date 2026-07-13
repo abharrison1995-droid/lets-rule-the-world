@@ -6,6 +6,7 @@ import { declareWar } from './diplomacy';
 import { recordConflictBaseline } from './conflictRelations';
 import type { StrikeType } from './strikes';
 import { getReadinessStrikeMultiplier, drainReadinessForStrike } from './warReadiness';
+import { applyStrikeToTheaterHexes, isRegionInActiveTheater } from './warTheater';
 
 const PRESSURE_THRESHOLD = 100;
 const PRESSURE_SHIFT_BASE = 15;
@@ -57,6 +58,11 @@ export function resolveCombat(state: GameState): void {
     const defenderRegion = state.regions[front.defenderRegionId];
     if (!attackerRegion || !defenderRegion) continue;
 
+    // Hex theaters own flipping for their regions — classic pressure still ticks lightly for exhaust
+    const theaterManaged =
+      isRegionInActiveTheater(state, front.attackerRegionId) ||
+      isRegionInActiveTheater(state, front.defenderRegionId);
+
     const attacker = state.countries[front.attackerCountryId];
     const defender = state.countries[front.defenderCountryId];
     if (!attacker || !defender) continue;
@@ -82,6 +88,14 @@ export function resolveCombat(state: GameState): void {
     const differential = atkPower - defPower;
     const randomFactor = (Math.random() - 0.5) * 10;
     const shift = Math.sign(differential) * Math.min(PRESSURE_SHIFT_BASE, Math.abs(differential) * 0.1) + randomFactor;
+
+    if (theaterManaged) {
+      front.pressure += shift * 0.25;
+      const casualtyRate = 0.01 + Math.abs(differential) * 0.0005;
+      attackerRegion.garrison.troops = Math.max(100, attackerRegion.garrison.troops * (1 - casualtyRate));
+      defenderRegion.garrison.troops = Math.max(100, defenderRegion.garrison.troops * (1 - casualtyRate * 1.1));
+      continue;
+    }
 
     front.pressure += shift;
 
@@ -191,6 +205,7 @@ export function executeStrike(
     targetRegion.garrison.troops = Math.max(0, targetRegion.garrison.troops * troopRetention);
     targetRegion.industryValue *= industryRetention;
     targetRegion.unrest = Math.min(100, targetRegion.unrest + 8 + damageScale * 12);
+    applyStrikeToTheaterHexes(state, attackerId, targetRegionId, effectivePower);
   }
 
   if (attacker) {

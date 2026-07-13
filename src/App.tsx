@@ -48,6 +48,7 @@ import { RegionActionPanel } from './components/RegionActionPanel';
 import { SidePanel } from './components/SidePanel';
 import { TurnSummaryModal } from './components/TurnSummaryModal';
 import { NationIntroModal } from './components/NationIntroModal';
+import { WarTheaterScreen } from './components/WarTheaterScreen';
 import type { StrikeType } from './engine/strikes';
 import { useMobileLayout } from './hooks/useMobileLayout';
 import { getHemisphereForCountry, type HemisphereId } from './data/hemispheres';
@@ -77,6 +78,7 @@ export default function App() {
   const [turnSummary, setTurnSummary] = useState<TurnReportEntry[] | null>(null);
   const [talksResult, setTalksResult] = useState<string | null>(null);
   const [showNationIntro, setShowNationIntro] = useState(false);
+  const [showTheater, setShowTheater] = useState(false);
   const isMobile = useMobileLayout();
   const [mobileWorldView, setMobileWorldView] = useState<'chooser' | HemisphereId>('chooser');
   const [lastHemisphere, setLastHemisphere] = useState<HemisphereId>('eurasia');
@@ -99,6 +101,7 @@ export default function App() {
     setScreen('game');
     setShowDiplomacy(false);
     setShowEconomy(false);
+    setShowTheater(false);
     setFeedback(null);
     setShowNationIntro(false);
     setMobileWorldView('chooser');
@@ -391,14 +394,21 @@ export default function App() {
       <GameHeader
         state={state}
         onEndTurn={endTurn}
-        onOpenDiplomacy={() => { setShowDiplomacy(true); setShowEconomy(false); }}
-        onOpenEconomy={() => { setShowEconomy(true); setShowDiplomacy(false); }}
+        onOpenDiplomacy={() => { setShowDiplomacy(true); setShowEconomy(false); setShowTheater(false); }}
+        onOpenEconomy={() => { setShowEconomy(true); setShowDiplomacy(false); setShowTheater(false); }}
+        onOpenTheater={() => { setShowTheater(true); setShowDiplomacy(false); setShowEconomy(false); }}
         onSave={handleSave}
       />
 
       <div className="game-body">
         <main className="game-main">
-          {state.selectedMapTier === 1 ? (
+          {showTheater ? (
+            <WarTheaterScreen
+              state={state}
+              onClose={() => setShowTheater(false)}
+              onUpdate={updateState}
+            />
+          ) : state.selectedMapTier === 1 ? (
             isMobile ? (
               mobileWorldView === 'chooser' ? (
                 <HemisphereChooser

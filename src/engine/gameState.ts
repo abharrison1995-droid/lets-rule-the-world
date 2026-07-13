@@ -16,6 +16,7 @@ import { resolveStrikeCampaigns } from './strikeCampaigns';
 import { runNpcGreyZoneStrikes, runNpcWartimeStrikes } from './npcStrikes';
 import { tickNpcWorldActivity } from './npcNation';
 import { createDefaultNpcMechanicState, tickNpcMechanics } from './npcMechanics';
+import { syncWarTheaters, tickWarTheaters } from './warTheater';
 import { tickWarReadiness, forceHaltCampaignsFromWeariness } from './warReadiness';
 import { buildTurnReport } from './turnReport';
 import { resetActionEnergy } from './actionEnergy';
@@ -85,12 +86,15 @@ export function createInitialState(playerCountryId: string): GameState {
     lastTurnReport: [],
     actionEnergy: 0,
     npcMechanicState: createDefaultNpcMechanicState(),
+    warTheaters: [],
+    vassalRegions: [],
   };
 
   resetActionEnergy(state);
 
   // Seed opening scenario: Russia-Ukraine war
   seedOpeningScenario(state);
+  syncWarTheaters(state);
 
   return state;
 }
@@ -119,6 +123,7 @@ export function advanceTurn(state: GameState): GameState {
   runNpcGreyZoneStrikes(newState);
   runNpcWartimeStrikes(newState);
   resolveStrikeCampaigns(newState);
+  tickWarTheaters(newState);
   tickWarReadiness(newState);
   forceHaltCampaignsFromWeariness(newState);
   resetActionEnergy(newState);

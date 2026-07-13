@@ -2189,6 +2189,142 @@ body {
   box-shadow: 0 0 0 2px var(--accent);
 }
 
+.btn-header.theater-btn {
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+.theater-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  height: 100%;
+  min-height: 0;
+  padding: 0.5rem 0.75rem 1rem;
+  overflow: auto;
+}
+
+.theater-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.theater-header h3 {
+  margin: 0;
+  flex: 1;
+  font-size: 1rem;
+}
+
+.theater-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.theater-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.7rem;
+  color: var(--text-muted, #94a3b8);
+}
+
+.theater-controls select {
+  min-width: 10rem;
+}
+
+.theater-feedback {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #fbbf24;
+}
+
+.theater-fate-modal {
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: 6px;
+  background: rgba(251, 191, 36, 0.08);
+}
+
+.theater-fate-modal h4 {
+  margin: 0 0 0.25rem;
+}
+
+.theater-fate-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.45rem;
+}
+
+.theater-map-wrap {
+  flex: 1;
+  min-height: 280px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(56, 189, 248, 0.08), transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(251, 191, 36, 0.06), transparent 45%),
+    #0b1220;
+  overflow: hidden;
+}
+
+.theater-hex-map {
+  width: 100%;
+  height: min(55vh, 520px);
+}
+
+.theater-hex-str {
+  fill: #f8fafc;
+  font-size: 7px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.theater-side {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.theater-hex-dossier,
+.theater-region-summary {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.theater-hex-dossier h4,
+.theater-region-summary h5 {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+}
+
+.theater-hex-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+}
+
+.theater-region-summary ul {
+  margin: 0;
+  padding-left: 1rem;
+  font-size: 0.72rem;
+  color: var(--text-muted, #94a3b8);
+}
+
+.theater-region-summary li {
+  margin-bottom: 0.2rem;
+}
+
+@media (max-width: 700px) {
+  .theater-side {
+    grid-template-columns: 1fr;
+  }
+}
+
 @keyframes pulse-war {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.35; }
