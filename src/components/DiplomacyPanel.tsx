@@ -3,13 +3,20 @@ import type { GameState } from '../types/game';
 import type { PeaceTermsType } from '../types/game';
 import { getAllRelationsForCountry } from '../engine/diplomacy';
 import { getMechanicsForNation } from '../data/mechanics';
-import { isAtWarWith } from '../engine/actions';
 import { getPeaceOptions } from '../engine/peace';
+import {
+  categorizeRelation,
+  RELATION_GROUP_LABELS,
+  RELATION_GROUP_ORDER,
+  type RelationCategory,
+} from '../engine/warDeclaration';
+import { TalksScreen } from './TalksScreen';
+import { PressConferenceScreen } from './PressConferenceScreen';
 
 interface DiplomacyPanelProps {
   state: GameState;
   onClose: () => void;
-  onDeclareWar: (targetId: string) => void;
+  onRequestWar: (targetId: string) => void;
   onProposePeace: (targetId: string, terms: PeaceTermsType) => void;
   onCovertOp: (targetId: string) => void;
   onExecuteMechanic: (mechanicId: string, targetId?: string) => void;
@@ -22,24 +29,66 @@ const PEACE_LABELS: Record<PeaceTermsType, string> = {
   reparations: 'Demand Reparations',
 };
 
+type DiplomacyView = 'main' | 'talks' | 'press';
+
 export function DiplomacyPanel({
   state,
   onClose,
-  onDeclareWar,
+  onRequestWar,
   onProposePeace,
   onCovertOp,
   onExecuteMechanic,
   feedback,
 }: DiplomacyPanelProps) {
+  const [view, setView] = useState<DiplomacyView>('main');
+  const [talksTarget, setTalksTarget] = useState<string | null>(null);
   const [mechanicTarget, setMechanicTarget] = useState('');
   const [peaceTarget, setPeaceTarget] = useState('');
+
   const relations = getAllRelationsForCountry(state, state.playerCountryId);
   const alliances = state.alliances.filter(a => a.members.includes(state.playerCountryId));
   const mechanics = getMechanicsForNation(state.playerCountryId);
 
-  const atWarNations = relations.filter(r =>
-    isAtWarWith(state, state.playerCountryId, r.countryId)
+  const grouped = RELATION_GROUP_ORDER.reduce<Record<RelationCategory, typeof relations>>(
+    (acc, cat) => {
+      acc[cat] = relations.filter(r =>
+        categorizeRelation(state, state.playerCountryId, r.countryId, r.value) === cat
+      );
+      return acc;
+    },
+    { at_war: [], allies: [], friendly: [], neutral: [], hostile: [] }
   );
+
+  const atWarNations = grouped.at_war;
+
+  const openTalks = (countryId: string) => {
+    setTalksTarget(countryId);
+    setView('talks');
+  };
+
+  if (view === 'talks' && talksTarget) {
+    return (
+      <div className="panel diplomacy-panel">
+        <TalksScreen
+          state={state}
+          targetId={talksTarget}
+          onBack={() => { setView('main'); setTalksTarget(null); }}
+        />
+      </div>
+    );
+  }
+
+  if (view === 'press') {
+    return (
+      <div className="panel diplomacy-panel">
+        <PressConferenceScreen
+          state={state}
+          onBack={() => setView('main')}
+          onRequestWar={onRequestWar}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="panel diplomacy-panel">
@@ -49,6 +98,18 @@ export function DiplomacyPanel({
       </div>
 
       {feedback && <p className="feedback-msg">{feedback}</p>}
+
+      <div className="diplomacy-quick-actions">
+        <button className="btn-diplomacy-nav press" onClick={() => setView('press')}>
+          🎙️ Press Conference
+        </button>
+      </div>
+
+      {state.internationalPariahTurns > 0 && (
+        <p className="warning pariah-banner">
+          Global condemnation active — {state.internationalPariahTurns} turn{state.internationalPariahTurns !== 1 ? 's' : ''} remaining
+        </p>
+      )}
 
       {atWarNations.length > 0 && (
         <section className="panel-section peace-section">
@@ -89,32 +150,48 @@ export function DiplomacyPanel({
       </section>
 
       <section className="panel-section">
-        <h4>Relations & War</h4>
-        <div className="relations-table">
-          <div className="relations-header">
-            <span>Nation</span>
-            <span>Score</span>
-            <span>Actions</span>
-          </div>
-          {relations.map(r => {
-            const atWar = isAtWarWith(state, state.playerCountryId, r.countryId);
-            return (
-              <div key={r.countryId} className="relation-row">
-                <span>{r.name}</span>
-                <span className={`relation-value ${r.value > 0 ? 'positive' : r.value < 0 ? 'negative' : ''}`}>
-                  {r.value > 0 ? '+' : ''}{r.value}
-                </span>
-                <span className="relation-actions">
-                  {!atWar && (
-                    <button className="btn-small war" onClick={() => onDeclareWar(r.countryId)} title="Declare war">⚔</button>
-                  )}
-                  {atWar && <span className="war-active">AT WAR</span>}
-                  <button className="btn-small covert" onClick={() => onCovertOp(r.countryId)} title="Covert op">🕵</button>
-                </span>
-              </div>
-            );
-          })}
-        </div>
+        <h4>Relations</h4>
+        {RELATION_GROUP_ORDER.map(category => {
+          const group = grouped[category];
+          if (group.length === 0) return null;
+          return (
+            <div key={category} className="relation-group">
+              <h5 className="relation-group-title">{RELATION_GROUP_LABELS[category]}</h5>
+              {group.map(r => (
+                <div key={r.countryId} className="relation-row grouped">
+                  <span className="relation-nation">
+                    <span
+                      className="nation-dot"
+                      style={{ backgroundColor: state.countries[r.countryId]?.color }}
+                    />
+                    {r.name}
+                  </span>
+                  <span className={`relation-value ${r.value > 0 ? 'positive' : r.value < 0 ? 'negative' : ''}`}>
+                    {r.value > 0 ? '+' : ''}{r.value}
+                  </span>
+                  <span className="relation-actions">
+                    <button
+                      className="btn-small meeting"
+                      onClick={() => openTalks(r.countryId)}
+                      title="Enter talks"
+                    >
+                      Meeting
+                    </button>
+                    {category !== 'at_war' && (
+                      <button
+                        className="btn-small covert"
+                        onClick={() => onCovertOp(r.countryId)}
+                        title="Covert op"
+                      >
+                        🕵
+                      </button>
+                    )}
+                  </span>
+                </div>
+              ))}
+            </div>
+          );
+        })}
       </section>
 
       {mechanics.length > 0 && (

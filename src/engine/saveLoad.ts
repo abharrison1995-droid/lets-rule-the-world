@@ -1,5 +1,5 @@
 const SAVE_KEY = 'lrw_save';
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
 
 export function saveGame(state: unknown): void {
   const payload = { version: SAVE_VERSION, timestamp: Date.now(), state };

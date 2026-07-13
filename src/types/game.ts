@@ -233,6 +233,22 @@ export interface StrikeAnimation {
   turn: number;
 }
 
+export interface WarDeclarationPreview {
+  targetId: string;
+  targetName: string;
+  canDeclare: boolean;
+  blockReason?: string;
+  warsDeclaredThisTurn: number;
+  warCap: number;
+  warsRemaining: number;
+  blocExpulsions: Array<{ allianceId: string; allianceName: string }>;
+  blocMembersJoiningWar: Array<{ countryId: string; name: string; blocName: string }>;
+  alliesLikelyToJoinEnemy: Array<{ countryId: string; name: string; allianceName: string }>;
+  relationHits: Array<{ countryId: string; name: string; estimatedDelta: number }>;
+  triggersGlobalCondemnation: boolean;
+  condemnationReason?: string;
+}
+
 export interface GameState {
   turn: number;
   playerCountryId: string;
@@ -263,6 +279,10 @@ export interface GameState {
   visibleLayers: LayerCategory[];
   showDefenseRanges: boolean;
   history: string[];
+  /** Wars the player declared this turn (resets each turn) */
+  warsDeclaredThisTurn: number;
+  /** Turns remaining of global condemnation debuff */
+  internationalPariahTurns: number;
   /** Contextual nation for event effects (sender, ally, etc.) */
   eventContextNationId?: string;
 }

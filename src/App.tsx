@@ -10,6 +10,7 @@ import {
   playerLaunchCovertOp,
   playerExecuteMechanic,
   playerInvestMilitary,
+  getWarDeclarationPreview,
 } from './engine/actions';
 import { proposePeace } from './engine/peace';
 import { playerDomesticPropaganda, playerForeignInfluence } from './engine/propaganda';
@@ -20,6 +21,7 @@ import { HemisphereChooser } from './components/HemisphereChooser';
 import { NationalMap } from './components/NationalMap';
 import { LayerTray } from './components/LayerTray';
 import { DiplomacyPanel } from './components/DiplomacyPanel';
+import { WarConfirmModal } from './components/WarConfirmModal';
 import { EconomyPanel } from './components/EconomyPanel';
 import { EventModal } from './components/EventModal';
 import { RegionActionPanel } from './components/RegionActionPanel';
@@ -40,6 +42,7 @@ export default function App() {
   );
   const [saveExists, setSaveExists] = useState(hasSavedGame());
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [warConfirmTarget, setWarConfirmTarget] = useState<string | null>(null);
   const isMobile = useMobileLayout();
   const [mobileWorldView, setMobileWorldView] = useState<'chooser' | HemisphereId>('chooser');
   const [lastHemisphere, setLastHemisphere] = useState<HemisphereId>('eurasia');
@@ -125,13 +128,22 @@ export default function App() {
     else updateState(newState);
   }, [state, updateState]);
 
-  const handleDeclareWar = useCallback((targetId: string) => {
-    if (!state) return;
+  const handleRequestWar = useCallback((targetId: string) => {
+    setWarConfirmTarget(targetId);
+  }, []);
+
+  const handleConfirmWar = useCallback(() => {
+    if (!state || !warConfirmTarget) return;
     const newState = structuredClone(state);
-    const err = playerDeclareWar(newState, targetId);
+    const err = playerDeclareWar(newState, warConfirmTarget);
+    setWarConfirmTarget(null);
     if (err) showFeedback(err);
     else updateState(newState);
-  }, [state, updateState]);
+  }, [state, warConfirmTarget, updateState]);
+
+  const handleCancelWar = useCallback(() => {
+    setWarConfirmTarget(null);
+  }, []);
 
   const handleProposePeace = useCallback((targetId: string, terms: PeaceTermsType) => {
     if (!state) return;
@@ -304,11 +316,18 @@ export default function App() {
         <DiplomacyPanel
           state={state}
           onClose={() => setShowDiplomacy(false)}
-          onDeclareWar={handleDeclareWar}
+          onRequestWar={handleRequestWar}
           onProposePeace={handleProposePeace}
           onCovertOp={handleCovertOp}
           onExecuteMechanic={handleMechanic}
           feedback={feedback}
+        />
+      )}
+      {warConfirmTarget && (
+        <WarConfirmModal
+          preview={getWarDeclarationPreview(state, state.playerCountryId, warConfirmTarget)}
+          onConfirm={handleConfirmWar}
+          onCancel={handleCancelWar}
         />
       )}
       {showEconomy && (

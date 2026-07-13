@@ -1,7 +1,11 @@
 import type { GameState, MilitaryDev } from '../types/game';
 import { getMechanicsForNation } from '../data/mechanics';
 import { modifyRelation } from '../data/relations';
-import { declareWar } from './diplomacy';
+import { declareWar, applyGlobalCondemnation } from './diplomacy';
+import {
+  getWarDeclarationPreview,
+  wouldTriggerGlobalCondemnation,
+} from './warDeclaration';
 import { executeStrike } from './combat';
 import { getRegionsForCountry } from '../data/regions';
 
@@ -33,17 +37,29 @@ export function deductCost(state: GameState, costBillions: number): boolean {
 }
 
 export function playerDeclareWar(state: GameState, targetId: string): string | null {
-  if (targetId === state.playerCountryId) return 'Cannot declare war on yourself.';
-  if (!state.countries[targetId]) return 'Invalid target.';
-  if (isAtWarWith(state, state.playerCountryId, targetId)) return 'Already at war.';
+  const preview = getWarDeclarationPreview(state, state.playerCountryId, targetId);
+  if (!preview.canDeclare) return preview.blockReason ?? 'Cannot declare war.';
 
   declareWar(state, state.playerCountryId, targetId);
+  state.warsDeclaredThisTurn += 1;
+
+  const condemnation = wouldTriggerGlobalCondemnation(
+    { ...state, warsDeclaredThisTurn: state.warsDeclaredThisTurn - 1 },
+    state.playerCountryId,
+    targetId
+  );
+  if (condemnation.triggers && condemnation.reason) {
+    applyGlobalCondemnation(state, state.playerCountryId, condemnation.reason);
+  }
+
   state.countries[state.playerCountryId].stats.warPopularity = Math.max(
     0,
     state.countries[state.playerCountryId].stats.warPopularity - 0.1
   );
   return null;
 }
+
+export { getWarDeclarationPreview, canDeclareWarThisTurn, getWarsRemaining } from './warDeclaration';
 
 export function playerLaunchStrike(state: GameState, targetRegionId: string): string | null {
   const region = state.regions[targetRegionId];

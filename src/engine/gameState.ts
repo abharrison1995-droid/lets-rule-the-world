@@ -4,7 +4,7 @@ import { REGIONS } from '../data/regions';
 import { buildRelationsMatrix } from '../data/relations';
 import { defaultBudget } from './economy';
 import { tickEconomy, applyBudgetEffects } from './economy';
-import { tickDiplomacy, declareWar } from './diplomacy';
+import { tickDiplomacy, declareWar, tickInternationalPariah } from './diplomacy';
 import { detectFronts, resolveCombat, decayUnrest, cleanStrikeAnimations } from './combat';
 import { rollEvents, checkCollapseConditions } from './events';
 import { checkWinConditions } from './winConditions';
@@ -50,6 +50,8 @@ export function createInitialState(playerCountryId: string): GameState {
     visibleLayers: ['military', 'alliances'],
     showDefenseRanges: false,
     history: [`Turn 0: ${countries[playerCountryId]?.name} assumes leadership.`],
+    warsDeclaredThisTurn: 0,
+    internationalPariahTurns: 0,
   };
 
   // Seed opening scenario: Russia-Ukraine war
@@ -71,6 +73,7 @@ export function advanceTurn(state: GameState): GameState {
 
   const newState = structuredClone(state);
   newState.turn += 1;
+  newState.warsDeclaredThisTurn = 0;
 
   // Update fronts before economy (war exhaustion needs current front count)
   newState.fronts = detectFronts(newState);
@@ -78,6 +81,7 @@ export function advanceTurn(state: GameState): GameState {
   // Turn loop per spec
   tickEconomy(newState);
   tickDiplomacy(newState);
+  tickInternationalPariah(newState);
   rollEvents(newState);
   applyBudgetEffects(newState);
   tickCounterIntel(newState);

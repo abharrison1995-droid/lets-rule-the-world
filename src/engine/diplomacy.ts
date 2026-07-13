@@ -124,6 +124,22 @@ function breakAlliance(state: GameState, allianceId: string, breaker: string): v
   state.history.push(`Turn ${state.turn}: ${state.countries[breaker]?.name} broke an alliance.`);
 }
 
+export function expelFromAlliance(state: GameState, allianceId: string, expelledId: string, reason: string): void {
+  const alliance = state.alliances.find(a => a.id === allianceId);
+  if (!alliance || !alliance.members.includes(expelledId)) return;
+
+  for (const member of alliance.members) {
+    if (member !== expelledId) {
+      modifyRelation(state.relations, expelledId, member, -25);
+    }
+  }
+
+  alliance.members = alliance.members.filter(m => m !== expelledId);
+  state.history.push(
+    `Turn ${state.turn}: ${state.countries[expelledId]?.name} expelled from ${alliance.name} (${reason}).`
+  );
+}
+
 function applyIdeologicalDrift(state: GameState): void {
   const pairs = [
     ['usa', 'china', -1], ['usa', 'russia', -1], ['russia', 'china', 1],
@@ -161,6 +177,13 @@ export function declareWar(state: GameState, attackerId: string, defenderId: str
   );
   if (existing) return;
 
+  // Expel attacker from alliances shared with defender (e.g. attacking a NATO ally)
+  for (const alliance of [...state.alliances]) {
+    if (alliance.members.includes(attackerId) && alliance.members.includes(defenderId)) {
+      expelFromAlliance(state, alliance.id, attackerId, `war on ${state.countries[defenderId]?.name}`);
+    }
+  }
+
   state.wars.push({
     id: `war_${attackerId}_${defenderId}_${state.turn}`,
     belligerents: [attackerId, defenderId],
@@ -168,9 +191,21 @@ export function declareWar(state: GameState, attackerId: string, defenderId: str
     isDefensive: { [defenderId]: true },
   });
 
+  const war = state.wars[state.wars.length - 1];
+
+  // Bloc-wide war: all members of defender's blocs join against attacker
+  for (const alliance of state.alliances) {
+    if (alliance.tier !== 'bloc' || !alliance.members.includes(defenderId)) continue;
+    for (const member of alliance.members) {
+      if (member !== defenderId && !war.belligerents.includes(member)) {
+        war.belligerents.push(member);
+        war.isDefensive[member] = true;
+      }
+    }
+  }
+
   const allies = checkAllianceCallUp(state, defenderId, attackerId);
   for (const ally of allies) {
-    const war = state.wars[state.wars.length - 1];
     if (!war.belligerents.includes(ally)) {
       war.belligerents.push(ally);
     }
@@ -186,6 +221,32 @@ export function declareWar(state: GameState, attackerId: string, defenderId: str
   }
 
   state.history.push(`Turn ${state.turn}: ${state.countries[attackerId]?.name} declared war on ${state.countries[defenderId]?.name}.`);
+}
+
+export function applyGlobalCondemnation(state: GameState, attackerId: string, reason: string): void {
+  state.internationalPariahTurns = Math.max(state.internationalPariahTurns, 3);
+
+  for (const countryId of Object.keys(state.countries)) {
+    if (countryId === attackerId) continue;
+    modifyRelation(state.relations, countryId, attackerId, -10);
+  }
+
+  const attacker = state.countries[attackerId];
+  if (attacker) {
+    attacker.stats.warPopularity = Math.max(0, attacker.stats.warPopularity - 0.15);
+  }
+
+  state.history.push(`Turn ${state.turn}: Global condemnation of ${attacker?.name} — ${reason}`);
+}
+
+export function tickInternationalPariah(state: GameState): void {
+  if (state.internationalPariahTurns <= 0) return;
+  state.internationalPariahTurns -= 1;
+
+  const player = state.countries[state.playerCountryId];
+  if (player && state.internationalPariahTurns > 0) {
+    player.stats.gdpGrowth = Math.max(-0.05, player.stats.gdpGrowth - 0.005);
+  }
 }
 
 export function getBlocColor(state: GameState, countryId: string): string {
