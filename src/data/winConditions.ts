@@ -12,6 +12,8 @@ export const WIN_CONDITIONS: Record<string, WinConditionDef> = {
     type: 'hegemony',
     description: 'Lead NATO: stay in NATO bloc with 2+ allies above 60 relations for 35 turns.',
     minAlliesHighRelation: 2,
+    alliesRelationThreshold: 60,
+    requireAllianceId: 'nato',
     minTurns: 35,
   },
   russia: {
@@ -46,6 +48,7 @@ export const WIN_CONDITIONS: Record<string, WinConditionDef> = {
     description: 'Rising power: treasury reaches $117B and control all home regions for 35 turns.',
     minTreasury: 117,
     minTurns: 35,
+    controlHomeRegions: true,
   },
   pakistan: {
     type: 'survival',

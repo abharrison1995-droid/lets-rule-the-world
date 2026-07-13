@@ -53,7 +53,20 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
             <p>Treasury: {formatDisplayGDP(player?.stats.treasuryPoints ?? 0)}</p>
             <p>Counter-Intel: {((state.counterIntelLevel) * 100).toFixed(0)}%</p>
             <p>Morale: {((player?.stats.moraleBase ?? 0) * 100).toFixed(0)}%</p>
+            <p>War Support: {((player?.stats.warPopularity ?? 0) * 100).toFixed(0)}%</p>
             <p>War Exhaustion: {((player?.stats.warExhaustion ?? 0) * 100).toFixed(0)}%</p>
+            {(player?.stats.propagandaSaturation ?? 0) > 0.15 && (
+              <p>Propaganda Saturation: {((player?.stats.propagandaSaturation ?? 0) * 100).toFixed(0)}%</p>
+            )}
+            {(state.taxPressureTurns ?? 0) > 0 && (
+              <p className="warning-text">Tax pressure: {state.taxPressureTurns} turn(s)</p>
+            )}
+            {state.globalOilShock && state.globalOilShock.turnsRemaining > 0 && (
+              <p className="warning-text">Oil shock: {state.globalOilShock.turnsRemaining}t</p>
+            )}
+            {state.internationalPariahTurns > 0 && (
+              <p className="warning-text">International pariah: {state.internationalPariahTurns}t</p>
+            )}
             {state.declineMode && <p className="warning-text">⚠ Decline Mode</p>}
           </section>
 
@@ -79,11 +92,12 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
             {state.fronts.slice(0, 5).map(f => (
               <div key={f.id} className="front-entry">
                 {state.regions[f.attackerRegionId]?.name} ↔ {state.regions[f.defenderRegionId]?.name}
+                <span className="muted"> · {Math.abs(f.pressure)}/100</span>
                 <div className="pressure-bar">
                   <div
                     className="pressure-fill"
                     style={{
-                      width: `${Math.abs(f.pressure)}%`,
+                      width: `${Math.min(100, Math.abs(f.pressure))}%`,
                       background: f.pressure > 0 ? '#ef4444' : '#3b82f6',
                     }}
                   />

@@ -103,7 +103,7 @@ export function RegionActionPanel({
                   title={opt.blockReason ?? opt.description}
                   onClick={() => onStrike(regionId, opt.type)}
                 >
-                  ⚡ {opt.label} — {formatDisplayCost(opt.cost)}
+                  ⚡ {opt.label} — {formatDisplayCost(opt.cost)} · {opt.energyCost}⚡
                 </button>
               ))}
             </section>
@@ -134,7 +134,7 @@ export function RegionActionPanel({
                     title={opt?.blockReason ?? def.description}
                     onClick={() => sourceRegionId && onStartCampaign(sourceRegionId, regionId, type)}
                   >
-                    🎯 {def.label} — {formatDisplayCost(startCost)} start · {formatDisplayCost(def.sustainCost)}/turn
+                    🎯 {def.label} — {formatDisplayCost(startCost)} start · {formatDisplayCost(def.sustainCost)}/turn · {def.energyCost}⚡
                   </button>
                 );
               })}

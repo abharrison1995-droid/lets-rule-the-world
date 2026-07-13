@@ -176,7 +176,7 @@ export function EconomyPanel({
         </div>
       </section>
 
-      <section className="panel-section placeholder-tax-end">
+      <section className="panel-section">
         <h4>Budget Allocation {Math.abs(total - 1) > 0.01 && <span className="warning">({formatPercent(total)})</span>}</h4>
         {(Object.keys(BUDGET_LABELS) as Array<keyof BudgetAllocation>).map(key => (
           <div key={key} className="budget-slider">

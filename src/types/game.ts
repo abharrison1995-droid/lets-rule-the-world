@@ -290,6 +290,9 @@ export interface WinConditionDef {
   minTurns?: number;
   minTreasury?: number;
   minAlliesHighRelation?: number;
+  alliesRelationThreshold?: number;
+  requireAllianceId?: string;
+  controlHomeRegions?: boolean;
   minRelations?: Record<string, number>;
   minRegimeSecurity?: number;
   annexCountryIds?: string[];
