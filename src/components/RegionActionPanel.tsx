@@ -20,8 +20,8 @@ interface RegionActionPanelProps {
   state: GameState;
   regionId: string;
   onClose: () => void;
-  onStrike: (regionId: string, strikeType: StrikeType) => void;
-  onStartCampaign: (sourceRegionId: string, targetRegionId: string, strikeType: StrikeType) => void;
+  onRequestStrike: (regionId: string, strikeType: StrikeType) => void;
+  onRequestCampaign: (sourceRegionId: string, targetRegionId: string, strikeType: StrikeType) => void;
   onCancelCampaign: (campaignId: string) => void;
   onBuildFacility: (regionId: string, type: FacilityType) => void;
 }
@@ -32,8 +32,8 @@ export function RegionActionPanel({
   state,
   regionId,
   onClose,
-  onStrike,
-  onStartCampaign,
+  onRequestStrike,
+  onRequestCampaign,
   onCancelCampaign,
   onBuildFacility,
 }: RegionActionPanelProps) {
@@ -101,7 +101,7 @@ export function RegionActionPanel({
                   className={`btn-action strike ${opt.available ? '' : 'disabled-option'}`}
                   disabled={!opt.available}
                   title={opt.blockReason ?? opt.description}
-                  onClick={() => onStrike(regionId, opt.type)}
+                  onClick={() => onRequestStrike(regionId, opt.type)}
                 >
                   ⚡ {opt.label} — {formatDisplayCost(opt.cost)} · {opt.energyCost}⚡
                 </button>
@@ -132,7 +132,7 @@ export function RegionActionPanel({
                     className="btn-action"
                     disabled={!available || !!busy || !sourceRegionId}
                     title={opt?.blockReason ?? def.description}
-                    onClick={() => sourceRegionId && onStartCampaign(sourceRegionId, regionId, type)}
+                    onClick={() => sourceRegionId && onRequestCampaign(sourceRegionId, regionId, type)}
                   >
                     🎯 {def.label} — {formatDisplayCost(startCost)} start · {formatDisplayCost(def.sustainCost)}/turn · {def.energyCost}⚡
                   </button>

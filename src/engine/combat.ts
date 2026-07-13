@@ -129,6 +129,31 @@ const UNPROVOKED_DIRECT_PENALTY: Record<StrikeType, number> = {
   icbm: 68,
 };
 
+export function getUnprovokedStrikePenalty(strikeType: StrikeType): number {
+  return UNPROVOKED_DIRECT_PENALTY[strikeType] ?? 45;
+}
+
+export function estimateUnprovokedSpillover(
+  state: GameState,
+  attackerId: string,
+  targetOwnerId: string
+): Array<{ countryId: string; name: string; estimatedDelta: number }> {
+  const hits: Array<{ countryId: string; name: string; estimatedDelta: number }> = [];
+  for (const countryId of Object.keys(state.countries)) {
+    if (countryId === attackerId || countryId === targetOwnerId) continue;
+    const allyToVictim = getRelation(state.relations, countryId, targetOwnerId);
+    if (allyToVictim > 25) {
+      hits.push({
+        countryId,
+        name: state.countries[countryId]?.name ?? countryId,
+        estimatedDelta: -Math.round(8 + allyToVictim * 0.12),
+      });
+    }
+  }
+  hits.sort((a, b) => a.estimatedDelta - b.estimatedDelta);
+  return hits;
+}
+
 export function executeStrike(
   state: GameState,
   attackerId: string,
@@ -164,7 +189,7 @@ export function executeStrike(
   if (!atWar) {
     recordConflictBaseline(state, attackerId, targetOwner);
 
-    const directPenalty = UNPROVOKED_DIRECT_PENALTY[strikeType] ?? 45;
+    const directPenalty = getUnprovokedStrikePenalty(strikeType);
     modifyRelation(state.relations, attackerId, targetOwner, -directPenalty);
 
     const victim = state.countries[targetOwner];

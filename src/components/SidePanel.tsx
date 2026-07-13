@@ -12,7 +12,7 @@ import {
   getTurnsUntilMilitaryUpgrade,
   MIL_CATEGORY_LABELS,
 } from '../engine/militaryDevUpgrades';
-import { getPlayerCampaigns, CAMPAIGN_DEFS } from '../engine/strikeCampaigns';
+import { getPlayerCampaigns, getCampaignsTargetingPlayer, CAMPAIGN_DEFS } from '../engine/strikeCampaigns';
 import { getWinProgress } from '../engine/winConditions';
 
 interface SidePanelProps {
@@ -29,6 +29,7 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
   const pendingBuilds = getPendingFacilityBuilds(state);
   const milUpgrade = getPendingMilitaryUpgrade(state);
   const strikeCampaigns = getPlayerCampaigns(state);
+  const incomingCampaigns = getCampaignsTargetingPlayer(state);
 
   return (
     <>
@@ -65,7 +66,7 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
               <p className="warning-text">Oil shock: {state.globalOilShock.turnsRemaining}t</p>
             )}
             {state.internationalPariahTurns > 0 && (
-              <p className="warning-text">International pariah: {state.internationalPariahTurns}t</p>
+              <p className="warning-text">International pariah: {state.internationalPariahTurns}t (income drag)</p>
             )}
             {state.declineMode && <p className="warning-text">⚠ Decline Mode</p>}
           </section>
@@ -86,6 +87,19 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
               ))
             )}
           </section>
+
+          {incomingCampaigns.length > 0 && (
+            <section className="side-section incoming-threats">
+              <h4>Incoming Strikes ({incomingCampaigns.length})</h4>
+              {incomingCampaigns.map(c => (
+                <div key={c.id} className="mission-entry warning-text">
+                  🎯 {state.countries[c.attackerCountryId]?.name} → {state.regions[c.targetRegionId]?.name}
+                  <span className="muted"> · {CAMPAIGN_DEFS[c.strikeType].label}</span>
+                  <span className="muted"> · {state.turn - c.startTurn}t active</span>
+                </div>
+              ))}
+            </section>
+          )}
 
           <section className="side-section">
             <h4>Fronts ({state.fronts.length})</h4>

@@ -85,6 +85,10 @@ function applyUnprovokedCampaignEscalation(state: GameState, campaign: StrikeCam
   if (!target || !attacker) return;
 
   const victimId = target.controlledBy;
+  if (isAtWarWith(state, campaign.attackerCountryId, victimId)) {
+    campaign.startedUnprovoked = false;
+    return;
+  }
   const sustainTurns = state.turn - campaign.startTurn;
   const penalty = SUSTAIN_ESCALATION_PENALTY[campaign.strikeType] ?? 10;
 
@@ -117,6 +121,15 @@ function applyUnprovokedCampaignEscalation(state: GameState, campaign: StrikeCam
 
 export function getPlayerCampaigns(state: GameState): StrikeCampaign[] {
   return (state.strikeCampaigns ?? []).filter(c => c.attackerCountryId === state.playerCountryId);
+}
+
+export function getCampaignsTargetingPlayer(state: GameState): StrikeCampaign[] {
+  const playerId = state.playerCountryId;
+  return (state.strikeCampaigns ?? []).filter(c => {
+    if (c.attackerCountryId === playerId) return false;
+    const target = state.regions[c.targetRegionId];
+    return target?.controlledBy === playerId;
+  });
 }
 
 export function hasCampaignOnTarget(
@@ -184,6 +197,11 @@ export function playerStartStrikeCampaign(
   const strikePower = computeStrikePower(attacker!, strikeType, option.power * def.powerScale);
   executeStrike(state, state.playerCountryId, targetRegionId, strikePower, strikeType);
 
+  const campaignEntry = state.strikeCampaigns![state.strikeCampaigns!.length - 1];
+  if (isAtWarWith(state, state.playerCountryId, target.controlledBy)) {
+    campaignEntry.startedUnprovoked = false;
+  }
+
   state.history.push(
     `Turn ${state.turn}: ${def.label} opened from ${source.name} against ${target.name} (${formatDisplayCost(def.sustainCost)}/turn).`
   );
@@ -248,8 +266,10 @@ export function resolveStrikeCampaigns(state: GameState): void {
     const strikePower = computeStrikePower(attacker, campaign.strikeType, option.power * def.powerScale * 0.85);
     executeStrike(state, campaign.attackerCountryId, campaign.targetRegionId, strikePower, campaign.strikeType);
 
-    if (campaign.startedUnprovoked) {
+    if (campaign.startedUnprovoked && !isAtWarWith(state, campaign.attackerCountryId, target.controlledBy)) {
       applyUnprovokedCampaignEscalation(state, campaign);
+    } else if (campaign.startedUnprovoked) {
+      campaign.startedUnprovoked = false;
     }
 
     surviving.push(campaign);

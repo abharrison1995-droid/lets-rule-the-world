@@ -1334,6 +1334,15 @@ body {
 .relation-badge.negative { color: var(--danger); }
 
 /* War confirm modal */
+.incoming-threats .mission-entry {
+  border-left: 2px solid var(--danger);
+  padding-left: 0.4rem;
+}
+
+.strike-confirm-modal .war-preview-stats {
+  flex-wrap: wrap;
+}
+
 .war-confirm-modal {
   max-width: 480px;
   max-height: 85dvh;

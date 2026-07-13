@@ -181,6 +181,9 @@ export function EconomyPanel({
           {taxPreview.oilShockDrag > 0 && (
             <p className="warning-text">Oil shock drag: −{formatDisplayGDP(taxPreview.oilShockDrag)}</p>
           )}
+          {taxPreview.pariahDrag > 0 && (
+            <p className="warning-text">Pariah condemnation drag: −{formatDisplayGDP(taxPreview.pariahDrag)}</p>
+          )}
           {(state.taxPressureTurns ?? 0) > 0 && (
             <p className="warning-text">High taxes are eroding morale and raising unrest.</p>
           )}

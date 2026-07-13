@@ -278,11 +278,15 @@ export function applyGlobalCondemnation(state: GameState, attackerId: string, re
 export function tickInternationalPariah(state: GameState): void {
   if (state.internationalPariahTurns <= 0) return;
   state.internationalPariahTurns -= 1;
+}
 
-  const player = state.countries[state.playerCountryId];
-  if (player && state.internationalPariahTurns > 0) {
-    player.stats.baseGrowthRate = Math.max(-0.05, player.stats.baseGrowthRate - 0.005);
-  }
+/** Temporary income drag while under international condemnation (reversible when pariah expires). */
+export function getPariahIncomeDrag(state: GameState, countryId: string): number {
+  if (countryId !== state.playerCountryId || state.internationalPariahTurns <= 0) return 0;
+  const country = state.countries[countryId];
+  if (!country) return 0;
+  const severity = Math.min(1, state.internationalPariahTurns / 3) * 0.028;
+  return country.stats.treasuryPoints * severity;
 }
 
 export function getBlocColor(state: GameState, countryId: string): string {

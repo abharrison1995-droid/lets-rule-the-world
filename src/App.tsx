@@ -20,6 +20,7 @@ import { dispatchTalkMission } from './engine/diplomaticMissions';
 import { playerDomesticPropaganda, playerForeignInfluence } from './engine/propaganda';
 import { playerStartFacilityBuild } from './engine/facilities';
 import { playerStartStrikeCampaign, playerCancelStrikeCampaign } from './engine/strikeCampaigns';
+import { getStrikeConfirmPreview, getCampaignConfirmPreview } from './engine/strikePreview';
 import { NationSelect } from './components/NationSelect';
 import { GameHeader } from './components/GameHeader';
 import { WorldMap } from './components/WorldMap';
@@ -28,6 +29,7 @@ import { NationalMap } from './components/NationalMap';
 import { LayerTray } from './components/LayerTray';
 import { DiplomacyPanel } from './components/DiplomacyPanel';
 import { WarConfirmModal } from './components/WarConfirmModal';
+import { StrikeConfirmModal } from './components/StrikeConfirmModal';
 import { EconomyPanel } from './components/EconomyPanel';
 import { EventModal } from './components/EventModal';
 import { RegionActionPanel } from './components/RegionActionPanel';
@@ -40,6 +42,10 @@ import './App.css';
 
 type Screen = 'menu' | 'game';
 
+type StrikeConfirmRequest =
+  | { kind: 'strike'; regionId: string; strikeType: StrikeType }
+  | { kind: 'campaign'; sourceRegionId: string; targetRegionId: string; strikeType: StrikeType };
+
 export default function App() {
   const [screen, setScreen] = useState<Screen>('menu');
   const [state, setState] = useState<GameState | null>(null);
@@ -51,6 +57,7 @@ export default function App() {
   const [saveExists, setSaveExists] = useState(hasSavedGame());
   const [feedback, setFeedback] = useState<string | null>(null);
   const [warConfirmTarget, setWarConfirmTarget] = useState<string | null>(null);
+  const [strikeConfirm, setStrikeConfirm] = useState<StrikeConfirmRequest | null>(null);
   const [talksResult, setTalksResult] = useState<string | null>(null);
   const [showNationIntro, setShowNationIntro] = useState(false);
   const isMobile = useMobileLayout();
@@ -131,25 +138,42 @@ export default function App() {
     setState({ ...state, selectedRegionId: regionId });
   }, [state]);
 
-  const handleStrike = useCallback((regionId: string, strikeType: StrikeType) => {
-    if (!state) return;
-    const newState = structuredClone(state);
-    const err = playerLaunchStrike(newState, regionId, strikeType);
-    if (err) showFeedback(err);
-    else updateState(newState);
-  }, [state, updateState]);
+  const handleRequestStrike = useCallback((regionId: string, strikeType: StrikeType) => {
+    setStrikeConfirm({ kind: 'strike', regionId, strikeType });
+  }, []);
 
-  const handleStartCampaign = useCallback((
+  const handleRequestCampaign = useCallback((
     sourceRegionId: string,
     targetRegionId: string,
     strikeType: StrikeType
   ) => {
-    if (!state) return;
+    setStrikeConfirm({ kind: 'campaign', sourceRegionId, targetRegionId, strikeType });
+  }, []);
+
+  const handleConfirmStrike = useCallback(() => {
+    if (!state || !strikeConfirm) return;
     const newState = structuredClone(state);
-    const err = playerStartStrikeCampaign(newState, sourceRegionId, targetRegionId, strikeType);
+    let err: string | null = null;
+
+    if (strikeConfirm.kind === 'strike') {
+      err = playerLaunchStrike(newState, strikeConfirm.regionId, strikeConfirm.strikeType);
+    } else {
+      err = playerStartStrikeCampaign(
+        newState,
+        strikeConfirm.sourceRegionId,
+        strikeConfirm.targetRegionId,
+        strikeConfirm.strikeType
+      );
+    }
+
+    setStrikeConfirm(null);
     if (err) showFeedback(err);
     else updateState(newState);
-  }, [state, updateState]);
+  }, [state, strikeConfirm, updateState]);
+
+  const handleCancelStrike = useCallback(() => {
+    setStrikeConfirm(null);
+  }, []);
 
   const handleCancelCampaign = useCallback((campaignId: string) => {
     if (!state) return;
@@ -389,8 +413,8 @@ export default function App() {
               state={state}
               regionId={state.selectedRegionId}
               onClose={() => setState({ ...state, selectedRegionId: null })}
-              onStrike={handleStrike}
-              onStartCampaign={handleStartCampaign}
+              onRequestStrike={handleRequestStrike}
+              onRequestCampaign={handleRequestCampaign}
               onCancelCampaign={handleCancelCampaign}
               onBuildFacility={handleBuildFacility}
             />
@@ -418,6 +442,24 @@ export default function App() {
           talksResult={talksResult}
         />
       )}
+      {strikeConfirm && state && (() => {
+        const preview = strikeConfirm.kind === 'strike'
+          ? getStrikeConfirmPreview(state, strikeConfirm.regionId, strikeConfirm.strikeType)
+          : getCampaignConfirmPreview(
+              state,
+              strikeConfirm.sourceRegionId,
+              strikeConfirm.targetRegionId,
+              strikeConfirm.strikeType
+            );
+        if (!preview) return null;
+        return (
+          <StrikeConfirmModal
+            preview={preview}
+            onConfirm={handleConfirmStrike}
+            onCancel={handleCancelStrike}
+          />
+        );
+      })()}
       {warConfirmTarget && (
         <WarConfirmModal
           preview={getWarDeclarationPreview(state, state.playerCountryId, warConfirmTarget)}
