@@ -127,7 +127,7 @@ function npcStartCampaign(
     targetRegionId: pair.targetRegionId,
     strikeType,
     startTurn: state.turn,
-    unprovoked: false,
+    startedUnprovoked: false,
   });
 
   const strikePower = computeStrikePower(attacker, strikeType, option.power * def.powerScale);

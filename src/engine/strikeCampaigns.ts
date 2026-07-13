@@ -10,6 +10,8 @@ import {
 import { executeStrike } from './combat';
 import { getRegionsForCountry } from '../data/regions';
 import { isAtWarWith } from './actions';
+import { getRelation, modifyRelation } from '../data/relations';
+import { triggerUnprovokedStrikeEvent } from './events';
 
 export interface CampaignDefinition {
   type: StrikeType;
@@ -68,6 +70,50 @@ export const CAMPAIGN_DEFS: Record<StrikeType, CampaignDefinition> = {
     energyCost: 2,
   },
 };
+
+const SUSTAIN_ESCALATION_PENALTY: Record<StrikeType, number> = {
+  artillery: 6,
+  drone: 9,
+  cruise: 12,
+  ballistic: 15,
+  icbm: 18,
+};
+
+function applyUnprovokedCampaignEscalation(state: GameState, campaign: StrikeCampaign): void {
+  const target = state.regions[campaign.targetRegionId];
+  const attacker = state.countries[campaign.attackerCountryId];
+  if (!target || !attacker) return;
+
+  const victimId = target.controlledBy;
+  const sustainTurns = state.turn - campaign.startTurn;
+  const penalty = SUSTAIN_ESCALATION_PENALTY[campaign.strikeType] ?? 10;
+
+  modifyRelation(state.relations, campaign.attackerCountryId, victimId, -penalty);
+
+  for (const countryId of Object.keys(state.countries)) {
+    if (countryId === campaign.attackerCountryId || countryId === victimId) continue;
+    const allyToVictim = getRelation(state.relations, countryId, victimId);
+    if (allyToVictim > 20) {
+      modifyRelation(state.relations, countryId, campaign.attackerCountryId, -Math.round(3 + allyToVictim * 0.06));
+    }
+  }
+
+  attacker.stats.warExhaustion = Math.min(1, (attacker.stats.warExhaustion ?? 0) + 0.015);
+
+  if (campaign.attackerCountryId === state.playerCountryId) {
+    attacker.stats.warPopularity = Math.max(0, attacker.stats.warPopularity - 0.04);
+    if (sustainTurns > 0 && sustainTurns % 2 === 0) {
+      state.internationalPariahTurns = Math.max(state.internationalPariahTurns, 2);
+    }
+    if (sustainTurns > 0 && sustainTurns % 4 === 0) {
+      triggerUnprovokedStrikeEvent(state);
+    }
+    const victimName = state.countries[victimId]?.name ?? victimId;
+    state.history.push(
+      `Turn ${state.turn}: Sustained bombardment of ${victimName} draws global condemnation (−${penalty} relations).`
+    );
+  }
+}
 
 export function getPlayerCampaigns(state: GameState): StrikeCampaign[] {
   return (state.strikeCampaigns ?? []).filter(c => c.attackerCountryId === state.playerCountryId);
@@ -128,7 +174,7 @@ export function playerStartStrikeCampaign(
     targetRegionId,
     strikeType,
     startTurn: state.turn,
-    unprovoked: !atWar,
+    startedUnprovoked: !atWar,
   };
 
   if (!state.strikeCampaigns) state.strikeCampaigns = [];
@@ -201,7 +247,10 @@ export function resolveStrikeCampaigns(state: GameState): void {
 
     const strikePower = computeStrikePower(attacker, campaign.strikeType, option.power * def.powerScale * 0.85);
     executeStrike(state, campaign.attackerCountryId, campaign.targetRegionId, strikePower, campaign.strikeType);
-    campaign.unprovoked = false;
+
+    if (campaign.startedUnprovoked) {
+      applyUnprovokedCampaignEscalation(state, campaign);
+    }
 
     surviving.push(campaign);
   }

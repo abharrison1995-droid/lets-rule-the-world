@@ -110,7 +110,7 @@ export function RegionActionPanel({
 
             <section className="strike-section">
               <h4>Sustained Campaign</h4>
-              <p className="muted small">Launch from your territory — pays upfront + upkeep each turn until you stand down or run out of funds.</p>
+              <p className="muted small">Launch from your territory — pays upfront + upkeep each turn until you stand down or run out of funds. Unprovoked campaigns draw escalating condemnation each turn.</p>
               <select
                 className="target-select"
                 value={sourceRegionId}

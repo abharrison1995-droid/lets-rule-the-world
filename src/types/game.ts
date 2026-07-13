@@ -222,8 +222,8 @@ export interface StrikeCampaign {
   targetRegionId: string;
   strikeType: StrikeType;
   startTurn: number;
-  /** First strike was unprovoked — used for escalation tracking */
-  unprovoked: boolean;
+  /** Campaign opened before war was declared — sustains diplomatic fallout each turn */
+  startedUnprovoked: boolean;
 }
 
 export interface GlobalOilShock {

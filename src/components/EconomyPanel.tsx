@@ -4,7 +4,7 @@ import { formatPercent } from '../engine/gameState';
 import { normalizeBudget } from '../engine/economy';
 import { normalizeDomesticSplit } from '../engine/propaganda';
 import { BottomSheet } from './BottomSheet';
-import { getFiscalHeadroom } from '../engine/fiscal';
+import { getFiscalHeadroom, getDebtServicePerTurn } from '../engine/fiscal';
 import { getProjectedPlayerIncome, previewIncomeAtTaxRates } from '../engine/taxation';
 import {
   getPendingMilitaryUpgrade,
@@ -70,6 +70,11 @@ export function EconomyPanel({
 
   const headroom = getFiscalHeadroom(country);
   const debt = country.debtToGdp ?? 0;
+  const debtService = getDebtServicePerTurn(country);
+  const atWar = state.wars.some(w => w.belligerents.includes(state.playerCountryId));
+  const activeCampaigns = (state.strikeCampaigns ?? []).filter(
+    c => c.attackerCountryId === state.playerCountryId
+  ).length;
   const corporateTax = state.corporateTaxRate ?? 0.22;
   const incomeTax = state.incomeTaxRate ?? 0.25;
   const projectedIncome = getProjectedPlayerIncome(state);
@@ -117,6 +122,12 @@ export function EconomyPanel({
             <span className="stat-value warning-text">
               {formatDebtRatio(debt)} ({formatDisplayDebt(country.stats.treasuryPoints, debt)})
             </span>
+          </div>
+        )}
+        {debtService > 0 && (
+          <div className="stat-item">
+            <span className="stat-label">Debt Service</span>
+            <span className="stat-value warning-text">−{formatDisplayGDP(debtService)}/turn</span>
           </div>
         )}
         <div className="stat-item">
@@ -172,6 +183,11 @@ export function EconomyPanel({
           )}
           {(state.taxPressureTurns ?? 0) > 0 && (
             <p className="warning-text">High taxes are eroding morale and raising unrest.</p>
+          )}
+          {(atWar || activeCampaigns > 0) && debt > 0 && (
+            <p className="warning-text">
+              War spending and deficits are adding to national debt{activeCampaigns > 0 ? ` (${activeCampaigns} active campaign${activeCampaigns > 1 ? 's' : ''})` : ''}.
+            </p>
           )}
         </div>
       </section>

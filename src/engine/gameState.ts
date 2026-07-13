@@ -11,6 +11,7 @@ import { checkWinConditions } from './winConditions';
 import { resolveCovertOps, runNpcCovertOps } from './covert';
 import { tickCovertAllianceExposure } from './covertAlliances';
 import { applyTurnIncome, checkTaxPoliticalPressure, getDefaultCorporateTaxRate, getDefaultIncomeTaxRate } from './taxation';
+import { tickFiscalDebt } from './fiscal';
 import { resolveStrikeCampaigns } from './strikeCampaigns';
 import { runNpcWartimeStrikes } from './npcStrikes';
 import { resetActionEnergy } from './actionEnergy';
@@ -121,6 +122,7 @@ export function advanceTurn(state: GameState): GameState {
   tickCounterIntel(newState);
   applyDomesticPropagandaTick(newState);
   applyTurnIncome(newState);
+  tickFiscalDebt(newState);
   checkTaxPoliticalPressure(newState);
   runNpcCovertOps(newState);
   resolveCovertOps(newState);
