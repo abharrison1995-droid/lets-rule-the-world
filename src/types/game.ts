@@ -197,6 +197,8 @@ export interface Country {
   id: string;
   name: string;
   playable: boolean;
+  /** Sovereign debt as ratio of GDP (e.g. 1.22 = 122%) */
+  debtToGdp: number;
   stats: CountryStats;
   militaryDev: MilitaryDev;
   startingAlliances: string[];
@@ -308,6 +310,11 @@ export interface ActiveEvent {
   turn: number;
   targetCountryId?: string;
   resolved: boolean;
+  /** Resolved description with nation/region names filled in */
+  displayDescription?: string;
+  contextNationId?: string;
+  contextRegionId?: string;
+  contextAmount?: number;
 }
 
 export interface PendingFollowUp {

@@ -11,6 +11,7 @@ import { checkWinConditions } from './winConditions';
 import { resolveCovertOps, runNpcCovertOps } from './covert';
 import { tickCovertAllianceExposure } from './covertAlliances';
 import { accumulateReserve } from './actions';
+import { getStartingReserve } from './fiscal';
 import { resetActionEnergy } from './actionEnergy';
 import { resolveDiplomaticMissions } from './diplomaticMissions';
 import {
@@ -64,6 +65,7 @@ export function createInitialState(playerCountryId: string): GameState {
   };
 
   resetActionEnergy(state);
+  state.reserveFunds = getStartingReserve(countries[playerCountryId]);
 
   // Seed opening scenario: Russia-Ukraine war
   seedOpeningScenario(state);

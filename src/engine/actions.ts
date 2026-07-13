@@ -21,6 +21,14 @@ import {
   actionEnergyBlockReason,
   ACTION_ENERGY_COSTS,
 } from './actionEnergy';
+import {
+  getSpendingPool,
+  getEffectiveSpendCost,
+  getFiscalHeadroom,
+  getDebtServicePerTurn,
+} from './fiscal';
+import type { StrikeType } from './strikes';
+import { getStrikeOptions, computeStrikePower } from './strikes';
 
 export function isAtWarWith(state: GameState, a: string, b: string): boolean {
   return state.wars.some(w => w.belligerents.includes(a) && w.belligerents.includes(b));
@@ -29,21 +37,27 @@ export function isAtWarWith(state: GameState, a: string, b: string): boolean {
 export function canAfford(state: GameState, costBillions: number): boolean {
   const country = state.countries[state.playerCountryId];
   if (!country) return false;
-  const reserveAvailable = state.reserveFunds + country.stats.gdp * state.budget.reserve * 0.01;
-  return reserveAvailable >= costBillions || country.stats.gdp * 0.01 >= costBillions;
+  const effective = getEffectiveSpendCost(country, costBillions);
+  return getSpendingPool(state) >= effective;
 }
 
 export function deductCost(state: GameState, costBillions: number): boolean {
   const country = state.countries[state.playerCountryId];
   if (!country) return false;
 
-  if (state.reserveFunds >= costBillions) {
-    state.reserveFunds -= costBillions;
+  const effective = getEffectiveSpendCost(country, costBillions);
+
+  if (state.reserveFunds >= effective) {
+    state.reserveFunds -= effective;
     return true;
   }
-  const gdpCost = costBillions;
-  if (country.stats.gdp >= gdpCost) {
-    country.stats.gdp -= gdpCost;
+
+  const fromReserve = state.reserveFunds;
+  const remainder = effective - fromReserve;
+  state.reserveFunds = 0;
+
+  if (country.stats.gdp >= remainder) {
+    country.stats.gdp -= remainder;
     return true;
   }
   return false;
@@ -147,32 +161,36 @@ export function playerProbeCovertPacts(state: GameState, targetNationId: string)
   return null;
 }
 
-export function playerLaunchStrike(state: GameState, targetRegionId: string): string | null {
+export function playerLaunchStrike(
+  state: GameState,
+  targetRegionId: string,
+  strikeType: StrikeType = 'cruise'
+): string | null {
   const region = state.regions[targetRegionId];
   if (!region) return 'Invalid target region.';
 
   const attacker = state.countries[state.playerCountryId];
   if (!attacker) return 'Invalid player.';
 
-  const energyCost = ACTION_ENERGY_COSTS.strike;
-  if (!spendActionEnergy(state, energyCost)) {
-    return actionEnergyBlockReason(state, energyCost)!;
+  const options = getStrikeOptions(state, state.playerCountryId, targetRegionId);
+  const option = options.find(o => o.type === strikeType);
+  if (!option) return 'Unknown strike type.';
+  if (!option.available) return option.blockReason ?? 'Strike unavailable.';
+
+  if (!spendActionEnergy(state, option.energyCost)) {
+    return actionEnergyBlockReason(state, option.energyCost)!;
   }
 
-  const strikeCost = 20 + (5 - attacker.militaryDev.strikeCapability) * 5;
-  if (!deductCost(state, strikeCost)) {
-    state.actionEnergy += energyCost;
-    return `Insufficient funds (need $${strikeCost}B).`;
+  if (!deductCost(state, option.cost)) {
+    state.actionEnergy += option.energyCost;
+    return `Insufficient funds (need $${option.cost}B).`;
   }
 
-  const strikePower =
-    attacker.militaryDev.strikeCapability * 2 +
-    attacker.militaryDev.droneProgram * 0.5 +
-    attacker.stats.techLevel * 3;
+  const strikePower = computeStrikePower(attacker, strikeType, option.power);
 
   executeStrike(state, state.playerCountryId, targetRegionId, strikePower);
   state.history.push(
-    `Turn ${state.turn}: Strike launched at ${region.name} (${state.countries[region.controlledBy]?.name}).`
+    `Turn ${state.turn}: ${option.label} launched at ${region.name} (${state.countries[region.controlledBy]?.name}).`
   );
   return null;
 }
@@ -352,6 +370,8 @@ export function playerInvestMilitary(
 export function accumulateReserve(state: GameState): void {
   const country = state.countries[state.playerCountryId];
   if (!country) return;
-  const contribution = country.stats.gdp * state.budget.reserve * 0.005;
-  state.reserveFunds += contribution;
+  const headroom = getFiscalHeadroom(country);
+  const contribution = headroom * state.budget.reserve * 0.0015;
+  const debtService = getDebtServicePerTurn(country);
+  state.reserveFunds += Math.max(0, contribution - debtService);
 }

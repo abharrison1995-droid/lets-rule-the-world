@@ -2,6 +2,7 @@ import type { GameState, GameEvent, ActiveEvent } from '../types/game';
 import { EVENTS, getEventById } from '../data/events';
 import { getRelation, modifyRelation } from '../data/relations';
 import { proposeAlliance } from './diplomacy';
+import { getRegionsForCountry } from '../data/regions';
 
 const STAT_COMPARE: Record<string, 'lte' | 'gte'> = {
   moraleBase: 'lte',
@@ -23,27 +24,18 @@ export function rollEvents(state: GameState): ActiveEvent[] {
     if (followUp.triggerTurn <= state.turn) {
       const event = getEventById(followUp.eventId);
       if (event) {
-        newEvents.push({
-          eventId: event.id,
-          turn: state.turn,
-          targetCountryId: followUp.targetCountryId,
-          resolved: false,
-        });
+        newEvents.push(buildActiveEvent(state, event, followUp.targetCountryId ?? state.playerCountryId));
       }
     }
   }
   state.pendingFollowUps = state.pendingFollowUps.filter(f => f.triggerTurn > state.turn);
 
   const eligible = filterEligibleEvents(state, state.playerCountryId);
-  const playerEvents = weightedRandomSelect(eligible, 1 + (Math.random() < 0.3 ? 1 : 0));
+  const rollCount = 1 + (Math.random() < 0.55 ? 1 : 0) + (Math.random() < 0.2 ? 1 : 0);
+  const playerEvents = weightedRandomSelect(eligible, rollCount);
 
   for (const event of playerEvents) {
-    newEvents.push({
-      eventId: event.id,
-      turn: state.turn,
-      targetCountryId: state.playerCountryId,
-      resolved: false,
-    });
+    newEvents.push(buildActiveEvent(state, event, state.playerCountryId));
   }
 
   for (const npcId of Object.keys(state.countries)) {
@@ -57,6 +49,109 @@ export function rollEvents(state: GameState): ActiveEvent[] {
 
   state.activeEvents.push(...newEvents);
   return newEvents;
+}
+
+function pickDiplomaticPartner(state: GameState, countryId: string): string | null {
+  const candidates = Object.keys(state.countries)
+    .filter(id => id !== countryId)
+    .map(id => ({ id, rel: getRelation(state.relations, countryId, id) }))
+    .filter(c => c.rel > -20)
+    .sort((a, b) => b.rel - a.rel);
+  if (candidates.length === 0) return null;
+  const pool = candidates.slice(0, Math.min(5, candidates.length));
+  return pool[Math.floor(Math.random() * pool.length)].id;
+}
+
+function pickPlayerRegion(countryId: string): string | null {
+  const regions = getRegionsForCountry(countryId);
+  if (regions.length === 0) return null;
+  return regions[Math.floor(Math.random() * regions.length)].id;
+}
+
+function pickCauseLabel(): string {
+  const causes = [
+    'veterans\' healthcare',
+    'rural broadband expansion',
+    'your re-election campaign',
+    'a state propaganda initiative',
+    'disaster relief reserves',
+    'the national space programme',
+  ];
+  return causes[Math.floor(Math.random() * causes.length)];
+}
+
+function buildActiveEvent(
+  state: GameState,
+  event: GameEvent,
+  countryId: string
+): ActiveEvent {
+  const active: ActiveEvent = {
+    eventId: event.id,
+    turn: state.turn,
+    targetCountryId: countryId,
+    resolved: false,
+  };
+
+  const partner = pickDiplomaticPartner(state, countryId);
+  const regionId = pickPlayerRegion(countryId);
+  const region = regionId ? state.regions[regionId] : null;
+  const partnerName = partner ? state.countries[partner]?.name ?? partner : 'a foreign power';
+  const donation = Math.round(15 + Math.random() * 85);
+  const cause = pickCauseLabel();
+
+  if (event.id === 'alliance_proposal' && partner) {
+    active.contextNationId = partner;
+    active.displayDescription =
+      `${partnerName} seeks a defensive pact with your government. ` +
+      `Relations stand at ${getRelation(state.relations, countryId, partner) > 0 ? '+' : ''}` +
+      `${getRelation(state.relations, countryId, partner)}. Accepting binds you to mutual defence.`;
+  } else if (event.id === 'trade_deal' && partner) {
+    active.contextNationId = partner;
+    active.displayDescription =
+      `${partnerName} proposes an expanded trade framework. ` +
+      `Your ministries estimate +0.8% GDP growth if signed.`;
+  } else if (event.id === 'betrayal_warning' && partner) {
+    active.contextNationId = partner;
+    active.displayDescription =
+      `Intelligence reports suggest ${partnerName} is reconsidering their commitment to your pact.`;
+  } else if (event.id === 'datacentre_protest' && region) {
+    active.contextRegionId = regionId!;
+    active.contextAmount = donation;
+    active.displayDescription =
+      `A rogue tech billionaire wants to build a hyperscale data centre in ${region.name}. ` +
+      `Local residents are furious — but he will donate $${donation}B to ${cause} if you approve the permits.`;
+  } else if (event.id === 'dissident_pardon') {
+    active.displayDescription =
+      'A political dissident requests a presidential pardon. They attempted to assassinate your chief political rival last year. ' +
+      'Granting clemency may calm unrest; refusing may harden opposition.';
+  } else if (event.id === 'arms_deal_offer' && partner) {
+    active.contextNationId = partner;
+    active.contextAmount = donation;
+    active.displayDescription =
+      `${partnerName} offers a discounted arms package worth $${donation}B — ` +
+      `with strings attached on future diplomatic votes.`;
+  } else if (event.id === 'refugee_crisis' && region) {
+    active.contextRegionId = regionId!;
+    active.displayDescription =
+      `A sudden influx of refugees strains ${region.name}. Border towns demand emergency funding or closed crossings.`;
+  } else if (event.id === 'corruption_scandal') {
+    active.displayDescription =
+      'Investigative journalists allege senior officials diverted defence contracts. ' +
+      'The story is trending worldwide.';
+  } else if (event.id === 'energy_blackout' && region) {
+    active.contextRegionId = regionId!;
+    active.displayDescription =
+      `Rolling blackouts hit ${region.name} after grid failures. Industry lobbies demand immediate investment.`;
+  } else if (event.id === 'covert_op_detected' && partner) {
+    active.contextNationId = partner;
+    active.displayDescription =
+      `Counter-intelligence flags suspicious activity linked to ${partnerName}. ` +
+      `Your agencies recommend a response.`;
+  } else {
+    active.displayDescription = event.description;
+  }
+
+  return active;
 }
 
 function filterEligibleEvents(state: GameState, countryId: string): GameEvent[] {
@@ -154,10 +249,11 @@ export function resolveEventChoice(
   const country = state.countries[targetCountryId];
   if (!country) return;
 
-  state.eventContextNationId = state.eventContextNationId ?? 'usa';
+  const active = state.activeEvents.find(e => e.eventId === eventId && !e.resolved);
+  state.eventContextNationId = active?.contextNationId ?? pickDiplomaticPartner(state, targetCountryId) ?? 'usa';
 
   for (const effect of choice.effects) {
-    applyEffect(state, country, effect.stat, effect.target, effect.delta);
+    applyEffect(state, country, effect.stat, effect.target, effect.delta, active);
   }
 
   if (choice.followUpEventId) {
@@ -168,7 +264,6 @@ export function resolveEventChoice(
     });
   }
 
-  const active = state.activeEvents.find(e => e.eventId === eventId && !e.resolved);
   if (active) active.resolved = true;
 }
 
@@ -187,7 +282,8 @@ function applyEffect(
   country: typeof state.countries[string],
   stat: string,
   target: string,
-  delta: number
+  delta: number,
+  active?: ActiveEvent
 ): void {
   if (stat === 'gameOver') {
     state.gameOver = true;
@@ -210,6 +306,14 @@ function applyEffect(
     case 'troopQuality': stats.troopQuality = Math.max(0, Math.min(1, stats.troopQuality + delta)); break;
     case 'missileDefense': dev.missileDefense = Math.max(1, Math.min(5, dev.missileDefense + delta)); break;
     case 'droneProgram': dev.droneProgram = Math.max(1, Math.min(5, dev.droneProgram + delta)); break;
+    case 'unrest': {
+      if (active?.contextRegionId && state.regions[active.contextRegionId]) {
+        const r = state.regions[active.contextRegionId];
+        r.unrest = Math.max(0, Math.min(100, r.unrest + delta));
+      }
+      break;
+    }
+    case 'reserve': state.reserveFunds += active?.contextAmount ?? delta; break;
     case 'alliance': {
       const targetId = resolveRelationTarget(state, country, target);
       if (targetId) proposeAlliance(state, country.id, targetId, 'defensive_pact');
@@ -284,12 +388,7 @@ export function checkCollapseConditions(state: GameState): void {
   if (!state.telegraphedCollapse && collapse.telegraphEventId) {
     const telegraphEvent = getEventById(collapse.telegraphEventId);
     if (telegraphEvent) {
-      state.activeEvents.push({
-        eventId: telegraphEvent.id,
-        turn: state.turn,
-        targetCountryId: state.playerCountryId,
-        resolved: false,
-      });
+      state.activeEvents.push(buildActiveEvent(state, telegraphEvent, state.playerCountryId));
       state.telegraphedCollapse = true;
       state.history.push(`Turn ${state.turn}: WARNING — ${telegraphEvent.title}`);
       return;

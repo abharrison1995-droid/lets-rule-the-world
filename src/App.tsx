@@ -30,6 +30,8 @@ import { EconomyPanel } from './components/EconomyPanel';
 import { EventModal } from './components/EventModal';
 import { RegionActionPanel } from './components/RegionActionPanel';
 import { SidePanel } from './components/SidePanel';
+import { NationIntroModal } from './components/NationIntroModal';
+import type { StrikeType } from './engine/strikes';
 import { useMobileLayout } from './hooks/useMobileLayout';
 import { getHemisphereForCountry, type HemisphereId } from './data/hemispheres';
 import './App.css';
@@ -48,6 +50,7 @@ export default function App() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [warConfirmTarget, setWarConfirmTarget] = useState<string | null>(null);
   const [talksResult, setTalksResult] = useState<string | null>(null);
+  const [showNationIntro, setShowNationIntro] = useState(false);
   const isMobile = useMobileLayout();
   const [mobileWorldView, setMobileWorldView] = useState<'chooser' | HemisphereId>('chooser');
   const [lastHemisphere, setLastHemisphere] = useState<HemisphereId>('eurasia');
@@ -71,6 +74,7 @@ export default function App() {
     setShowDiplomacy(false);
     setShowEconomy(false);
     setFeedback(null);
+    setShowNationIntro(true);
     setMobileWorldView('chooser');
     setLastHemisphere(getHemisphereForCountry(countryId));
   }, []);
@@ -125,10 +129,10 @@ export default function App() {
     setState({ ...state, selectedRegionId: regionId });
   }, [state]);
 
-  const handleStrike = useCallback((regionId: string) => {
+  const handleStrike = useCallback((regionId: string, strikeType: StrikeType) => {
     if (!state) return;
     const newState = structuredClone(state);
-    const err = playerLaunchStrike(newState, regionId);
+    const err = playerLaunchStrike(newState, regionId, strikeType);
     if (err) showFeedback(err);
     else updateState(newState);
   }, [state, updateState]);
@@ -351,7 +355,6 @@ export default function App() {
               regionId={state.selectedRegionId}
               onClose={() => setState({ ...state, selectedRegionId: null })}
               onStrike={handleStrike}
-              onClosePanel={() => setState({ ...state, selectedRegionId: null })}
             />
           )}
         </main>
@@ -396,10 +399,18 @@ export default function App() {
           feedback={feedback}
         />
       )}
-      {pendingEventData && (
+      {showNationIntro && (
+        <NationIntroModal
+          state={state}
+          onContinue={() => setShowNationIntro(false)}
+        />
+      )}
+
+      {pendingEventData && pendingEvent && (
         <EventModal
           event={pendingEventData}
-          onChoice={(i) => handleEventChoice(pendingEvent!.eventId, i)}
+          activeEvent={pendingEvent}
+          onChoice={(i) => handleEventChoice(pendingEvent.eventId, i)}
         />
       )}
 

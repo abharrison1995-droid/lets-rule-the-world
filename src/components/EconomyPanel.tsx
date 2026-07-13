@@ -4,6 +4,7 @@ import { formatGDP, formatPercent } from '../engine/gameState';
 import { normalizeBudget } from '../engine/economy';
 import { normalizeDomesticSplit } from '../engine/propaganda';
 import { BottomSheet } from './BottomSheet';
+import { getFiscalHeadroom, formatDebtRatio } from '../engine/fiscal';
 
 interface EconomyPanelProps {
   state: GameState;
@@ -52,6 +53,9 @@ export function EconomyPanel({
   const [influenceTarget, setInfluenceTarget] = useState('');
   if (!country) return null;
 
+  const headroom = getFiscalHeadroom(country);
+  const debt = country.debtToGdp ?? 0;
+
   const total = Object.values(state.budget).reduce((s, v) => s + v, 0);
 
   const handleChange = (key: keyof BudgetAllocation, value: number) => {
@@ -82,6 +86,16 @@ export function EconomyPanel({
           <span className="stat-label">Reserve</span>
           <span className="stat-value">${state.reserveFunds.toFixed(0)}B</span>
         </div>
+        <div className="stat-item">
+          <span className="stat-label">Fiscal Headroom</span>
+          <span className="stat-value">{formatGDP(headroom)}</span>
+        </div>
+        {debt > 0 && (
+          <div className="stat-item">
+            <span className="stat-label">National Debt</span>
+            <span className="stat-value warning-text">{formatDebtRatio(debt)}</span>
+          </div>
+        )}
         <div className="stat-item">
           <span className="stat-label">Counter-Intel</span>
           <span className="stat-value">{formatPercent(state.counterIntelLevel)}</span>

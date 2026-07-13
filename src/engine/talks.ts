@@ -87,15 +87,32 @@ function calculateNegotiationAcceptance(
   if (option === 'peace') return 0;
 
   const relation = getRelation(state.relations, playerId, targetId);
+  const alliance = findAllianceBetween(state, playerId, targetId);
   const allianceScore = computeAllianceScore(state, playerId, targetId);
   const target = state.countries[targetId];
   const difficulty = target?.difficultyRating.score ?? 5;
 
-  let score = 0.35;
-  score += relation / 120;
-  score += allianceScore / 200;
-  score += state.budget.diplomacy * 0.004;
-  score -= (difficulty - 5) * 0.04;
+  let score: number;
+  if (alliance) {
+    const tierBase: Record<string, number> = {
+      informal: 0.38,
+      defensive_pact: 0.52,
+      full_alliance: 0.62,
+      bloc: 0.58,
+    };
+    score = tierBase[alliance.tier] ?? 0.4;
+    score += relation / 250;
+  } else {
+    score = 0.06;
+    score += relation / 220;
+    score += allianceScore / 350;
+    score += state.budget.diplomacy * 0.002;
+    if (relation < 25) score *= 0.25;
+    if (relation < 0) score *= 0.15;
+    if (relation > 50) score += 0.08;
+  }
+
+  score -= (difficulty - 5) * 0.035;
 
   if (isAtWarWith(state, playerId, targetId)) return 0;
 
@@ -104,28 +121,29 @@ function calculateNegotiationAcceptance(
     if (existing) {
       const idx = TIER_ORDER.indexOf(existing.tier);
       if (idx >= TIER_ORDER.indexOf('full_alliance')) return 0;
-      score += 0.1;
+      score += alliance ? 0.12 : 0.04;
     }
-    if (relation < 25) score *= 0.5;
+    if (!alliance && relation < 25) score *= 0.3;
   } else if (option === 'trade_deal') {
-    if (relation < 0) score *= 0.4;
-    else if (relation > 40) score += 0.15;
-  } else   if (option === 'intel_sharing') {
-    if (relation < 15) score *= 0.5;
-    const existingMil = findAllianceBetween(state, playerId, targetId);
-    if (existingMil) score += 0.12;
+    if (!alliance) {
+      if (relation < 0) score *= 0.2;
+      else if (relation > 40) score += 0.06;
+    }
+  } else if (option === 'intel_sharing') {
+    if (!alliance && relation < 15) score *= 0.25;
+    if (alliance || findAllianceBetween(state, playerId, targetId)) score += 0.1;
   } else if (option === 'ultimatum') {
     const player = state.countries[playerId];
-    const target = state.countries[targetId];
     if (player && target) {
       const powerRatio = player.stats.gdp / Math.max(1, target.stats.gdp);
-      score += Math.min(0.25, powerRatio * 0.08);
+      score += Math.min(0.12, powerRatio * 0.04);
     }
-    score += relation / 150;
-    if (relation < -40) score *= 0.6;
+    if (!alliance) score *= 0.5;
+    if (relation < -40) score *= 0.4;
   }
 
-  return Math.max(0.05, Math.min(0.95, score));
+  const cap = alliance ? 0.92 : 0.38;
+  return Math.max(0.03, Math.min(cap, score));
 }
 
 function getMilitaryPactEffects(state: GameState, playerId: string, targetId: string): string[] {

@@ -1,12 +1,13 @@
 import type { GameState } from '../types/game';
 import { isAtWarWith } from '../engine/actions';
+import type { StrikeType } from '../engine/strikes';
+import { getStrikeOptions, getStrikeRange, getStrikeRangeLabel } from '../engine/strikes';
 
 interface RegionActionPanelProps {
   state: GameState;
   regionId: string;
   onClose: () => void;
-  onStrike: (regionId: string) => void;
-  onClosePanel: () => void;
+  onStrike: (regionId: string, strikeType: StrikeType) => void;
 }
 
 export function RegionActionPanel({ state, regionId, onClose, onStrike }: RegionActionPanelProps) {
@@ -16,8 +17,8 @@ export function RegionActionPanel({ state, regionId, onClose, onStrike }: Region
   const owner = state.countries[region.controlledBy];
   const isEnemy = region.controlledBy !== state.playerCountryId;
   const atWar = isEnemy && isAtWarWith(state, state.playerCountryId, region.controlledBy);
-  const player = state.countries[state.playerCountryId];
-  const strikeCost = 20 + (5 - (player?.militaryDev.strikeCapability ?? 1)) * 5;
+  const strikeOptions = getStrikeOptions(state, state.playerCountryId, regionId);
+  const range = getStrikeRange(state, state.playerCountryId, regionId);
 
   return (
     <div className="region-action-panel">
@@ -36,12 +37,26 @@ export function RegionActionPanel({ state, regionId, onClose, onStrike }: Region
 
       <div className="region-actions">
         {isEnemy && (
-          <button
-            className="btn-action strike"
-            onClick={() => onStrike(regionId)}
-          >
-            {atWar ? '⚡ Missile/Drone Strike' : '⚡ Strike (Unprovoked)'} — ${strikeCost}B
-          </button>
+          <>
+            <p className="strike-range-label muted small">
+              Strike range: <strong>{getStrikeRangeLabel(range)}</strong>
+              {!atWar && <span className="warning-text"> · Unprovoked</span>}
+            </p>
+            {strikeOptions.map(opt => (
+              <button
+                key={opt.type}
+                className={`btn-action strike ${opt.available ? '' : 'disabled-option'}`}
+                disabled={!opt.available}
+                title={opt.blockReason ?? opt.description}
+                onClick={() => onStrike(regionId, opt.type)}
+              >
+                ⚡ {opt.label} — ${opt.cost}B
+                {!opt.available && opt.blockReason && (
+                  <span className="strike-block-reason"> ({opt.blockReason})</span>
+                )}
+              </button>
+            ))}
+          </>
         )}
         {!isEnemy && (
           <p className="muted">Friendly territory — no hostile actions available.</p>

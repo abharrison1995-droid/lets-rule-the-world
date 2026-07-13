@@ -6,7 +6,7 @@ import type {
   CovertAlliance,
 } from '../types/game';
 import { getRelation, modifyRelation } from '../data/relations';
-import { computeAllianceScore } from './diplomacy';
+import { computeAllianceScore, findAllianceBetween } from './diplomacy';
 import { hasBilateralAgreement } from './talks';
 import { actionEnergyBlockReason } from './actionEnergy';
 
@@ -92,22 +92,30 @@ function calculateCovertAcceptance(
   option: CovertTalkOptionId
 ): number {
   const relation = getRelation(state.relations, playerId, targetId);
+  const alliance = findAllianceBetween(state, playerId, targetId);
   const allianceScore = computeAllianceScore(state, playerId, targetId);
   const target = state.countries[targetId];
   const difficulty = target?.difficultyRating.score ?? 5;
 
-  let score = 0.25;
-  score += relation / 100;
-  score += allianceScore / 250;
-  score += state.budget.covert * 0.006;
+  let score: number;
+  if (alliance) {
+    score = 0.35 + relation / 300;
+  } else {
+    score = 0.05;
+    score += relation / 180;
+    score += allianceScore / 400;
+    score += state.budget.covert * 0.003;
+    if (relation < 0) score *= 0.2;
+  }
   score -= (difficulty - 5) * 0.05;
 
   const type = COVERT_TO_TYPE[option];
-  if (type === 'trade' && relation >= 0) score += 0.1;
-  if (type === 'military' && relation >= 20) score += 0.08;
-  if (type === 'intel' && relation >= 10) score += 0.08;
+  if (type === 'trade' && relation >= 0) score += alliance ? 0.08 : 0.03;
+  if (type === 'military' && relation >= 20) score += alliance ? 0.1 : 0.02;
+  if (type === 'intel' && relation >= 10) score += alliance ? 0.08 : 0.02;
 
-  return Math.max(0.08, Math.min(0.88, score));
+  const cap = alliance ? 0.75 : 0.32;
+  return Math.max(0.04, Math.min(cap, score));
 }
 
 function getCovertEffects(option: CovertTalkOptionId): string[] {
