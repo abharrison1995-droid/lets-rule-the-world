@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import type { GameState } from '../types/game';
-import type { PeaceTermsType } from '../types/game';
+import type { GameState, PeaceTermsType, TalkOptionId, CovertTalkOptionId } from '../types/game';
 import { getAllRelationsForCountry } from '../engine/diplomacy';
 import { getMechanicsForNation } from '../data/mechanics';
 import { getPeaceOptions } from '../engine/peace';
@@ -12,15 +11,20 @@ import {
 } from '../engine/warDeclaration';
 import { TalksScreen } from './TalksScreen';
 import { PressConferenceScreen } from './PressConferenceScreen';
+import { getActiveCovertAlliances } from '../engine/covertAlliances';
 
 interface DiplomacyPanelProps {
   state: GameState;
   onClose: () => void;
   onRequestWar: (targetId: string) => void;
   onProposePeace: (targetId: string, terms: PeaceTermsType) => void;
+  onNegotiate: (targetId: string, option: TalkOptionId, peaceTerms?: PeaceTermsType) => void;
+  onCovertNegotiate: (targetId: string, option: CovertTalkOptionId) => void;
   onCovertOp: (targetId: string) => void;
+  onProbePacts: (targetId: string) => void;
   onExecuteMechanic: (mechanicId: string, targetId?: string) => void;
   feedback: string | null;
+  talksResult: string | null;
 }
 
 const PEACE_LABELS: Record<PeaceTermsType, string> = {
@@ -36,9 +40,13 @@ export function DiplomacyPanel({
   onClose,
   onRequestWar,
   onProposePeace,
+  onNegotiate,
+  onCovertNegotiate,
   onCovertOp,
+  onProbePacts,
   onExecuteMechanic,
   feedback,
+  talksResult,
 }: DiplomacyPanelProps) {
   const [view, setView] = useState<DiplomacyView>('main');
   const [talksTarget, setTalksTarget] = useState<string | null>(null);
@@ -47,6 +55,7 @@ export function DiplomacyPanel({
 
   const relations = getAllRelationsForCountry(state, state.playerCountryId);
   const alliances = state.alliances.filter(a => a.members.includes(state.playerCountryId));
+  const covertAlliances = getActiveCovertAlliances(state, state.playerCountryId);
   const mechanics = getMechanicsForNation(state.playerCountryId);
 
   const grouped = RELATION_GROUP_ORDER.reduce<Record<RelationCategory, typeof relations>>(
@@ -73,6 +82,9 @@ export function DiplomacyPanel({
           state={state}
           targetId={talksTarget}
           onBack={() => { setView('main'); setTalksTarget(null); }}
+          onNegotiate={(option, peaceTerms) => onNegotiate(talksTarget, option, peaceTerms)}
+          onCovertNegotiate={(option) => onCovertNegotiate(talksTarget, option)}
+          lastResult={talksResult}
         />
       </div>
     );
@@ -133,19 +145,47 @@ export function DiplomacyPanel({
       )}
 
       <section className="panel-section">
-        <h4>Alliances</h4>
-        {alliances.length === 0 ? (
-          <p className="muted">No active alliances.</p>
+        <h4>Alliances & Agreements</h4>
+        {alliances.length === 0 && state.bilateralAgreements.filter(
+          ag => ag.a === state.playerCountryId || ag.b === state.playerCountryId
+        ).length === 0 && covertAlliances.length === 0 ? (
+          <p className="muted">No active alliances or bilateral deals.</p>
         ) : (
-          alliances.map(a => (
-            <div key={a.id} className="alliance-row">
-              <span className="alliance-name">{a.name}</span>
-              <span className="alliance-tier">{a.tier.replace('_', ' ')}</span>
-              <span className="alliance-members">
-                {a.members.map(m => state.countries[m]?.name).join(', ')}
-              </span>
-            </div>
-          ))
+          <>
+            {alliances.map(a => (
+              <div key={a.id} className="alliance-row">
+                <span className="alliance-name">{a.name}</span>
+                <span className="alliance-tier">{a.tier.replace('_', ' ')}</span>
+                <span className="alliance-members">
+                  {a.members.map(m => state.countries[m]?.name).join(', ')}
+                </span>
+              </div>
+            ))}
+            {state.bilateralAgreements
+              .filter(ag => ag.a === state.playerCountryId || ag.b === state.playerCountryId)
+              .map(ag => {
+                const partnerId = ag.a === state.playerCountryId ? ag.b : ag.a;
+                return (
+                  <div key={ag.id} className="alliance-row bilateral">
+                    <span className="alliance-name">
+                      {ag.type === 'trade' ? '📜 Trade' : '🔍 Intel'} — {state.countries[partnerId]?.name}
+                    </span>
+                    <span className="alliance-tier">bilateral · turn {ag.formedTurn}</span>
+                  </div>
+                );
+              })}
+            {covertAlliances.map(ca => {
+              const partnerId = ca.a === state.playerCountryId ? ca.b : ca.a;
+              return (
+                <div key={ca.id} className="alliance-row covert">
+                  <span className="alliance-name">
+                    🔒 {ca.type} — {state.countries[partnerId]?.name}
+                  </span>
+                  <span className="alliance-tier">secret · {ca.exposureRisk.toFixed(0)}% leak risk/turn</span>
+                </div>
+              );
+            })}
+          </>
         )}
       </section>
 
@@ -178,13 +218,22 @@ export function DiplomacyPanel({
                       Meeting
                     </button>
                     {category !== 'at_war' && (
-                      <button
-                        className="btn-small covert"
-                        onClick={() => onCovertOp(r.countryId)}
-                        title="Covert op"
-                      >
-                        🕵
-                      </button>
+                      <>
+                        <button
+                          className="btn-small covert"
+                          onClick={() => onCovertOp(r.countryId)}
+                          title="Covert sabotage op"
+                        >
+                          🕵
+                        </button>
+                        <button
+                          className="btn-small probe"
+                          onClick={() => onProbePacts(r.countryId)}
+                          title="Probe for secret pacts"
+                        >
+                          🔎
+                        </button>
+                      </>
                     )}
                   </span>
                 </div>

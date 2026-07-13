@@ -5,6 +5,7 @@ import {
   getCounterIntelDiscoveryBonus,
   getPlayerCovertDiscoveryReduction,
 } from './propaganda';
+import { tryExposeFromCounterIntel, resolveProbePactsOp } from './covertAlliances';
 
 export function resolveCovertOps(state: GameState): void {
   const remaining = [];
@@ -35,8 +36,13 @@ export function resolveCovertOps(state: GameState): void {
       op.discovered = true;
       applyCovertEffects(state, op, op.effectIfDiscovered, true);
 
+      if (op.opKind === 'probe_pacts') {
+        resolveProbePactsOp(state, op.sourceNation, op.targetNation);
+      }
+
       if (op.targetNation === state.playerCountryId) {
         // Player counter-intel exposed enemy op — diplomatic win
+        tryExposeFromCounterIntel(state, op.sourceNation, op.targetNation);
         state.history.push(
           `Turn ${state.turn}: Counter-intelligence EXPOSED ${state.countries[op.sourceNation]?.name}'s covert op!`
         );
@@ -64,7 +70,11 @@ export function resolveCovertOps(state: GameState): void {
       }
     } else {
       applyCovertEffects(state, op, op.effectIfHidden, false);
-      state.history.push(`Turn ${state.turn}: Covert op against ${target.name} succeeded (hidden).`);
+      if (op.opKind === 'probe_pacts') {
+        resolveProbePactsOp(state, op.sourceNation, op.targetNation);
+      } else {
+        state.history.push(`Turn ${state.turn}: Covert op against ${target.name} succeeded (hidden).`);
+      }
     }
   }
 

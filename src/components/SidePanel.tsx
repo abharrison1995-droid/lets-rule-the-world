@@ -78,13 +78,37 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
           </section>
 
           <section className="side-section">
+            <h4>Secret Pacts 🔒 ({state.covertAlliances.filter(
+              ca => !ca.exposed && (ca.a === state.playerCountryId || ca.b === state.playerCountryId)
+            ).length})</h4>
+            {state.covertAlliances.filter(
+              ca => !ca.exposed && (ca.a === state.playerCountryId || ca.b === state.playerCountryId)
+            ).length === 0 ? (
+              <p className="muted">None active.</p>
+            ) : (
+              state.covertAlliances
+                .filter(ca => !ca.exposed && (ca.a === state.playerCountryId || ca.b === state.playerCountryId))
+                .map(ca => {
+                  const partnerId = ca.a === state.playerCountryId ? ca.b : ca.a;
+                  return (
+                    <div key={ca.id} className="covert-entry">
+                      🔒 {ca.type} — {state.countries[partnerId]?.name}
+                      <span className="muted"> · {ca.exposureRisk.toFixed(0)}% risk</span>
+                    </div>
+                  );
+                })
+            )}
+          </section>
+
+          <section className="side-section">
             <h4>Covert Ops ({state.activeCovertOps.length})</h4>
             {state.activeCovertOps.length === 0 ? (
               <p className="muted">None active.</p>
             ) : (
               state.activeCovertOps.map(op => (
                 <div key={op.id} className="covert-entry">
-                  → {state.countries[op.targetNation]?.name}
+                  {op.opKind === 'probe_pacts' ? '🔎' : '→'} {state.countries[op.targetNation]?.name}
+                  {op.opKind === 'probe_pacts' && <span className="muted"> (probe)</span>}
                   {op.discovered && <span className="warning-text"> (discovered)</span>}
                 </div>
               ))

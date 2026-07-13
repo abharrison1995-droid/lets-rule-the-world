@@ -93,6 +93,19 @@ function findAllianceBetween(state: GameState, a: string, b: string): Alliance |
   return state.alliances.find(al => al.members.includes(a) && al.members.includes(b));
 }
 
+export { findAllianceBetween };
+
+export function upgradeAlliance(state: GameState, allianceId: string, newTier: AllianceTier): boolean {
+  const alliance = state.alliances.find(a => a.id === allianceId);
+  if (!alliance) return false;
+
+  const tierOrder: AllianceTier[] = ['informal', 'defensive_pact', 'full_alliance', 'bloc'];
+  if (tierOrder.indexOf(newTier) <= tierOrder.indexOf(alliance.tier)) return false;
+
+  alliance.tier = newTier;
+  return true;
+}
+
 export function proposeAlliance(
   state: GameState, proposer: string, target: string, tier: AllianceTier
 ): void {
@@ -211,6 +224,17 @@ export function declareWar(state: GameState, attackerId: string, defenderId: str
     }
   }
 
+  // Covert military partners may join secretly
+  const covertJoiners = getCovertMilitaryJoiners(state, defenderId, attackerId);
+  for (const ally of covertJoiners) {
+    if (!war.belligerents.includes(ally)) {
+      war.belligerents.push(ally);
+      state.history.push(
+        `Turn ${state.turn}: ${state.countries[ally]?.name} covertly intervened on behalf of ${state.countries[defenderId]?.name}.`
+      );
+    }
+  }
+
   // Relation penalties for attacking
   for (const countryId of Object.keys(state.countries)) {
     if (countryId === attackerId) continue;
@@ -277,4 +301,20 @@ export function getAllRelationsForCountry(state: GameState, countryId: string): 
       value: getRelation(state.relations, countryId, id),
     }))
     .sort((a, b) => b.value - a.value);
+}
+
+function getCovertMilitaryJoiners(
+  state: GameState,
+  defenderId: string,
+  attackerId: string
+): string[] {
+  const joiners: string[] = [];
+  for (const ca of state.covertAlliances) {
+    if (ca.exposed || ca.type !== 'military') continue;
+    const partner = ca.a === defenderId ? ca.b : ca.b === defenderId ? ca.a : null;
+    if (!partner || partner === attackerId) continue;
+    const relation = getRelation(state.relations, partner, defenderId);
+    if (Math.random() < 0.3 * (relation / 80)) joiners.push(partner);
+  }
+  return joiners;
 }

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { GameState, BudgetAllocation, MilitaryDev, DomesticSplit, PeaceTermsType } from './types/game';
+import type { GameState, BudgetAllocation, MilitaryDev, DomesticSplit, PeaceTermsType, TalkOptionId, CovertTalkOptionId } from './types/game';
 import { createInitialState, advanceTurn } from './engine/gameState';
 import { saveGame, loadGame, hasSavedGame, deleteSave } from './engine/saveLoad';
 import { resolveEventChoice } from './engine/events';
@@ -11,6 +11,9 @@ import {
   playerExecuteMechanic,
   playerInvestMilitary,
   getWarDeclarationPreview,
+  playerNegotiate,
+  playerCovertNegotiate,
+  playerProbeCovertPacts,
 } from './engine/actions';
 import { proposePeace } from './engine/peace';
 import { playerDomesticPropaganda, playerForeignInfluence } from './engine/propaganda';
@@ -43,6 +46,7 @@ export default function App() {
   const [saveExists, setSaveExists] = useState(hasSavedGame());
   const [feedback, setFeedback] = useState<string | null>(null);
   const [warConfirmTarget, setWarConfirmTarget] = useState<string | null>(null);
+  const [talksResult, setTalksResult] = useState<string | null>(null);
   const isMobile = useMobileLayout();
   const [mobileWorldView, setMobileWorldView] = useState<'chooser' | HemisphereId>('chooser');
   const [lastHemisphere, setLastHemisphere] = useState<HemisphereId>('eurasia');
@@ -144,6 +148,42 @@ export default function App() {
   const handleCancelWar = useCallback(() => {
     setWarConfirmTarget(null);
   }, []);
+
+  const handleNegotiate = useCallback((
+    targetId: string,
+    option: TalkOptionId,
+    peaceTerms?: PeaceTermsType
+  ) => {
+    if (!state) return;
+    const newState = structuredClone(state);
+    const result = playerNegotiate(newState, targetId, option, peaceTerms);
+    setTalksResult(result.message);
+    showFeedback(result.message);
+    if (result.success) updateState(newState);
+  }, [state, updateState]);
+
+  const handleCovertNegotiate = useCallback((
+    targetId: string,
+    option: CovertTalkOptionId
+  ) => {
+    if (!state) return;
+    const newState = structuredClone(state);
+    const result = playerCovertNegotiate(newState, targetId, option);
+    setTalksResult(result.message);
+    showFeedback(result.message);
+    if (result.success) updateState(newState);
+  }, [state, updateState]);
+
+  const handleProbePacts = useCallback((targetId: string) => {
+    if (!state) return;
+    const newState = structuredClone(state);
+    const err = playerProbeCovertPacts(newState, targetId);
+    if (err) showFeedback(err);
+    else {
+      showFeedback('Intelligence probe launched — results next turn.');
+      updateState(newState);
+    }
+  }, [state, updateState]);
 
   const handleProposePeace = useCallback((targetId: string, terms: PeaceTermsType) => {
     if (!state) return;
@@ -318,9 +358,13 @@ export default function App() {
           onClose={() => setShowDiplomacy(false)}
           onRequestWar={handleRequestWar}
           onProposePeace={handleProposePeace}
+          onNegotiate={handleNegotiate}
+          onCovertNegotiate={handleCovertNegotiate}
           onCovertOp={handleCovertOp}
+          onProbePacts={handleProbePacts}
           onExecuteMechanic={handleMechanic}
           feedback={feedback}
+          talksResult={talksResult}
         />
       )}
       {warConfirmTarget && (

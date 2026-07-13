@@ -1,4 +1,6 @@
 import type { GameState, Country, BudgetAllocation } from '../types/game';
+import { computeTradeAgreementBonus } from './talks';
+import { computeCovertTradeBonus } from './covertAlliances';
 
 const TERRAIN_ATTACK_PENALTY: Record<string, number> = {
   urban: 0.15, mountain: 0.25, coastal: 0.10, desert: 0.05, plains: 0,
@@ -76,6 +78,9 @@ function computeGrowthModifiers(state: GameState, country: Country): number {
   if (state.playerCountryId === country.id) {
     mod += (state.budget.domestic * 0.5 + state.budget.military * 0.1) * 0.01;
   }
+
+  mod += computeTradeAgreementBonus(state, country.id);
+  mod += computeCovertTradeBonus(state, country.id);
 
   return mod;
 }

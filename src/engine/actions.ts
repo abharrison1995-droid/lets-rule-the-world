@@ -8,6 +8,10 @@ import {
 } from './warDeclaration';
 import { executeStrike } from './combat';
 import { getRegionsForCountry } from '../data/regions';
+import { executeNegotiation, TALK_COSTS } from './talks';
+import type { TalkOptionId, PeaceTermsType, CovertTalkOptionId } from '../types/game';
+import type { NegotiationResult } from './talks';
+import { executeCovertNegotiation, COVERT_TALK_COSTS } from './covertAlliances';
 
 export function isAtWarWith(state: GameState, a: string, b: string): boolean {
   return state.wars.some(w => w.belligerents.includes(a) && w.belligerents.includes(b));
@@ -60,6 +64,72 @@ export function playerDeclareWar(state: GameState, targetId: string): string | n
 }
 
 export { getWarDeclarationPreview, canDeclareWarThisTurn, getWarsRemaining } from './warDeclaration';
+
+export function playerNegotiate(
+  state: GameState,
+  targetId: string,
+  option: TalkOptionId,
+  peaceTerms?: PeaceTermsType
+): NegotiationResult {
+  if (!state.countries[targetId]) return { success: false, message: 'Invalid target.' };
+  if (targetId === state.playerCountryId) return { success: false, message: 'Cannot negotiate with yourself.' };
+
+  const cost = TALK_COSTS[option];
+  if (cost > 0 && !deductCost(state, cost)) {
+    return { success: false, message: `Insufficient funds (need $${cost}B).` };
+  }
+
+  return executeNegotiation(state, state.playerCountryId, targetId, option, peaceTerms);
+}
+
+export function playerCovertNegotiate(
+  state: GameState,
+  targetId: string,
+  option: CovertTalkOptionId
+): NegotiationResult {
+  if (!state.countries[targetId]) return { success: false, message: 'Invalid target.' };
+  if (targetId === state.playerCountryId) return { success: false, message: 'Cannot negotiate with yourself.' };
+
+  const cost = COVERT_TALK_COSTS[option];
+  if (!deductCost(state, cost)) {
+    return { success: false, message: `Insufficient funds (need $${cost}B).` };
+  }
+
+  return executeCovertNegotiation(state, state.playerCountryId, targetId, option);
+}
+
+export function playerProbeCovertPacts(state: GameState, targetNationId: string): string | null {
+  if (targetNationId === state.playerCountryId) return 'Cannot probe yourself.';
+  const target = state.countries[targetNationId];
+  if (!target) return 'Invalid target.';
+
+  const baseCost = 25;
+  const targetCI = (target.stats.regimeSecurity ?? 0.5) * 25;
+  const discoveryRisk = Math.max(
+    10,
+    30 + (1 - state.budget.covert) * 15 + targetCI - state.counterIntelLevel * 8
+  );
+
+  if (!deductCost(state, baseCost)) return `Insufficient funds (need $${baseCost}B).`;
+
+  state.activeCovertOps.push({
+    id: `probe_${state.turn}_${targetNationId}`,
+    sourceNation: state.playerCountryId,
+    targetNation: targetNationId,
+    cost: baseCost,
+    discoveryRiskPercent: discoveryRisk,
+    effectIfHidden: {},
+    effectIfDiscovered: { relationsPenalty: -12 },
+    opKind: 'probe_pacts',
+    turnStarted: state.turn,
+    discovered: false,
+  });
+
+  state.history.push(
+    `Turn ${state.turn}: Intelligence probe launched against ${target.name} (seeking secret pacts).`
+  );
+  return null;
+}
 
 export function playerLaunchStrike(state: GameState, targetRegionId: string): string | null {
   const region = state.regions[targetRegionId];

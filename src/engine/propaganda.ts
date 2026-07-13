@@ -1,6 +1,8 @@
 import type { GameState } from '../types/game';
 import { modifyRelation } from '../data/relations';
 import { deductCost } from './actions';
+import { computeIntelAgreementBonus } from './talks';
+import { computeCovertIntelBonus } from './covertAlliances';
 
 export function tickCounterIntel(state: GameState): void {
   const player = state.countries[state.playerCountryId];
@@ -8,7 +10,9 @@ export function tickCounterIntel(state: GameState): void {
 
   const domestic = state.budget.domestic;
   const ciShare = state.domesticSplit.counterIntel;
-  const boost = domestic * ciShare * 0.08;
+  const boost = domestic * ciShare * 0.08
+    + computeIntelAgreementBonus(state, state.playerCountryId)
+    + computeCovertIntelBonus(state, state.playerCountryId);
 
   state.counterIntelLevel = Math.min(1, state.counterIntelLevel + boost);
   state.counterIntelLevel = Math.max(0, state.counterIntelLevel - 0.01);

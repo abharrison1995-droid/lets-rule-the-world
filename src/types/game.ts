@@ -66,6 +66,56 @@ export interface Alliance {
   name: string;
 }
 
+export type AgreementType = 'trade' | 'intel';
+
+export interface BilateralAgreement {
+  id: string;
+  type: AgreementType;
+  a: string;
+  b: string;
+  formedTurn: number;
+}
+
+export type CovertAgreementType = 'trade' | 'military' | 'intel';
+
+export interface CovertAlliance {
+  id: string;
+  type: CovertAgreementType;
+  a: string;
+  b: string;
+  formedTurn: number;
+  exposed: boolean;
+  /** % chance per turn of leaking to the world */
+  exposureRisk: number;
+}
+
+export type CovertTalkOptionId = 'covert_trade' | 'covert_military' | 'covert_intel';
+
+export interface CovertNegotiationPreview {
+  optionId: CovertTalkOptionId;
+  label: string;
+  description: string;
+  canAttempt: boolean;
+  blockReason?: string;
+  cost: number;
+  acceptanceChance: number;
+  exposureRisk: number;
+  effects: string[];
+}
+
+export type TalkOptionId = 'peace' | 'military_pact' | 'trade_deal' | 'intel_sharing';
+
+export interface NegotiationPreview {
+  optionId: TalkOptionId;
+  label: string;
+  description: string;
+  canAttempt: boolean;
+  blockReason?: string;
+  cost: number;
+  acceptanceChance: number;
+  effects: string[];
+}
+
 export interface DifficultyRating {
   score: number; // 1-10
   blurb: string;
@@ -179,6 +229,8 @@ export interface CovertOp {
   mechanicId?: string;
   turnStarted: number;
   discovered: boolean;
+  /** Spy op probing for secret pacts */
+  opKind?: 'standard' | 'probe_pacts';
 }
 
 export interface EventChoice {
@@ -256,6 +308,10 @@ export interface GameState {
   regions: Record<string, Region>;
   relations: Record<string, number>; // key: "a|b" sorted
   alliances: Alliance[];
+  /** Overt bilateral deals formed via talks (trade, intel) */
+  bilateralAgreements: BilateralAgreement[];
+  /** Secret pacts — visible to player only until exposed */
+  covertAlliances: CovertAlliance[];
   wars: War[];
   fronts: Front[];
   budget: BudgetAllocation;
@@ -283,6 +339,10 @@ export interface GameState {
   warsDeclaredThisTurn: number;
   /** Turns remaining of global condemnation debuff */
   internationalPariahTurns: number;
+  /** Target nation IDs the player has held talks with this turn */
+  talksAttemptedThisTurn: string[];
+  /** Target nation IDs the player has used covert backchannel with this turn */
+  covertTalksAttemptedThisTurn: string[];
   /** Contextual nation for event effects (sender, ally, etc.) */
   eventContextNationId?: string;
 }

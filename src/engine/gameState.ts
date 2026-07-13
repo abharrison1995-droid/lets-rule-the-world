@@ -9,6 +9,7 @@ import { detectFronts, resolveCombat, decayUnrest, cleanStrikeAnimations } from 
 import { rollEvents, checkCollapseConditions } from './events';
 import { checkWinConditions } from './winConditions';
 import { resolveCovertOps, runNpcCovertOps } from './covert';
+import { tickCovertAllianceExposure } from './covertAlliances';
 import { accumulateReserve } from './actions';
 import {
   tickCounterIntel,
@@ -29,6 +30,8 @@ export function createInitialState(playerCountryId: string): GameState {
     regions,
     relations,
     alliances,
+    bilateralAgreements: [],
+    covertAlliances: [],
     wars: [],
     fronts: [],
     budget: defaultBudget(),
@@ -52,6 +55,8 @@ export function createInitialState(playerCountryId: string): GameState {
     history: [`Turn 0: ${countries[playerCountryId]?.name} assumes leadership.`],
     warsDeclaredThisTurn: 0,
     internationalPariahTurns: 0,
+    talksAttemptedThisTurn: [],
+    covertTalksAttemptedThisTurn: [],
   };
 
   // Seed opening scenario: Russia-Ukraine war
@@ -74,6 +79,8 @@ export function advanceTurn(state: GameState): GameState {
   const newState = structuredClone(state);
   newState.turn += 1;
   newState.warsDeclaredThisTurn = 0;
+  newState.talksAttemptedThisTurn = [];
+  newState.covertTalksAttemptedThisTurn = [];
 
   // Update fronts before economy (war exhaustion needs current front count)
   newState.fronts = detectFronts(newState);
@@ -89,6 +96,7 @@ export function advanceTurn(state: GameState): GameState {
   accumulateReserve(newState);
   runNpcCovertOps(newState);
   resolveCovertOps(newState);
+  tickCovertAllianceExposure(newState);
   resolveCombat(newState);
   decayUnrest(newState);
   cleanStrikeAnimations(newState);
