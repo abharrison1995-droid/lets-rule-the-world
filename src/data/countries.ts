@@ -27,7 +27,7 @@ export const COUNTRIES: Record<string, Country> = {
     startingAlliances: ['nato'],
     startingRelations: {},
     difficultyRating: { score: 2, blurb: 'Easy — unmatched spending, global alliances, and technological edge.' },
-    uniqueMechanics: ['soft_power_ngo'],
+    uniqueMechanics: ['soft_power_ngo', 'bot_farm'],
     collapseCondition: { type: 'soft', triggerStats: { globalInfluence: 30 }, telegraphEventId: 'usa_decline_warning' },
   },
   england: {
@@ -83,7 +83,7 @@ export const COUNTRIES: Record<string, Country> = {
     startingAlliances: ['csto'],
     startingRelations: {},
     difficultyRating: { score: 6, blurb: 'Hard — sanctions vulnerability and morale collapse risk under prolonged war.' },
-    uniqueMechanics: ['tommy_ten_names'],
+    uniqueMechanics: ['troll_farm', 'tommy_ten_names'],
     collapseCondition: { type: 'hard', triggerStats: { moraleBase: 0.25, warExhaustion: 0.7 }, telegraphEventId: 'russia_uprising_warning' },
   },
   china: {
@@ -111,7 +111,7 @@ export const COUNTRIES: Record<string, Country> = {
     startingAlliances: ['sco'],
     startingRelations: {},
     difficultyRating: { score: 4, blurb: 'Moderate — economic powerhouse but purge risk if over-extended.' },
-    uniqueMechanics: ['tech_espionage'],
+    uniqueMechanics: ['tech_espionage', 'firewall_breach'],
     collapseCondition: { type: 'hard', triggerStats: { regimeSecurity: 0.3 }, telegraphEventId: 'china_purge_warning' },
   },
   turkey: {

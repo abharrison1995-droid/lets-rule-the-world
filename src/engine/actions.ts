@@ -25,7 +25,6 @@ import {
   ACTION_ENERGY_COSTS,
 } from './actionEnergy';
 import {
-  getSpendingPool,
   getEffectiveSpendCost,
   getDebtServicePerTurn,
 } from './fiscal';
@@ -41,7 +40,7 @@ export function canAfford(state: GameState, costTp: number): boolean {
   const country = state.countries[state.playerCountryId];
   if (!country) return false;
   const effective = getEffectiveSpendCost(country, costTp);
-  return getSpendingPool(state) >= effective;
+  return country.stats.treasuryPoints >= effective;
 }
 
 export function deductCost(state: GameState, costTp: number): boolean {
@@ -254,6 +253,24 @@ export function playerExecuteMechanic(
 
   const player = state.countries[state.playerCountryId];
 
+  if (mechanic.effects.counterIntel && !targetNationId) {
+    state.counterIntelLevel = Math.min(1, state.counterIntelLevel + mechanic.effects.counterIntel);
+    if (mechanic.effects.relationsBoost) {
+      for (const otherId of Object.keys(state.countries)) {
+        if (otherId === state.playerCountryId) continue;
+        modifyRelation(
+          state.relations,
+          state.playerCountryId,
+          otherId,
+          mechanic.effects.relationsBoost * 0.3
+        );
+      }
+    }
+    state.history.push(`Turn ${state.turn}: ${mechanic.name} strengthened intelligence sharing.`);
+    state.mechanicCooldowns[mechanicId] = state.turn;
+    return null;
+  }
+
   if (mechanic.category === 'strategic' && mechanic.id === 'invoke_us_support' && targetNationId) {
     const duration = mechanic.missionTurns ?? 7;
     const result = dispatchInvokeUsSupportMission(
@@ -330,8 +347,6 @@ export function playerExecuteMechanic(
       border.garrison.troops = Math.max(100, border.garrison.troops * 0.9);
     }
     state.history.push(`Turn ${state.turn}: ${mechanic.name} pressured ${state.countries[targetNationId]?.name} border.`);
-  } else if (mechanic.effects.counterIntel) {
-    state.history.push(`Turn ${state.turn}: ${mechanic.name} strengthened counter-intelligence.`);
   }
 
   state.mechanicCooldowns[mechanicId] = state.turn;

@@ -7,7 +7,7 @@ import { DEFAULT_DOMESTIC_SPLIT } from './propaganda';
 import { defaultBudget } from './economy';
 
 const SAVE_KEY = 'lrw_save';
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
 
 interface SavePayload {
   version: number;
@@ -45,6 +45,10 @@ function migrateState(state: GameState, fromVersion: number): GameState {
         delete legacy.unprovoked;
       }
     }
+  }
+
+  if (fromVersion < 13) {
+    migrated.collapseTelegraphedNations ??= [];
   }
 
   return fillMissingSaveFields(migrated);
@@ -86,6 +90,7 @@ function fillMissingSaveFields(state: GameState): GameState {
   state.showDefenseRanges ??= false;
   state.declineMode ??= false;
   state.telegraphedCollapse ??= false;
+  state.collapseTelegraphedNations ??= [];
   state.gameOver ??= false;
   state.playerWon ??= false;
 

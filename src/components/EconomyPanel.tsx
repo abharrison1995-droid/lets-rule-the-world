@@ -4,7 +4,7 @@ import { formatPercent } from '../engine/gameState';
 import { normalizeBudget } from '../engine/economy';
 import { normalizeDomesticSplit } from '../engine/propaganda';
 import { BottomSheet } from './BottomSheet';
-import { getFiscalHeadroom, getDebtServicePerTurn } from '../engine/fiscal';
+import { getFiscalHeadroom, getDebtServicePerTurn, projectDebtDelta, getEffectiveSpendCost } from '../engine/fiscal';
 import { getProjectedPlayerIncome, previewIncomeAtTaxRates } from '../engine/taxation';
 import {
   getPendingMilitaryUpgrade,
@@ -79,6 +79,7 @@ export function EconomyPanel({
   const incomeTax = state.incomeTaxRate ?? 0.25;
   const projectedIncome = getProjectedPlayerIncome(state);
   const taxPreview = previewIncomeAtTaxRates(state, corporateTax, incomeTax);
+  const debtDelta = projectDebtDelta(state, state.playerCountryId);
   const milUpgrade = getPendingMilitaryUpgrade(state);
   const milUpgradeBusy = milUpgrade !== null;
 
@@ -113,9 +114,17 @@ export function EconomyPanel({
           <span className="stat-value positive-text">+{formatDisplayGDP(projectedIncome)}</span>
         </div>
         <div className="stat-item">
-          <span className="stat-label">Spendable</span>
+          <span className="stat-label">Fiscal Headroom</span>
           <span className="stat-value">{formatDisplayGDP(headroom)}</span>
         </div>
+        {debt > 0 && (
+          <div className="stat-item">
+            <span className="stat-label">Debt Trend</span>
+            <span className={`stat-value ${debtDelta > 0.0005 ? 'warning-text' : debtDelta < -0.0005 ? 'positive-text' : ''}`}>
+              {debtDelta > 0 ? '+' : ''}{(debtDelta * 100).toFixed(2)}% GDP/turn
+            </span>
+          </div>
+        )}
         {debt > 0 && (
           <div className="stat-item">
             <span className="stat-label">National Debt</span>
@@ -187,9 +196,15 @@ export function EconomyPanel({
           {(state.taxPressureTurns ?? 0) > 0 && (
             <p className="warning-text">High taxes are eroding morale and raising unrest.</p>
           )}
-          {(atWar || activeCampaigns > 0) && debt > 0 && (
+          {(atWar || activeCampaigns > 0) && debt > 0 && debtDelta > 0 && (
             <p className="warning-text">
-              War spending and deficits are adding to national debt{activeCampaigns > 0 ? ` (${activeCampaigns} active campaign${activeCampaigns > 1 ? 's' : ''})` : ''}.
+              War spending and deficits are adding ~{(debtDelta * 100).toFixed(2)}% to debt each turn
+              {activeCampaigns > 0 ? ` (${activeCampaigns} active campaign${activeCampaigns > 1 ? 's' : ''})` : ''}.
+            </p>
+          )}
+          {debt > 0 && (
+            <p className="muted small">
+              High debt raises effective costs — a {formatDisplayCost(10)} action costs ~{formatDisplayCost(getEffectiveSpendCost(country, 10))} at current debt.
             </p>
           )}
         </div>

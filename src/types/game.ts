@@ -442,6 +442,8 @@ export interface GameState {
   winReason?: string;
   declineMode: boolean;
   telegraphedCollapse: boolean;
+  /** Nations that have received a collapse telegraph warning */
+  collapseTelegraphedNations: string[];
   selectedMapTier: 1 | 2;
   selectedCountryId: string | null;
   selectedRegionId: string | null;

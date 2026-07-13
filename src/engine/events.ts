@@ -408,6 +408,11 @@ function isCollapseTriggered(state: GameState, countryId: string): boolean {
 }
 
 export function checkCollapseConditions(state: GameState): void {
+  checkPlayerCollapse(state);
+  checkNpcCollapseTelegraphs(state);
+}
+
+function checkPlayerCollapse(state: GameState): void {
   const country = state.countries[state.playerCountryId];
   if (!country) return;
 
@@ -421,7 +426,6 @@ export function checkCollapseConditions(state: GameState): void {
     return;
   }
 
-  // Telegraph warning first
   if (!state.telegraphedCollapse && collapse.telegraphEventId) {
     const telegraphEvent = getEventById(collapse.telegraphEventId);
     if (telegraphEvent) {
@@ -438,6 +442,36 @@ export function checkCollapseConditions(state: GameState): void {
   } else if (collapse.type === 'soft') {
     state.declineMode = true;
     state.history.push(`Turn ${state.turn}: ${country.name} enters decline/survival mode.`);
+  }
+}
+
+function checkNpcCollapseTelegraphs(state: GameState): void {
+  if (!state.collapseTelegraphedNations) state.collapseTelegraphedNations = [];
+  const playerId = state.playerCountryId;
+
+  for (const [countryId, country] of Object.entries(state.countries)) {
+    if (countryId === playerId) continue;
+    const collapse = country.collapseCondition;
+    if (collapse.type === 'none') continue;
+    if (!isCollapseTriggered(state, countryId)) continue;
+    if (state.collapseTelegraphedNations.includes(countryId)) continue;
+
+    const telegraphId = collapse.telegraphEventId;
+    if (!telegraphId) continue;
+
+    const telegraphEvent = getEventById(telegraphId);
+    if (!telegraphEvent) continue;
+
+    state.collapseTelegraphedNations.push(countryId);
+    state.history.push(`Turn ${state.turn}: ${country.name} — ${telegraphEvent.title}`);
+
+    const atWar = state.wars.some(
+      w => w.belligerents.includes(countryId) && w.belligerents.includes(playerId)
+    );
+    const rel = getRelation(state.relations, playerId, countryId);
+    if (atWar || Math.abs(rel) > 25) {
+      triggerEventById(state, telegraphId, playerId);
+    }
   }
 }
 
