@@ -1592,6 +1592,13 @@ body {
   color: var(--text-muted);
 }
 
+.fiscal-impact-line {
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.45rem 0.6rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+}
+
 .muted.small {
   font-size: 0.75rem;
   margin-bottom: 0.5rem;

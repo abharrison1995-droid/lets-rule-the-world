@@ -1,5 +1,6 @@
 import type { StrikeConfirmPreview } from '../engine/strikePreview';
 import { formatDisplayCost } from '../engine/treasuryDisplay';
+import { FiscalImpactLine } from './FiscalImpactLine';
 
 interface StrikeConfirmModalProps {
   preview: StrikeConfirmPreview;
@@ -36,6 +37,8 @@ export function StrikeConfirmModal({ preview, onConfirm, onCancel }: StrikeConfi
           )}
           <span>Energy: ⚡ {preview.energyCost}</span>
         </div>
+
+        <FiscalImpactLine fiscal={preview.fiscal} />
 
         {!preview.canExecute && (
           <p className="war-preview-block">{preview.blockReason}</p>

@@ -29,7 +29,7 @@ import {
 } from './engine/actions';
 import { dispatchTalkMission } from './engine/diplomaticMissions';
 import { playerDomesticPropaganda, playerForeignInfluence } from './engine/propaganda';
-import { playerStartFacilityBuild } from './engine/facilities';
+import { playerStartFacilityBuild, getFacilityConfirmPreview } from './engine/facilities';
 import { playerStartStrikeCampaign, playerCancelStrikeCampaign } from './engine/strikeCampaigns';
 import { getStrikeConfirmPreview, getCampaignConfirmPreview } from './engine/strikePreview';
 import { NationSelect } from './components/NationSelect';
@@ -41,6 +41,7 @@ import { LayerTray } from './components/LayerTray';
 import { DiplomacyPanel } from './components/DiplomacyPanel';
 import { WarConfirmModal } from './components/WarConfirmModal';
 import { StrikeConfirmModal } from './components/StrikeConfirmModal';
+import { FacilityConfirmModal } from './components/FacilityConfirmModal';
 import { EconomyPanel } from './components/EconomyPanel';
 import { EventModal } from './components/EventModal';
 import { RegionActionPanel } from './components/RegionActionPanel';
@@ -58,6 +59,8 @@ type StrikeConfirmRequest =
   | { kind: 'strike'; regionId: string; strikeType: StrikeType }
   | { kind: 'campaign'; sourceRegionId: string; targetRegionId: string; strikeType: StrikeType };
 
+type FacilityConfirmRequest = { regionId: string; facilityType: FacilityType };
+
 export default function App() {
   const [screen, setScreen] = useState<Screen>('menu');
   const [state, setState] = useState<GameState | null>(null);
@@ -70,6 +73,7 @@ export default function App() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [warConfirmTarget, setWarConfirmTarget] = useState<string | null>(null);
   const [strikeConfirm, setStrikeConfirm] = useState<StrikeConfirmRequest | null>(null);
+  const [facilityConfirm, setFacilityConfirm] = useState<FacilityConfirmRequest | null>(null);
   const [turnSummary, setTurnSummary] = useState<TurnReportEntry[] | null>(null);
   const [talksResult, setTalksResult] = useState<string | null>(null);
   const [showNationIntro, setShowNationIntro] = useState(false);
@@ -328,13 +332,26 @@ export default function App() {
     setState({ ...state, corporateTaxRate, incomeTaxRate });
   }, [state]);
 
-  const handleBuildFacility = useCallback((regionId: string, type: FacilityType) => {
-    if (!state) return;
+  const handleRequestFacilityBuild = useCallback((regionId: string, type: FacilityType) => {
+    setFacilityConfirm({ regionId, facilityType: type });
+  }, []);
+
+  const handleConfirmFacilityBuild = useCallback(() => {
+    if (!state || !facilityConfirm) return;
     const newState = structuredClone(state);
-    const err = playerStartFacilityBuild(newState, regionId, type);
+    const err = playerStartFacilityBuild(
+      newState,
+      facilityConfirm.regionId,
+      facilityConfirm.facilityType
+    );
+    setFacilityConfirm(null);
     if (err) showFeedback(err);
     else updateState(newState);
-  }, [state, updateState]);
+  }, [state, facilityConfirm, updateState]);
+
+  const handleCancelFacilityBuild = useCallback(() => {
+    setFacilityConfirm(null);
+  }, []);
 
   const pendingEvent = state?.activeEvents.find(
     e => !e.resolved && (!e.targetCountryId || e.targetCountryId === state.playerCountryId)
@@ -432,7 +449,7 @@ export default function App() {
               onRequestStrike={handleRequestStrike}
               onRequestCampaign={handleRequestCampaign}
               onCancelCampaign={handleCancelCampaign}
-              onBuildFacility={handleBuildFacility}
+              onBuildFacility={handleRequestFacilityBuild}
             />
           )}
         </main>
@@ -480,6 +497,21 @@ export default function App() {
             preview={preview}
             onConfirm={handleConfirmStrike}
             onCancel={handleCancelStrike}
+          />
+        );
+      })()}
+      {facilityConfirm && state && (() => {
+        const preview = getFacilityConfirmPreview(
+          state,
+          facilityConfirm.regionId,
+          facilityConfirm.facilityType
+        );
+        if (!preview) return null;
+        return (
+          <FacilityConfirmModal
+            preview={preview}
+            onConfirm={handleConfirmFacilityBuild}
+            onCancel={handleCancelFacilityBuild}
           />
         );
       })()}

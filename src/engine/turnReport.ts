@@ -1,4 +1,6 @@
 import type { GameState, War, TurnReportCategory, TurnReportEntry } from '../types/game';
+import { getRelation } from '../data/relations';
+import { isHormuzEnergyExposed, isPlayerInIranWar } from './warRelations';
 
 export type { TurnReportCategory, TurnReportEntry };
 
@@ -85,6 +87,31 @@ function detectAllianceChanges(before: GameState, after: GameState): TurnReportE
   return entries;
 }
 
+function isGreyZoneRelevant(state: GameState, line: string): boolean {
+  const playerId = state.playerCountryId;
+  if (line.includes('YOUR TERRITORY')) return true;
+
+  for (const war of state.wars) {
+    if (!war.belligerents.includes(playerId)) continue;
+    for (const b of war.belligerents) {
+      if (b !== playerId && line.includes(state.countries[b]?.name ?? '')) return true;
+    }
+  }
+
+  for (const country of Object.values(state.countries)) {
+    if (country.id === playerId) continue;
+    if (line.includes(country.name) && getRelation(state.relations, playerId, country.id) <= -35) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function isOilShockRelevant(state: GameState, playerId: string): boolean {
+  return isHormuzEnergyExposed(playerId) || isPlayerInIranWar(state, playerId) || state.globalOilShock !== null;
+}
+
 function filterPlayerRelevant(
   state: GameState,
   line: string
@@ -93,9 +120,27 @@ function filterPlayerRelevant(
   const playerName = state.countries[playerId]?.name ?? '';
   if (line.includes(playerName)) return true;
   if (line.includes('YOUR TERRITORY')) return true;
-  if (line.includes('grey-zone') && line.includes(playerName)) return true;
-  if (line.includes('Global') || line.includes('global')) return true;
-  if (line.includes('Oil shock') || line.includes('oil shock')) return true;
+
+  const lower = line.toLowerCase();
+  if (lower.includes('grey-zone')) {
+    return isGreyZoneRelevant(state, line);
+  }
+
+  if (
+    lower.includes('strait of hormuz') ||
+    lower.includes('global oil markets spike') ||
+    lower.includes('hormuz disruption')
+  ) {
+    return isOilShockRelevant(state, playerId);
+  }
+
+  if (lower.includes('global oil shock') || lower.includes('oil shock eased')) {
+    return isOilShockRelevant(state, playerId);
+  }
+
+  if (lower.includes('global condemnation') || lower.includes('draws global condemnation')) {
+    return true;
+  }
 
   for (const war of state.wars) {
     if (!war.belligerents.includes(playerId)) continue;

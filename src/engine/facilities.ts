@@ -1,7 +1,8 @@
 import type { FacilityBuildOrder, FacilityType, GameState } from '../types/game';
-import { deductCost } from './actions';
+import { deductCost, canAfford } from './actions';
 import { formatDisplayCost } from './treasuryDisplay';
 import { spendActionEnergy, actionEnergyBlockReason, ACTION_ENERGY_COSTS } from './actionEnergy';
+import { previewSpendFiscalImpact, type SpendFiscalPreview } from './fiscal';
 
 export interface FacilityDefinition {
   type: FacilityType;
@@ -69,6 +70,64 @@ export function getPendingFacilityBuilds(state: GameState): FacilityBuildOrder[]
 
 export function getTurnsUntilFacilityComplete(state: GameState, order: FacilityBuildOrder): number {
   return Math.max(0, order.completeTurn - state.turn);
+}
+
+export interface FacilityConfirmPreview {
+  regionId: string;
+  regionName: string;
+  facilityType: FacilityType;
+  label: string;
+  description: string;
+  cost: number;
+  buildTurns: number;
+  energyCost: number;
+  canBuild: boolean;
+  blockReason?: string;
+  fiscal: SpendFiscalPreview | null;
+}
+
+export function getFacilityConfirmPreview(
+  state: GameState,
+  regionId: string,
+  type: FacilityType
+): FacilityConfirmPreview | null {
+  const region = state.regions[regionId];
+  const def = FACILITY_DEFINITIONS[type];
+  if (!region || !def) return null;
+
+  const playerId = state.playerCountryId;
+  const energyCost = ACTION_ENERGY_COSTS.facility_build ?? 1;
+
+  let canBuild = region.controlledBy === playerId;
+  let blockReason: string | undefined;
+
+  if (!canBuild) blockReason = 'You do not control this region.';
+  else if (hasFacilityInRegion(state, regionId, type)) blockReason = 'This facility already exists here.';
+  else if (hasPendingBuild(state, regionId, type)) blockReason = 'Already building this facility here.';
+  else if (!canAfford(state, def.cost)) {
+    canBuild = false;
+    blockReason = `Insufficient funds (need ${formatDisplayCost(def.cost)}).`;
+  } else {
+    const energyReason = actionEnergyBlockReason(state, energyCost);
+    if (energyReason) {
+      canBuild = false;
+      blockReason = energyReason;
+    }
+  }
+
+  return {
+    regionId,
+    regionName: region.name,
+    facilityType: type,
+    label: def.label,
+    description: def.description,
+    cost: def.cost,
+    buildTurns: def.buildTurns,
+    energyCost,
+    canBuild,
+    blockReason,
+    fiscal: previewSpendFiscalImpact(state, playerId, def.cost),
+  };
 }
 
 export function playerStartFacilityBuild(

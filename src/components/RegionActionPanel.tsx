@@ -93,7 +93,7 @@ export function RegionActionPanel({
               Strike range: <strong>{getStrikeRangeLabel(range)}</strong>
               {!atWar && <span className="warning-text"> · Unprovoked strikes trigger war</span>}
             </p>
-            {warReadiness < 0.35 && (
+            {warReadiness < 0.32 && (
               <p className="warning-text small">
                 War readiness {Math.round(warReadiness * 100)}% — strikes and campaigns drain public support. Use propaganda or stand down.
               </p>

@@ -28,6 +28,16 @@ export function getHormuzAffectedNations(initiatorId: string, otherId: string): 
   return [...affected];
 }
 
+export function isHormuzEnergyExposed(countryId: string): boolean {
+  return (HORMUZ_ENERGY_EXPOSED as readonly string[]).includes(countryId);
+}
+
+export function isPlayerInIranWar(state: GameState, playerId: string): boolean {
+  return state.wars.some(
+    w => w.belligerents.includes('iran') && w.belligerents.includes(playerId)
+  );
+}
+
 function isAtWar(state: GameState, a: string, b: string): boolean {
   return state.wars.some(w => w.belligerents.includes(a) && w.belligerents.includes(b));
 }

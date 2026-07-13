@@ -2,23 +2,23 @@ import type { GameState, Country } from '../types/game';
 import type { StrikeType } from '../types/game';
 
 const STRIKE_READINESS_COST: Record<StrikeType, number> = {
-  artillery: 0.018,
-  drone: 0.024,
-  cruise: 0.038,
-  ballistic: 0.052,
-  icbm: 0.075,
+  artillery: 0.016,
+  drone: 0.021,
+  cruise: 0.034,
+  ballistic: 0.047,
+  icbm: 0.068,
 };
 
 const CAMPAIGN_SUSTAIN_READINESS: Record<StrikeType, number> = {
-  artillery: 0.012,
-  drone: 0.016,
-  cruise: 0.022,
-  ballistic: 0.028,
-  icbm: 0.035,
+  artillery: 0.01,
+  drone: 0.014,
+  cruise: 0.02,
+  ballistic: 0.025,
+  icbm: 0.031,
 };
 
-export const READINESS_STRIKE_BLOCK = 0.28;
-export const READINESS_CAMPAIGN_HALT = 0.18;
+export const READINESS_STRIKE_BLOCK = 0.24;
+export const READINESS_CAMPAIGN_HALT = 0.15;
 
 export function getWarReadiness(country: Country): number {
   return country.stats.warReadiness ?? 1;
@@ -72,20 +72,20 @@ export function tickWarReadiness(state: GameState): void {
 
     if (atWar) {
       const supportGap = Math.max(0, 0.42 - country.stats.warPopularity);
-      readiness -= 0.015 + supportGap * 0.06;
-      readiness -= country.stats.warExhaustion * 0.025;
-      readiness -= activeCampaigns * 0.012;
+      readiness -= 0.012 + supportGap * 0.05;
+      readiness -= country.stats.warExhaustion * 0.022;
+      readiness -= activeCampaigns * 0.01;
 
       if (country.stats.warPopularity > 0.58) {
-        readiness += 0.02;
+        readiness += 0.025;
       }
       if (activeCampaigns > 2) {
-        readiness -= 0.02;
+        readiness -= 0.015;
       }
     } else {
-      readiness = Math.min(1, readiness + 0.035);
+      readiness = Math.min(1, readiness + 0.04);
       if (country.stats.warExhaustion < 0.15) {
-        readiness = Math.min(1, readiness + 0.02);
+        readiness = Math.min(1, readiness + 0.025);
       }
     }
 

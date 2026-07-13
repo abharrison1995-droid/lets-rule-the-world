@@ -4,6 +4,8 @@ import { CAMPAIGN_DEFS } from './strikeCampaigns';
 import { isAtWarWith, canAfford } from './actions';
 import { getUnprovokedStrikePenalty, estimateUnprovokedSpillover } from './combat';
 import { getRelation } from '../data/relations';
+import type { SpendFiscalPreview } from './fiscal';
+import { previewSpendFiscalImpact } from './fiscal';
 import { formatDisplayCost } from './treasuryDisplay';
 import { canSpendActionEnergy } from './actionEnergy';
 import { getReadinessBlockReason } from './warReadiness';
@@ -29,6 +31,7 @@ export interface StrikeConfirmPreview {
   spilloverHits: Array<{ countryId: string; name: string; estimatedDelta: number }>;
   triggersCondemnation: boolean;
   ongoingEscalationWarning?: string;
+  fiscal: SpendFiscalPreview | null;
 }
 
 export function getStrikeConfirmPreview(
@@ -83,6 +86,7 @@ export function getStrikeConfirmPreview(
     directRelationPenalty: directPenalty,
     spilloverHits: spillover,
     triggersCondemnation: triggersWar,
+    fiscal: previewSpendFiscalImpact(state, playerId, option.cost),
   };
 }
 
@@ -150,5 +154,8 @@ export function getCampaignConfirmPreview(
     ongoingEscalationWarning: triggersWar
       ? `Opening salvo will crater relations (${currentRel} → ~${currentRel - directPenalty}) and declare war. Further grey-zone bombardment before war formalizes draws escalating condemnation each turn.`
       : undefined,
+    fiscal: previewSpendFiscalImpact(state, playerId, totalStart, {
+      extraCampaignSustainCost: def.sustainCost,
+    }),
   };
 }
