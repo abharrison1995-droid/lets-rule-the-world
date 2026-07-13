@@ -28,6 +28,7 @@ const OPTION_ICONS: Record<TalkOptionId, string> = {
   military_pact: '🤝',
   trade_deal: '📜',
   intel_sharing: '🔍',
+  ultimatum: '⚠️',
 };
 
 const COVERT_ICONS: Record<CovertTalkOptionId, string> = {
@@ -42,7 +43,7 @@ const PEACE_LABELS: Record<PeaceTermsType, string> = {
   reparations: 'Demand Reparations',
 };
 
-const OPTION_ORDER: TalkOptionId[] = ['peace', 'military_pact', 'trade_deal', 'intel_sharing'];
+const OPTION_ORDER: TalkOptionId[] = ['peace', 'military_pact', 'trade_deal', 'intel_sharing', 'ultimatum'];
 
 export function TalksScreen({
   state,
@@ -204,7 +205,8 @@ export function TalksScreen({
           {OPTION_ORDER.map(opt => {
             const optPreview = getNegotiationPreview(state, state.playerCountryId, targetId, opt);
             const hidden = opt === 'peace' && !atWar;
-            if (hidden) return null;
+            const ultimatumHidden = opt === 'ultimatum' && atWar;
+            if (hidden || ultimatumHidden) return null;
             return (
               <button
                 key={opt}

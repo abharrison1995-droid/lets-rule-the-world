@@ -3,6 +3,7 @@ import type { GameState, BudgetAllocation, MilitaryDev, DomesticSplit } from '..
 import { formatGDP, formatPercent } from '../engine/gameState';
 import { normalizeBudget } from '../engine/economy';
 import { normalizeDomesticSplit } from '../engine/propaganda';
+import { BottomSheet } from './BottomSheet';
 
 interface EconomyPanelProps {
   state: GameState;
@@ -64,7 +65,7 @@ export function EconomyPanel({
   };
 
   return (
-    <div className="panel economy-panel">
+    <BottomSheet onClose={onClose} className="economy-panel">
       <div className="panel-header">
         <h3>Economy & Budget</h3>
         <button className="btn-close" onClick={onClose}>×</button>
@@ -158,6 +159,6 @@ export function EconomyPanel({
           })}
         </div>
       </section>
-    </div>
+    </BottomSheet>
   );
 }

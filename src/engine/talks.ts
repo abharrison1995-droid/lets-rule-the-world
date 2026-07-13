@@ -8,6 +8,7 @@ import {
 } from './diplomacy';
 import { proposePeace, getPeaceOptions, calculatePeaceAcceptance } from './peace';
 import { actionEnergyBlockReason } from './actionEnergy';
+import { getRegionsForCountry } from '../data/regions';
 
 const TIER_ORDER: AllianceTier[] = ['informal', 'defensive_pact', 'full_alliance', 'bloc'];
 
@@ -17,6 +18,7 @@ export const TALK_COSTS: Record<TalkOptionId, number> = {
   military_pact: 120,
   trade_deal: 65,
   intel_sharing: 50,
+  ultimatum: 40,
 };
 
 export const TALK_DURATIONS: Record<TalkOptionId, number> = {
@@ -24,6 +26,7 @@ export const TALK_DURATIONS: Record<TalkOptionId, number> = {
   military_pact: 4,
   trade_deal: 2,
   intel_sharing: 3,
+  ultimatum: 2,
 };
 
 export const TALK_ENERGY_COSTS: Record<TalkOptionId, number> = {
@@ -31,6 +34,7 @@ export const TALK_ENERGY_COSTS: Record<TalkOptionId, number> = {
   military_pact: 2,
   trade_deal: 1,
   intel_sharing: 1,
+  ultimatum: 1,
 };
 
 const TALK_LABELS: Record<TalkOptionId, string> = {
@@ -38,6 +42,7 @@ const TALK_LABELS: Record<TalkOptionId, string> = {
   military_pact: 'Discuss military pact',
   trade_deal: 'Trade agreement',
   intel_sharing: 'Intel sharing pact',
+  ultimatum: 'Issue ultimatum',
 };
 
 function isAtWarWith(state: GameState, a: string, b: string): boolean {
@@ -105,10 +110,19 @@ function calculateNegotiationAcceptance(
   } else if (option === 'trade_deal') {
     if (relation < 0) score *= 0.4;
     else if (relation > 40) score += 0.15;
-  } else if (option === 'intel_sharing') {
+  } else   if (option === 'intel_sharing') {
     if (relation < 15) score *= 0.5;
     const existingMil = findAllianceBetween(state, playerId, targetId);
     if (existingMil) score += 0.12;
+  } else if (option === 'ultimatum') {
+    const player = state.countries[playerId];
+    const target = state.countries[targetId];
+    if (player && target) {
+      const powerRatio = player.stats.gdp / Math.max(1, target.stats.gdp);
+      score += Math.min(0.25, powerRatio * 0.08);
+    }
+    score += relation / 150;
+    if (relation < -40) score *= 0.6;
   }
 
   return Math.max(0.05, Math.min(0.95, score));
@@ -174,6 +188,10 @@ function getBlockReason(
     }
   }
 
+  if (option === 'ultimatum' && isAtWarWith(state, playerId, targetId)) {
+    return 'Cannot issue ultimatum while at war — use peace envoy instead.';
+  }
+
   return undefined;
 }
 
@@ -211,6 +229,9 @@ export function getNegotiationPreview(
     } else if (option === 'intel_sharing') {
       effects = ['+5% counter-intelligence effectiveness', '+5 relations', `Envoy returns in ${durationTurns} turns`];
       description = 'Dispatch intelligence liaisons for coordination.';
+    } else if (option === 'ultimatum') {
+      effects = ['On accept: +10 relations, target unrest +8', 'On reject: −15 relations', `Envoy returns in ${durationTurns} turns`];
+      description = 'Deliver a formal demand — backed by your national weight.';
     }
   }
 
@@ -233,7 +254,7 @@ export function getAllNegotiationPreviews(
   playerId: string,
   targetId: string
 ): NegotiationPreview[] {
-  const options: TalkOptionId[] = ['peace', 'military_pact', 'trade_deal', 'intel_sharing'];
+  const options: TalkOptionId[] = ['peace', 'military_pact', 'trade_deal', 'intel_sharing', 'ultimatum'];
   return options.map(opt => getNegotiationPreview(state, playerId, targetId, opt));
 }
 
@@ -334,6 +355,19 @@ export function resolveNegotiationMission(
     formBilateralAgreement(state, playerId, targetId, 'intel');
     modifyRelation(state.relations, playerId, targetId, 5);
     return { success: true, message: `Intel sharing pact established with ${targetName}.` };
+  }
+
+  if (option === 'ultimatum') {
+    const acceptance = calculateNegotiationAcceptance(state, playerId, targetId, 'ultimatum');
+    if (Math.random() > acceptance) {
+      modifyRelation(state.relations, playerId, targetId, -15);
+      return { success: false, message: `${targetName} rejected the ultimatum.` };
+    }
+    modifyRelation(state.relations, playerId, targetId, 10);
+    for (const region of getRegionsForCountry(targetId)) {
+      region.unrest = Math.min(100, region.unrest + 8);
+    }
+    return { success: true, message: `${targetName} conceded to the ultimatum.` };
   }
 
   return { success: false, message: 'Unknown negotiation.' };

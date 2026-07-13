@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { GameState, PeaceTermsType, TalkOptionId, CovertTalkOptionId } from '../types/game';
+import type { GameState, PeaceTermsType, TalkOptionId, CovertTalkOptionId, PressActionId } from '../types/game';
 import { getAllRelationsForCountry } from '../engine/diplomacy';
 import { getMechanicsForNation } from '../data/mechanics';
 import { getPeaceOptions } from '../engine/peace';
@@ -11,12 +11,14 @@ import {
 } from '../engine/warDeclaration';
 import { TalksScreen } from './TalksScreen';
 import { PressConferenceScreen } from './PressConferenceScreen';
+import { BottomSheet } from './BottomSheet';
 import { getActiveCovertAlliances } from '../engine/covertAlliances';
 
 interface DiplomacyPanelProps {
   state: GameState;
   onClose: () => void;
   onRequestWar: (targetId: string) => void;
+  onPressAction: (actionId: PressActionId, targetId: string) => void;
   onProposePeace: (targetId: string, terms: PeaceTermsType) => void;
   onNegotiate: (targetId: string, option: TalkOptionId, peaceTerms?: PeaceTermsType) => void;
   onCovertNegotiate: (targetId: string, option: CovertTalkOptionId) => void;
@@ -39,6 +41,7 @@ export function DiplomacyPanel({
   state,
   onClose,
   onRequestWar,
+  onPressAction,
   onProposePeace,
   onNegotiate,
   onCovertNegotiate,
@@ -77,7 +80,7 @@ export function DiplomacyPanel({
 
   if (view === 'talks' && talksTarget) {
     return (
-      <div className="panel diplomacy-panel">
+      <BottomSheet onClose={onClose} className="diplomacy-panel">
         <TalksScreen
           state={state}
           targetId={talksTarget}
@@ -86,24 +89,25 @@ export function DiplomacyPanel({
           onCovertNegotiate={(option) => onCovertNegotiate(talksTarget, option)}
           lastResult={talksResult}
         />
-      </div>
+      </BottomSheet>
     );
   }
 
   if (view === 'press') {
     return (
-      <div className="panel diplomacy-panel">
+      <BottomSheet onClose={onClose} className="diplomacy-panel">
         <PressConferenceScreen
           state={state}
           onBack={() => setView('main')}
           onRequestWar={onRequestWar}
+          onPressAction={onPressAction}
         />
-      </div>
+      </BottomSheet>
     );
   }
 
   return (
-    <div className="panel diplomacy-panel">
+    <BottomSheet onClose={onClose} className="diplomacy-panel">
       <div className="panel-header">
         <h3>Diplomacy & Actions</h3>
         <button className="btn-close" onClick={onClose}>×</button>
@@ -274,6 +278,6 @@ export function DiplomacyPanel({
           })}
         </section>
       )}
-    </div>
+    </BottomSheet>
   );
 }

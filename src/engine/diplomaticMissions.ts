@@ -26,6 +26,7 @@ import {
   COVERT_DURATIONS,
   COVERT_ENERGY_COSTS,
 } from './covertAlliances';
+import { resolveSummitMission } from './pressActions';
 
 export interface MissionDispatchResult {
   success: boolean;
@@ -159,6 +160,12 @@ export function resolveDiplomaticMissions(state: GameState): void {
     const playerId = state.playerCountryId;
     const targetName = state.countries[mission.targetNationId]?.name ?? mission.targetNationId;
 
+    if (mission.type === 'summit') {
+      const result = resolveSummitMission(state, mission.targetNationId);
+      state.history.push(`Turn ${state.turn}: Summit with ${targetName} — ${result.message}`);
+      continue;
+    }
+
     if (mission.type === 'covert_trade' || mission.type === 'covert_military' || mission.type === 'covert_intel') {
       const covertOption = mission.type as CovertTalkOptionId;
       const result = resolveCovertNegotiationMission(state, playerId, mission.targetNationId, covertOption);
@@ -167,6 +174,9 @@ export function resolveDiplomaticMissions(state: GameState): void {
     }
 
     const talkOption = mission.type as TalkOptionId;
+    if (!['peace', 'military_pact', 'trade_deal', 'intel_sharing', 'ultimatum'].includes(mission.type)) {
+      continue;
+    }
     const result = resolveNegotiationMission(
       state,
       playerId,

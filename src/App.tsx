@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { GameState, BudgetAllocation, MilitaryDev, DomesticSplit, PeaceTermsType, TalkOptionId, CovertTalkOptionId } from './types/game';
+import type { GameState, BudgetAllocation, MilitaryDev, DomesticSplit, PeaceTermsType, TalkOptionId, CovertTalkOptionId, PressActionId } from './types/game';
 import { createInitialState, advanceTurn } from './engine/gameState';
 import { saveGame, loadGame, hasSavedGame, deleteSave } from './engine/saveLoad';
 import { resolveEventChoice } from './engine/events';
@@ -14,6 +14,7 @@ import {
   playerNegotiate,
   playerCovertNegotiate,
   playerProbeCovertPacts,
+  playerPressAction,
 } from './engine/actions';
 import { dispatchTalkMission } from './engine/diplomaticMissions';
 import { playerDomesticPropaganda, playerForeignInfluence } from './engine/propaganda';
@@ -183,6 +184,14 @@ export default function App() {
       showFeedback('Intelligence probe launched — results next turn.');
       updateState(newState);
     }
+  }, [state, updateState]);
+
+  const handlePressAction = useCallback((actionId: PressActionId, targetId: string) => {
+    if (!state) return;
+    const newState = structuredClone(state);
+    const result = playerPressAction(newState, actionId, targetId);
+    showFeedback(result.message);
+    if (result.success) updateState(newState);
   }, [state, updateState]);
 
   const handleProposePeace = useCallback((targetId: string, terms: PeaceTermsType) => {
@@ -357,6 +366,7 @@ export default function App() {
           state={state}
           onClose={() => setShowDiplomacy(false)}
           onRequestWar={handleRequestWar}
+          onPressAction={handlePressAction}
           onProposePeace={handleProposePeace}
           onNegotiate={handleNegotiate}
           onCovertNegotiate={handleCovertNegotiate}
@@ -391,6 +401,30 @@ export default function App() {
           event={pendingEventData}
           onChoice={(i) => handleEventChoice(pendingEvent!.eventId, i)}
         />
+      )}
+
+      {isMobile && (
+        <nav className="mobile-action-bar">
+          <button
+            className={showEconomy ? 'active' : ''}
+            onClick={() => { setShowEconomy(true); setShowDiplomacy(false); }}
+          >
+            💰 Economy
+          </button>
+          <button
+            className={showDiplomacy ? 'active' : ''}
+            onClick={() => { setShowDiplomacy(true); setShowEconomy(false); }}
+          >
+            🤝 Diplomacy
+          </button>
+          <button
+            className={showSidePanel ? 'active' : ''}
+            onClick={() => setShowSidePanel(!showSidePanel)}
+          >
+            📊 Intel
+          </button>
+          <button className="mobile-end-turn" onClick={endTurn}>End Turn ▶</button>
+        </nav>
       )}
     </div>
   );

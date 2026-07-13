@@ -14,6 +14,8 @@ import {
   dispatchTalkMission,
   dispatchCovertMission,
 } from './diplomaticMissions';
+import { executePressAction } from './pressActions';
+import type { PressActionId } from '../types/game';
 import {
   spendActionEnergy,
   actionEnergyBlockReason,
@@ -94,6 +96,14 @@ export function playerCovertNegotiate(
 ): NegotiationResult {
   const result = dispatchCovertMission(state, targetId, option);
   return { success: result.success, message: result.message };
+}
+
+export function playerPressAction(
+  state: GameState,
+  actionId: PressActionId,
+  targetId: string
+): { success: boolean; message: string } {
+  return executePressAction(state, actionId, targetId);
 }
 
 export function playerProbeCovertPacts(state: GameState, targetNationId: string): string | null {

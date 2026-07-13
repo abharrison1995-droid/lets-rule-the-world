@@ -110,6 +110,8 @@ export type DiplomaticMissionType =
   | 'military_pact'
   | 'trade_deal'
   | 'intel_sharing'
+  | 'ultimatum'
+  | 'summit'
   | 'covert_trade'
   | 'covert_military'
   | 'covert_intel';
@@ -125,7 +127,26 @@ export interface DiplomaticMission {
   peaceTerms?: PeaceTermsType;
 }
 
-export type TalkOptionId = 'peace' | 'military_pact' | 'trade_deal' | 'intel_sharing';
+export type TalkOptionId = 'peace' | 'military_pact' | 'trade_deal' | 'intel_sharing' | 'ultimatum';
+
+export type PressActionId =
+  | 'condemn_aggression'
+  | 'announce_summit'
+  | 'social_media_flood'
+  | 'info_ops_leak';
+
+export interface PressActionPreview {
+  actionId: PressActionId;
+  label: string;
+  description: string;
+  canAttempt: boolean;
+  blockReason?: string;
+  cost: number;
+  energyCost: number;
+  durationTurns: number;
+  isInstant: boolean;
+  effects: string[];
+}
 
 export interface NegotiationPreview {
   optionId: TalkOptionId;

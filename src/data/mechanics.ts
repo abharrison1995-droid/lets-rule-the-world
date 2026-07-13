@@ -2,6 +2,17 @@ import type { NationMechanic } from '../types/game';
 
 export const NATION_MECHANICS: NationMechanic[] = [
   {
+    id: 'troll_farm',
+    countryId: 'russia',
+    name: 'Troll Farm Operation',
+    description: 'Industrial-scale disinformation targeting Western morale.',
+    cost: 35,
+    cooldown: 3,
+    category: 'covert',
+    effects: { targetMorale: -0.05, targetUnrest: 8 },
+    discoveryRiskBonus: 0.18,
+  },
+  {
     id: 'tommy_ten_names',
     countryId: 'russia',
     name: 'Deploy Tommy Ten Names',
@@ -13,6 +24,17 @@ export const NATION_MECHANICS: NationMechanic[] = [
     discoveryRiskBonus: 0.15,
   },
   {
+    id: 'firewall_breach',
+    countryId: 'china',
+    name: 'Firewall Breach Campaign',
+    description: 'State-sponsored social media manipulation abroad.',
+    cost: 45,
+    cooldown: 4,
+    category: 'covert',
+    effects: { targetMorale: -0.04, targetUnrest: 10 },
+    discoveryRiskBonus: 0.14,
+  },
+  {
     id: 'tech_espionage',
     countryId: 'china',
     name: 'Industrial Espionage',
@@ -22,6 +44,17 @@ export const NATION_MECHANICS: NationMechanic[] = [
     category: 'covert',
     effects: { targetTechGrowth: -0.01 },
     discoveryRiskBonus: 0.10,
+  },
+  {
+    id: 'bot_farm',
+    countryId: 'usa',
+    name: 'Bot Farm Disinformation',
+    description: 'Coordinated inauthentic accounts flood enemy information space.',
+    cost: 50,
+    cooldown: 4,
+    category: 'covert',
+    effects: { targetMorale: -0.06, targetUnrest: 12 },
+    discoveryRiskBonus: 0.12,
   },
   {
     id: 'soft_power_ngo',
