@@ -324,6 +324,18 @@ export interface WinConditionDef {
   minRelations?: Record<string, number>;
   minRegimeSecurity?: number;
   annexCountryIds?: string[];
+  /** Formal bilateral deals (trade/intel) the player must hold */
+  minBilateralAgreements?: number;
+  /** Must not be under international condemnation */
+  requireNoPariah?: boolean;
+  /** Must not be in decline mode */
+  requireNotInDecline?: boolean;
+  /** Ukraine must still control this fraction of its home regions (0–1) */
+  ukraineSovereigntyPct?: number;
+  /** Player treasury must rank this high worldwide (1 = richest) */
+  maxTreasuryRank?: number;
+  /** Absolute earliest turn any path may fire (safety floor) */
+  absoluteMinTurns?: number;
 }
 
 export type PeaceTermsType = 'white_peace' | 'ceasefire' | 'reparations';
