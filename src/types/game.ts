@@ -334,6 +334,8 @@ export interface GameEvent {
     requiredState?: Array<{ key: string; op: string; value: number | string | boolean }>;
     excludedIfActive?: string[];
     targetCountry?: string;
+    /** If true, only fires via explicit trigger — never from turn roll */
+    manualOnly?: boolean;
   };
   weight: number;
   weightModifiers?: Array<{ condition: string; multiplier: number }>;

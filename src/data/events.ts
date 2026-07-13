@@ -392,7 +392,7 @@ export const EVENTS: GameEvent[] = [
     title: 'Global Condemnation',
     description: 'Your strike on a nation you are not at war with triggers international outrage.',
     scope: 'global',
-    triggerConditions: { minTurn: 2 },
+    triggerConditions: { minTurn: 2, manualOnly: true },
     weight: 20,
     choices: [
       { label: 'Issue justification', effects: [{ stat: 'relations', target: 'all', delta: -5 }, { stat: 'warPopularity', target: 'self', delta: -0.1 }] },
