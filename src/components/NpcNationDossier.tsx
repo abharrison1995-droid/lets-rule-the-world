@@ -49,6 +49,26 @@ export function NpcNationDossierPanel({
         ))}
       </ul>
 
+      {dossier.mechanicStatus && (
+        <div className={`npc-mechanic ${dossier.mechanicStatus.active ? 'active' : 'dormant'}`}>
+          <h6>{dossier.mechanicStatus.name}</h6>
+          <p className="muted small">{dossier.mechanicStatus.description}</p>
+          <p className="npc-mechanic-status">
+            <span className={`mechanic-badge ${dossier.mechanicStatus.active ? 'on' : 'off'}`}>
+              {dossier.mechanicStatus.active ? 'Active' : 'Dormant'}
+            </span>
+            {dossier.mechanicStatus.statusLine}
+          </p>
+          {dossier.mechanicStatus.detailLines.length > 0 && (
+            <ul className="npc-mechanic-details">
+              {dossier.mechanicStatus.detailLines.map((line, i) => (
+                <li key={i}>{line}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       {dossier.behaviorNotes.length > 0 && (
         <div className="npc-behavior">
           <h6>Strategic notes</h6>

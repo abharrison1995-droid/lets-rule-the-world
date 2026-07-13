@@ -6,6 +6,7 @@ import { ALLIANCES_DATA } from '../data/countries';
 import { categorizeRelation, type RelationCategory } from './warDeclaration';
 import { formatDisplayGDP, formatDebtRatio } from './treasuryDisplay';
 import { getFiscalHeadroom } from './fiscal';
+import { getNpcMechanicStatus, type NpcMechanicStatus } from './npcMechanics';
 
 export interface NpcRelationEntry {
   countryId: string;
@@ -35,6 +36,7 @@ export interface NpcNationDossier {
   regionsTotal: number;
   warExhaustion: number;
   warReadiness: number;
+  mechanicStatus: NpcMechanicStatus | null;
 }
 
 export function isNpcNation(state: GameState, countryId: string): boolean {
@@ -162,6 +164,7 @@ export function getNpcNationDossier(state: GameState, npcId: string): NpcNationD
     regionsTotal: regions.length,
     warExhaustion: country.stats.warExhaustion,
     warReadiness: country.stats.warReadiness ?? 1,
+    mechanicStatus: getNpcMechanicStatus(state, npcId),
   };
 }
 

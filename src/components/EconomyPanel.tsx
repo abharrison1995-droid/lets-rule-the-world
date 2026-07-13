@@ -190,6 +190,9 @@ export function EconomyPanel({
           {taxPreview.oilShockDrag > 0 && (
             <p className="warning-text">Oil shock drag: −{formatDisplayGDP(taxPreview.oilShockDrag)}</p>
           )}
+          {taxPreview.suezDrag > 0 && (
+            <p className="warning-text">Suez transit drag: −{formatDisplayGDP(taxPreview.suezDrag)}</p>
+          )}
           {taxPreview.pariahDrag > 0 && (
             <p className="warning-text">Pariah condemnation drag: −{formatDisplayGDP(taxPreview.pariahDrag)}</p>
           )}

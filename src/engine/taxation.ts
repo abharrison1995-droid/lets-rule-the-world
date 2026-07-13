@@ -4,6 +4,7 @@ import { getPariahIncomeDrag } from './diplomacy';
 import { getRelation, modifyRelation } from '../data/relations';
 import { getRegionsForCountry } from '../data/regions';
 import { getFacilityIncomeBonus } from './facilities';
+import { getSuezTransitDrag } from './npcMechanics';
 
 const DEFAULT_CORPORATE_TAX = 0.20;
 const DEFAULT_INCOME_TAX = 0.22;
@@ -15,6 +16,7 @@ export interface TaxBreakdown {
   facilityBonus: number;
   reserveBoost: number;
   oilShockDrag: number;
+  suezDrag: number;
   pariahDrag: number;
   total: number;
 }
@@ -41,7 +43,7 @@ function getOilShockDrag(state: GameState, countryId: string): number {
 export function computeTaxBreakdown(state: GameState, countryId: string): TaxBreakdown {
   const country = state.countries[countryId];
   if (!country) {
-    return { corporateRevenue: 0, incomeRevenue: 0, organicGrowth: 0, facilityBonus: 0, reserveBoost: 0, oilShockDrag: 0, pariahDrag: 0, total: 0 };
+    return { corporateRevenue: 0, incomeRevenue: 0, organicGrowth: 0, facilityBonus: 0, reserveBoost: 0, oilShockDrag: 0, suezDrag: 0, pariahDrag: 0, total: 0 };
   }
 
   const corporate = state.corporateTaxRate ?? DEFAULT_CORPORATE_TAX;
@@ -54,10 +56,11 @@ export function computeTaxBreakdown(state: GameState, countryId: string): TaxBre
   const facilityBonus = countryId === state.playerCountryId ? getFacilityIncomeBonus(state) : 0;
   const reserveBoost = countryId === state.playerCountryId ? treasury * state.budget.reserve * 0.006 : 0;
   const oilShockDrag = getOilShockDrag(state, countryId);
+  const suezDrag = getSuezTransitDrag(state, countryId);
   const pariahDrag = getPariahIncomeDrag(state, countryId);
 
-  const total = corporateRevenue + incomeRevenue + organicGrowth + facilityBonus + reserveBoost - oilShockDrag - pariahDrag;
-  return { corporateRevenue, incomeRevenue, organicGrowth, facilityBonus, reserveBoost, oilShockDrag, pariahDrag, total };
+  const total = corporateRevenue + incomeRevenue + organicGrowth + facilityBonus + reserveBoost - oilShockDrag - suezDrag - pariahDrag;
+  return { corporateRevenue, incomeRevenue, organicGrowth, facilityBonus, reserveBoost, oilShockDrag, suezDrag, pariahDrag, total };
 }
 
 export function computeTurnIncome(state: GameState, countryId: string): number {

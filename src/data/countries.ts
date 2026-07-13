@@ -328,7 +328,7 @@ export const COUNTRIES: Record<string, Country> = {
     startingAlliances: [],
     startingRelations: {},
     difficultyRating: { score: 8, blurb: 'NPC — active war zone, high defense spend.' },
-    uniqueMechanics: [],
+    uniqueMechanics: ['western_aid_pipeline'],
     collapseCondition: { type: 'hard', triggerStats: { moraleBase: 0.2 }, telegraphEventId: 'ukraine_collapse_warning' },
   },
   saudi_arabia: {
@@ -348,7 +348,7 @@ export const COUNTRIES: Record<string, Country> = {
     startingAlliances: [],
     startingRelations: {},
     difficultyRating: { score: 5, blurb: 'NPC — oil wealth, US security umbrella.' },
-    uniqueMechanics: [],
+    uniqueMechanics: ['opec_leverage'],
     collapseCondition: { type: 'soft', triggerStats: { regimeSecurity: 0.3 }, telegraphEventId: 'saudi_instability_warning' },
   },
   japan: {
@@ -368,7 +368,7 @@ export const COUNTRIES: Record<string, Country> = {
     startingAlliances: [],
     startingRelations: {},
     difficultyRating: { score: 4, blurb: 'NPC — economic giant, constrained military.' },
-    uniqueMechanics: [],
+    uniqueMechanics: ['remilitarization'],
     collapseCondition: { type: 'soft', triggerStats: { moraleBase: 0.3 }, telegraphEventId: 'japan_crisis_warning' },
   },
   france: {
@@ -388,7 +388,7 @@ export const COUNTRIES: Record<string, Country> = {
     startingAlliances: ['nato'],
     startingRelations: {},
     difficultyRating: { score: 4, blurb: 'NPC — independent nuclear power, NATO member.' },
-    uniqueMechanics: [],
+    uniqueMechanics: ['independent_deterrent'],
     collapseCondition: { type: 'soft', triggerStats: { regimeSecurity: 0.3 }, telegraphEventId: 'france_crisis_warning' },
   },
   germany: {
@@ -408,7 +408,7 @@ export const COUNTRIES: Record<string, Country> = {
     startingAlliances: ['nato'],
     startingRelations: {},
     difficultyRating: { score: 4, blurb: 'NPC — economic engine, historically low defense spend.' },
-    uniqueMechanics: [],
+    uniqueMechanics: ['zeitenwende'],
     collapseCondition: { type: 'soft', triggerStats: { moraleBase: 0.3 }, telegraphEventId: 'germany_crisis_warning' },
   },
   egypt: {
@@ -428,7 +428,7 @@ export const COUNTRIES: Record<string, Country> = {
     startingAlliances: [],
     startingRelations: {},
     difficultyRating: { score: 6, blurb: 'NPC — regional power, economic fragility.' },
-    uniqueMechanics: [],
+    uniqueMechanics: ['suez_gatekeeper'],
     collapseCondition: { type: 'hard', triggerStats: { regimeSecurity: 0.25 }, telegraphEventId: 'egypt_crisis_warning' },
   },
 };

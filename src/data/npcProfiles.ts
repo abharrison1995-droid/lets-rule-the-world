@@ -37,8 +37,8 @@ export const NPC_PROFILES: Record<string, NpcProfile> = {
     foreignPolicy:
       'Seeks maximum Western military and financial support; will not accept territorial concessions while fighting continues.',
     behaviorNotes: [
+      'Western Aid Pipeline — treasury, morale, and readiness scale with US/EU relations while at war',
       'Defends home regions fiercely — collapse risk if morale collapses',
-      'Benefits from high relations with USA, UK, and EU majors',
       'Primary target of Russian offensives at game start',
     ],
     keyPartners: ['usa', 'england', 'germany', 'france'],
@@ -53,8 +53,8 @@ export const NPC_PROFILES: Record<string, NpcProfile> = {
     foreignPolicy:
       'Pragmatic balancer: arms deals with the West, quiet trade with China, cold rivalry with Iran.',
     behaviorNotes: [
+      'OPEC Leverage — softens or worsens global oil shocks depending on US relations',
       'Exposed to Hormuz crises when Iran is at war',
-      'Relations with USA and Israel shape Gulf stability',
       'Regime security fragile if oil income and patronage falter',
     ],
     keyPartners: ['usa', 'pakistan', 'egypt'],
@@ -69,8 +69,8 @@ export const NPC_PROFILES: Record<string, NpcProfile> = {
     foreignPolicy:
       'US alliance anchor in the Pacific; cautious on China; incremental remilitarization debate.',
     behaviorNotes: [
+      'Remilitarization — gradual strike and drone upgrades under China–Japan tension',
       'Quad membership links fate to US–China competition',
-      'High debt limits fiscal flexibility despite large treasury',
       'Vulnerable to oil shocks and regional missile crises',
     ],
     keyPartners: ['usa', 'india', 'south_korea'],
@@ -85,8 +85,8 @@ export const NPC_PROFILES: Record<string, NpcProfile> = {
     foreignPolicy:
       'Atlantic alliance when convenient; champions EU strategic autonomy; active in Africa and Middle East periphery.',
     behaviorNotes: [
+      'Independent Deterrent — autonomous aid to Ukraine and nuclear signaling when Russia war persists',
       'NATO bloc ties affect war declarations against members',
-      'Supports Ukraine materially when relations are strong',
       'Regime stability sensitive to domestic unrest and debt',
     ],
     keyPartners: ['usa', 'england', 'germany', 'ukraine'],
@@ -101,9 +101,9 @@ export const NPC_PROFILES: Record<string, NpcProfile> = {
     foreignPolicy:
       'Economic statecraft first; rearmament under pressure; reluctant to lead militarily without US cover.',
     behaviorNotes: [
+      'Zeitenwende — defense spending and mil-dev surge after prolonged Russia war',
       'High treasury but cautious war enthusiasm',
       'Energy exposure makes Hormuz and Russia wars costly',
-      'Coalition politics slow bold military moves',
     ],
     keyPartners: ['usa', 'france', 'england', 'ukraine'],
     keyRivals: ['russia'],
@@ -117,9 +117,9 @@ export const NPC_PROFILES: Record<string, NpcProfile> = {
     foreignPolicy:
       'Authoritarian stability over ideology; mediates Gaza/Levant periphery; avoids direct great-power war.',
     behaviorNotes: [
+      'Suez Gatekeeper — regional wars impose trade drag on major importers',
       'Regime collapse risk if security and treasury both weaken',
       'Useful partner for USA and Gulf states in Middle East',
-      'Sensitive to refugee flows and regional war spillover',
     ],
     keyPartners: ['usa', 'saudi_arabia', 'england'],
     keyRivals: ['iran'],

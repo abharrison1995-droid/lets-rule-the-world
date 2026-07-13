@@ -510,6 +510,19 @@ export interface GameState {
   lastTurnReport: TurnReportEntry[];
   /** Event context nation for event effects (sender, ally, etc.) */
   eventContextNationId?: string;
+  /** Passive automated mechanics for non-playable nations */
+  npcMechanicState: Record<string, NpcMechanicRuntime>;
+}
+
+/** Per-NPC runtime state for automated world-power mechanics */
+export interface NpcMechanicRuntime {
+  mechanicId: string;
+  /** 0–100 intensity / progress meter */
+  intensity: number;
+  /** Primary effects are currently firing */
+  active: boolean;
+  /** Turns since activation (0 while dormant) */
+  turnsActive: number;
 }
 
 export interface NationMechanic {

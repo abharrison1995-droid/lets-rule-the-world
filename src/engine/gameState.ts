@@ -15,6 +15,7 @@ import { tickFiscalDebt } from './fiscal';
 import { resolveStrikeCampaigns } from './strikeCampaigns';
 import { runNpcGreyZoneStrikes, runNpcWartimeStrikes } from './npcStrikes';
 import { tickNpcWorldActivity } from './npcNation';
+import { createDefaultNpcMechanicState, tickNpcMechanics } from './npcMechanics';
 import { tickWarReadiness, forceHaltCampaignsFromWeariness } from './warReadiness';
 import { buildTurnReport } from './turnReport';
 import { resetActionEnergy } from './actionEnergy';
@@ -83,6 +84,7 @@ export function createInitialState(playerCountryId: string): GameState {
     globalOilShock: null,
     lastTurnReport: [],
     actionEnergy: 0,
+    npcMechanicState: createDefaultNpcMechanicState(),
   };
 
   resetActionEnergy(state);
@@ -127,6 +129,7 @@ export function advanceTurn(state: GameState): GameState {
   // Turn loop per spec
   tickEconomy(newState);
   tickDiplomacy(newState);
+  tickNpcMechanics(newState);
   tickNpcWorldActivity(newState);
   tickInternationalPariah(newState);
   rollEvents(newState);

@@ -6,9 +6,10 @@ import {
 } from './taxation';
 import { DEFAULT_DOMESTIC_SPLIT } from './propaganda';
 import { defaultBudget } from './economy';
+import { createDefaultNpcMechanicState } from './npcMechanics';
 
 const SAVE_KEY = 'lrw_save';
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 
 interface SavePayload {
   version: number;
@@ -69,6 +70,10 @@ function migrateState(state: GameState, fromVersion: number): GameState {
     }
   }
 
+  if (fromVersion < 16) {
+    migrated.npcMechanicState ??= createDefaultNpcMechanicState();
+  }
+
   return fillMissingSaveFields(migrated);
 }
 
@@ -113,6 +118,7 @@ function fillMissingSaveFields(state: GameState): GameState {
   state.collapseTelegraphedNations ??= [];
   state.gameOver ??= false;
   state.playerWon ??= false;
+  state.npcMechanicState ??= createDefaultNpcMechanicState();
 
   for (const campaign of state.strikeCampaigns) {
     campaign.startedUnprovoked ??= false;
