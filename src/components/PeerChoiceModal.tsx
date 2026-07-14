@@ -19,8 +19,9 @@ export function PeerChoiceModal({ state, onConfirm }: PeerChoiceModalProps) {
         <p className="campaign-brief-kicker">Turn {state.turn} · Peer Threat</p>
         <h2 id="peer-choice-title">Choose Your Rival</h2>
         <p className="campaign-brief-body">
-          Neither Russia nor China is at war with you. The National Security Council will not let the century drift —
-          designate the primary peer to break next.
+          Neither Russia nor China is at war with you. Designate the primary peer —
+          this assigns Mission 2 (Peer Contest). You must open war within 15 turns, then break
+          them by exhaustion, foothold, or (vs Russia) keeping Ukraine mostly sovereign.
         </p>
         <div className="mode-select-options" style={{ maxWidth: '100%' }}>
           <button type="button" className="mode-option mode-option--campaign" onClick={() => choose('russia')}>

@@ -10,10 +10,20 @@ interface GameHeaderProps {
   onOpenDiplomacy: () => void;
   onOpenEconomy: () => void;
   onOpenTheater?: () => void;
+  /** Opens campaign mission sheet (Declare / Install / focus). */
+  onOpenMission?: () => void;
   onSave: () => void;
 }
 
-export function GameHeader({ state, onEndTurn, onOpenDiplomacy, onOpenEconomy, onOpenTheater, onSave }: GameHeaderProps) {
+export function GameHeader({
+  state,
+  onEndTurn,
+  onOpenDiplomacy,
+  onOpenEconomy,
+  onOpenTheater,
+  onOpenMission,
+  onSave,
+}: GameHeaderProps) {
   const country = state.countries[state.playerCountryId];
   const atWar = state.wars.some(w => w.belligerents.includes(state.playerCountryId));
   const hasTheater = (state.warTheaters ?? []).some(t => !t.closed);
@@ -26,7 +36,21 @@ export function GameHeader({ state, onEndTurn, onOpenDiplomacy, onOpenEconomy, o
         <h1 className="game-title">LET'S RULE THE WORLD</h1>
         <span className="turn-counter">Turn {state.turn}</span>
         <span className="mode-badge">{formatModeLabel(state.gameMode ?? 'sandbox')}</span>
-        {mission && <span className="mission-badge" title="Active campaign mission">{mission}</span>}
+        {mission &&
+          (onOpenMission ? (
+            <button
+              type="button"
+              className="mission-badge mission-badge-btn"
+              title="Open campaign mission"
+              onClick={onOpenMission}
+            >
+              {mission}
+            </button>
+          ) : (
+            <span className="mission-badge" title="Active campaign mission">
+              {mission}
+            </span>
+          ))}
       </div>
 
       <div className="header-center">

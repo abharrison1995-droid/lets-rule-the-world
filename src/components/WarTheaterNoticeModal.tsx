@@ -18,9 +18,9 @@ export function WarTheaterNoticeModal({ state, onOpenTheater, onDismiss }: WarTh
     .join(' vs ');
 
   return (
-    <div className="modal-backdrop theater-notice-backdrop">
-      <div className="modal theater-notice-modal">
-        <h3>War Theater Opened</h3>
+    <div className="modal-overlay theater-notice-overlay">
+      <div className="modal theater-notice-modal" role="dialog" aria-labelledby="theater-notice-heading">
+        <h3 id="theater-notice-heading">War Theater Opened</h3>
         <p className="theater-notice-title">{theater.name}</p>
         <p className="muted">{names}</p>
         <p className="muted small">

@@ -60,7 +60,7 @@ export function SidePanel({
           )}
 
           <section className="side-section win-section">
-            <h4>{state.usaCampaign ? 'Long-Term Victory' : 'Victory Progress'}</h4>
+            <h4>{state.usaCampaign ? 'Campaign Progress' : 'Victory Progress'}</h4>
             <p className="win-desc">{winProgress.description}</p>
             <div className="win-progress-bar">
               <div className="win-progress-fill" style={{ width: `${winProgress.progress * 100}%` }} />

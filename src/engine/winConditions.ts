@@ -1,6 +1,8 @@
 import type { GameState, WinConditionDef } from '../types/game';
 import { getRelation } from '../data/relations';
 import { getWinCondition } from '../data/winConditions';
+import { getUsaCampaignLadderProgress } from './usaCampaign';
+import { isUsaCampaignMode } from '../data/campaignUsa';
 import { formatDisplayGDP } from './treasuryDisplay';
 
 export interface WinProgress {
@@ -257,6 +259,10 @@ export function getWinProgress(state: GameState): WinProgress {
     return { description: 'No win condition defined.', progress: 0, met: false, details: [] };
   }
 
+  if (isUsaCampaignMode(state.gameMode) && state.usaCampaign && playerId === 'usa') {
+    return getUsaCampaignLadderProgress(state);
+  }
+
   if (playerId === 'usa') return getUsaWinProgress(state);
   if (playerId === 'russia') return getRussiaWinProgress(state);
 
@@ -344,6 +350,9 @@ export function getWinProgress(state: GameState): WinProgress {
 export function checkWinConditions(state: GameState): void {
   const player = state.countries[state.playerCountryId];
   if (!player || state.gameOver || state.playerWon) return;
+
+  // USA campaign victory is owned by tickUsaCampaign (mission ladder).
+  if (isUsaCampaignMode(state.gameMode) && state.usaCampaign) return;
 
   // Hard safety: never auto-win before turn 100 for any nation
   if (state.turn < 100) return;

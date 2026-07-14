@@ -9,10 +9,11 @@ import { DEFAULT_DOMESTIC_SPLIT } from './propaganda';
 import { defaultBudget } from './economy';
 import { createDefaultNpcMechanicState } from './npcMechanics';
 import { syncWarTheaters } from './warTheater';
+import { createUsaCampaignState } from './usaCampaign';
 import { formatModeLabel } from '../data/gameModes';
 
 const SAVE_KEY = 'lrw_save';
-export const SAVE_VERSION = 22;
+export const SAVE_VERSION = 23;
 
 interface SavePayload {
   version: number;
@@ -122,6 +123,8 @@ function migrateState(state: GameState, fromVersion: number): GameState {
     }
   }
 
+  // v23: revive missing usaCampaign on campaign saves (handled in fillMissingSaveFields)
+
   return fillMissingSaveFields(migrated);
 }
 
@@ -172,6 +175,29 @@ function fillMissingSaveFields(state: GameState): GameState {
   state.theaterSettlements ??= [];
   state.gameMode ??= 'sandbox';
   state.usaCampaign ??= null;
+  if (
+    state.gameMode === 'campaign' &&
+    !state.usaCampaign &&
+    state.playerCountryId === 'usa'
+  ) {
+    const camp = createUsaCampaignState(state.turn ?? 1);
+    if ((state.turn ?? 1) > 1) {
+      camp.briefAcknowledged = true;
+    }
+    state.usaCampaign = camp;
+    if (!state.countries.cuba && COUNTRIES.cuba) {
+      state.countries.cuba = structuredClone(COUNTRIES.cuba);
+    }
+    for (const id of ['cuba_west', 'cuba_central', 'cuba_east'] as const) {
+      if (!state.regions[id] && REGIONS[id]) {
+        state.regions[id] = structuredClone(REGIONS[id]);
+      }
+    }
+    const se = state.regions.usa_southeast;
+    if (se && !se.neighbours.includes('cuba_west')) {
+      se.neighbours = [...se.neighbours, 'cuba_west'];
+    }
+  }
   state.interventionMeters ??= {};
   state.pendingTheaterNotices ??= [];
   state.collapsedNations ??= [];

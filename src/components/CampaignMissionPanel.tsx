@@ -23,7 +23,9 @@ export function CampaignMissionPanel({
   const hud = getMissionHud(state);
   if (!hud) return null;
 
-  const install = getInstallClientPreview(state, hud.targetId);
+  const install = hud.allowsClientInstall
+    ? getInstallClientPreview(state, hud.targetId)
+    : null;
   const alignment = state.usaCampaign?.ukraineAlignment;
 
   return (
@@ -42,14 +44,16 @@ export function CampaignMissionPanel({
               </>
             )}
           </p>
+          {hud.peerWarByTurn !== null && !hud.atWar && (
+            <p className="warning-text small">
+              Open war by turn <strong>{hud.peerWarByTurn}</strong> or the contest fails.
+            </p>
+          )}
           <p className="muted small">{hud.blurb}</p>
           <ul className="campaign-mission-paths">
-            <li className={hud.controlOwned === hud.controlTotal ? 'done' : ''}>
-              Conquer: {hud.controlOwned}/{hud.controlTotal} regions
-            </li>
-            <li className={hud.isClient ? 'done' : ''}>
-              Or install client government {hud.isClient ? '(done)' : ''}
-            </li>
+            {hud.winPaths.map(path => (
+              <li key={path}>{path}</li>
+            ))}
           </ul>
           {hud.atWar && <p className="mission-war-flag">At war with {hud.targetName}</p>}
           <div className="campaign-mission-actions">
@@ -71,23 +75,34 @@ export function CampaignMissionPanel({
                 Open {hud.targetName} Map
               </button>
             )}
-            <button
-              type="button"
-              className="btn-small meeting"
-              disabled={!install.canInstall}
-              title={install.blockReason}
-              onClick={() => onInstallClient(hud.targetId)}
-            >
-              Install Client Gov
-              {install.canInstall
-                ? ` ($${install.costTp}B · ${install.energyCost}⚡)`
-                : ''}
-            </button>
+            {hud.kind === 'peer_contest' && hud.targetId === 'russia' && onFocusTarget && (
+              <button
+                type="button"
+                className="btn-small"
+                onClick={() => onFocusTarget('ukraine')}
+              >
+                Open Ukraine Map
+              </button>
+            )}
+            {install && (
+              <button
+                type="button"
+                className="btn-small meeting"
+                disabled={!install.canInstall}
+                title={install.blockReason}
+                onClick={() => onInstallClient(hud.targetId)}
+              >
+                Install Client Gov
+                {install.canInstall
+                  ? ` ($${install.costTp}B · ${install.energyCost}⚡)`
+                  : ''}
+              </button>
+            )}
           </div>
-          {!install.canInstall && install.blockReason && hud.atWar && (
+          {install && !install.canInstall && install.blockReason && hud.atWar && (
             <p className="muted small">{install.blockReason}</p>
           )}
-          {install.reasonsMet.length > 0 && (
+          {install && install.reasonsMet.length > 0 && (
             <p className="muted small">Ready: {install.reasonsMet.join(' · ')}</p>
           )}
         </>
@@ -119,12 +134,18 @@ export function UkraineAlignmentControls({
 }) {
   if (!state.usaCampaign) return null;
   const current = state.usaCampaign.ukraineAlignment;
+
   return (
     <section className="panel-section">
       <h4>Ukraine Alignment</h4>
-      <p className="muted small">Revisitable — each flip costs credibility.</p>
-      <div className="campaign-mission-actions">
-        {(['ukraine', 'deniable', 'russia'] as UkraineAlignment[]).map(id => (
+      <div className="campaign-align-inline">
+        {(
+          [
+            ['ukraine', 'Back Ukraine'],
+            ['deniable', 'Deniable'],
+            ['russia', 'Tilt Moscow'],
+          ] as Array<[UkraineAlignment, string]>
+        ).map(([id, label]) => (
           <button
             key={id}
             type="button"
@@ -132,7 +153,7 @@ export function UkraineAlignmentControls({
             disabled={current === id}
             onClick={() => onChange(id)}
           >
-            {getUkraineAlignmentLabel(id)}
+            {label}
           </button>
         ))}
       </div>

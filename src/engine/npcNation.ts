@@ -64,6 +64,40 @@ export function getPlayableRelationTargets(
     .sort((a, b) => b.value - a.value);
 }
 
+/**
+ * Diplomacy Relations / Peace list: playable nations plus wartime opponents
+ * and the active campaign mission target (so NPC Cuba appears when it matters).
+ */
+export function getDiplomacyRelationTargets(
+  state: GameState,
+  countryId: string
+): Array<{ countryId: string; name: string; value: number }> {
+  const byId = new Map(
+    getPlayableRelationTargets(state, countryId).map(r => [r.countryId, r] as const)
+  );
+
+  const add = (id: string) => {
+    if (!id || id === countryId || byId.has(id)) return;
+    const country = state.countries[id];
+    if (!country) return;
+    byId.set(id, {
+      countryId: id,
+      name: country.name,
+      value: getRelation(state.relations, countryId, id),
+    });
+  };
+
+  for (const war of state.wars) {
+    if (!war.belligerents.includes(countryId)) continue;
+    for (const id of war.belligerents) add(id);
+  }
+
+  const missionTarget = state.usaCampaign?.activeMission?.targetCountryId;
+  if (missionTarget) add(missionTarget);
+
+  return [...byId.values()].sort((a, b) => b.value - a.value);
+}
+
 function relationEntries(
   state: GameState,
   npcId: string,

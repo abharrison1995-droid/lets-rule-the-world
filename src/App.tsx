@@ -59,6 +59,8 @@ import { PeerChoiceModal } from './components/PeerChoiceModal';
 import { NationIntroModal } from './components/NationIntroModal';
 import { WarTheaterScreen } from './components/WarTheaterScreen';
 import { WarTheaterNoticeModal } from './components/WarTheaterNoticeModal';
+import { CampaignMissionPanel } from './components/CampaignMissionPanel';
+import { BottomSheet } from './components/BottomSheet';
 import { installCampaignClient, setUkraineAlignment } from './engine/usaCampaign';
 import { detectFronts } from './engine/combat';
 import type { StrikeType } from './engine/strikes';
@@ -93,6 +95,7 @@ export default function App() {
   const [showNationIntro, setShowNationIntro] = useState(false);
   const [showTheater, setShowTheater] = useState(false);
   const [theaterFocusId, setTheaterFocusId] = useState<string | undefined>(undefined);
+  const [showMission, setShowMission] = useState(false);
   const isMobile = useMobileLayout();
   const [mobileWorldView, setMobileWorldView] = useState<'chooser' | HemisphereId>('chooser');
   const [lastHemisphere, setLastHemisphere] = useState<HemisphereId>('eurasia');
@@ -107,6 +110,7 @@ export default function App() {
     setShowDiplomacy(false);
     setShowEconomy(false);
     setShowTheater(false);
+    setShowMission(false);
     refreshSaveMeta();
   }, [refreshSaveMeta]);
 
@@ -130,6 +134,7 @@ export default function App() {
     setShowDiplomacy(false);
     setShowEconomy(false);
     setShowTheater(false);
+    setShowMission(false);
     setFeedback(null);
     setShowNationIntro(false);
     setMobileWorldView('chooser');
@@ -491,25 +496,52 @@ export default function App() {
     );
   }
 
+  const campaignBriefOpen = Boolean(state.usaCampaign && !state.usaCampaign.briefAcknowledged);
+  const peerChoiceOpen = Boolean(
+    state.usaCampaign?.peerChoicePending && state.usaCampaign.briefAcknowledged
+  );
+  const deferTheaterNotice = campaignBriefOpen || peerChoiceOpen;
+
   return (
     <div className="game-layout">
-      {state.usaCampaign && !state.usaCampaign.briefAcknowledged && (
+      {campaignBriefOpen && (
         <CampaignBriefModal state={state} onConfirm={updateState} />
       )}
-      {state.usaCampaign?.peerChoicePending && state.usaCampaign.briefAcknowledged && (
+      {peerChoiceOpen && (
         <PeerChoiceModal state={state} onConfirm={updateState} />
       )}
       <GameHeader
         state={state}
         onEndTurn={endTurn}
-        onOpenDiplomacy={() => { setShowDiplomacy(true); setShowEconomy(false); setShowTheater(false); }}
-        onOpenEconomy={() => { setShowEconomy(true); setShowDiplomacy(false); setShowTheater(false); }}
+        onOpenDiplomacy={() => {
+          setShowMission(false);
+          setShowDiplomacy(true);
+          setShowEconomy(false);
+          setShowTheater(false);
+        }}
+        onOpenEconomy={() => {
+          setShowMission(false);
+          setShowEconomy(true);
+          setShowDiplomacy(false);
+          setShowTheater(false);
+        }}
         onOpenTheater={() => {
           setTheaterFocusId(undefined);
           setShowTheater(true);
           setShowDiplomacy(false);
           setShowEconomy(false);
+          setShowMission(false);
         }}
+        onOpenMission={
+          state.usaCampaign
+            ? () => {
+                setShowMission(true);
+                setShowDiplomacy(false);
+                setShowEconomy(false);
+                setShowTheater(false);
+              }
+            : undefined
+        }
         onSave={handleSave}
       />
 
@@ -614,7 +646,34 @@ export default function App() {
           talksResult={talksResult}
         />
       )}
-      {state && (state.pendingTheaterNotices?.length ?? 0) > 0 && !showTheater && (
+      {showMission && state.usaCampaign && (
+        <BottomSheet onClose={() => setShowMission(false)} className="mission-sheet-panel">
+          <div className="panel-header">
+            <h3>Campaign Mission</h3>
+            <button type="button" className="btn-close" onClick={() => setShowMission(false)}>
+              ×
+            </button>
+          </div>
+          <CampaignMissionPanel
+            state={state}
+            onDeclareWar={(id) => {
+              setShowMission(false);
+              handleRequestWar(id);
+            }}
+            onInstallClient={(id) => {
+              handleInstallClient(id);
+            }}
+            onFocusTarget={(id) => {
+              setShowMission(false);
+              handleCountryClick(id);
+            }}
+          />
+        </BottomSheet>
+      )}
+      {state &&
+        (state.pendingTheaterNotices?.length ?? 0) > 0 &&
+        !showTheater &&
+        !deferTheaterNotice && (
         <WarTheaterNoticeModal
           state={state}
           onDismiss={updateState}
@@ -622,6 +681,7 @@ export default function App() {
             setTheaterFocusId(theaterId);
             setShowTheater(true);
             setShowDiplomacy(false);
+            setShowMission(false);
           }}
         />
       )}
