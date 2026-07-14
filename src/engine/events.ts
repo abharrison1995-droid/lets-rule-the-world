@@ -280,17 +280,27 @@ export function resolveEventChoice(
   }
 
   if (choice.followUpEventId) {
-    const followTurn = state.turn + 1 + Math.floor(Math.random() * 2);
-    state.pendingFollowUps.push({
-      eventId: choice.followUpEventId,
-      triggerTurn: followTurn,
-      targetCountryId,
-    });
     const followEvent = getEventById(choice.followUpEventId);
-    if (followEvent) {
-      state.history.push(
-        `Turn ${state.turn}: Aftermath brewing — ${followEvent.title} expected around turn ${followTurn}.`
-      );
+    const followNation = followEvent?.triggerConditions.targetCountry;
+    // Never schedule another nation's fatal collapse onto the player
+    const followIsForeignFatal =
+      !!followEvent &&
+      followNation !== undefined &&
+      followNation !== targetCountryId &&
+      followEvent.choices.every(c => c.effects.some(e => e.stat === 'gameOver'));
+
+    if (!followIsForeignFatal) {
+      const followTurn = state.turn + 1 + Math.floor(Math.random() * 2);
+      state.pendingFollowUps.push({
+        eventId: choice.followUpEventId,
+        triggerTurn: followTurn,
+        targetCountryId,
+      });
+      if (followEvent) {
+        state.history.push(
+          `Turn ${state.turn}: Aftermath brewing — ${followEvent.title} expected around turn ${followTurn}.`
+        );
+      }
     }
   }
 
@@ -434,8 +444,38 @@ function isCollapseTriggered(state: GameState, countryId: string): boolean {
 }
 
 export function checkCollapseConditions(state: GameState): void {
+  purgeMisfiredForeignCollapseEvents(state);
   checkPlayerCollapse(state);
   checkNpcCollapseTelegraphs(state);
+}
+
+/** Drop NPC collapse/warning events that were incorrectly queued onto the player */
+function purgeMisfiredForeignCollapseEvents(state: GameState): void {
+  const playerId = state.playerCountryId;
+  state.activeEvents = state.activeEvents.filter(ae => {
+    if (ae.resolved) return false;
+    const ev = getEventById(ae.eventId);
+    if (!ev) return true;
+    const nationTarget = ev.triggerConditions.targetCountry;
+    if (nationTarget && nationTarget !== playerId) {
+      // Foreign nation crisis — never belongs on the player's modal queue
+      return false;
+    }
+    return true;
+  });
+
+  state.pendingFollowUps = (state.pendingFollowUps ?? []).filter(f => {
+    const ev = getEventById(f.eventId);
+    if (!ev) return true;
+    const nationTarget = ev.triggerConditions.targetCountry;
+    if (nationTarget && nationTarget !== playerId) return false;
+    const onlyFatal = ev.choices.length > 0 && ev.choices.every(c =>
+      c.effects.some(e => e.stat === 'gameOver')
+    );
+    if (onlyFatal && (f.targetCountryId ?? playerId) !== playerId) return false;
+    if (onlyFatal && nationTarget && nationTarget !== playerId) return false;
+    return true;
+  });
 }
 
 function checkPlayerCollapse(state: GameState): void {
@@ -448,13 +488,24 @@ function checkPlayerCollapse(state: GameState): void {
   const triggered = isCollapseTriggered(state, state.playerCountryId);
 
   if (!triggered) {
+    if (state.declineMode) {
+      state.declineMode = false;
+      state.history.push(
+        `Turn ${state.turn}: ${country.name} climbs out of decline — strategic breathing room restored.`
+      );
+    }
     state.telegraphedCollapse = false;
     return;
   }
 
   if (!state.telegraphedCollapse && collapse.telegraphEventId) {
     const telegraphEvent = getEventById(collapse.telegraphEventId);
-    if (telegraphEvent) {
+    // Only queue telegraph if it is for this nation (or has no nation lock)
+    if (
+      telegraphEvent &&
+      (!telegraphEvent.triggerConditions.targetCountry ||
+        telegraphEvent.triggerConditions.targetCountry === state.playerCountryId)
+    ) {
       state.activeEvents.push(buildActiveEvent(state, telegraphEvent, state.playerCountryId));
       state.telegraphedCollapse = true;
       state.history.push(`Turn ${state.turn}: WARNING — ${telegraphEvent.title}`);
@@ -466,8 +517,10 @@ function checkPlayerCollapse(state: GameState): void {
     state.gameOver = true;
     state.gameOverReason = `${country.name} has collapsed.`;
   } else if (collapse.type === 'soft') {
-    state.declineMode = true;
-    state.history.push(`Turn ${state.turn}: ${country.name} enters decline/survival mode.`);
+    if (!state.declineMode) {
+      state.declineMode = true;
+      state.history.push(`Turn ${state.turn}: ${country.name} enters decline/survival mode.`);
+    }
   }
 }
 
@@ -477,6 +530,7 @@ function checkNpcCollapseTelegraphs(state: GameState): void {
 
   for (const [countryId, country] of Object.entries(state.countries)) {
     if (countryId === playerId) continue;
+    if ((state.collapsedNations ?? []).includes(countryId)) continue;
     const collapse = country.collapseCondition;
     if (collapse.type === 'none') continue;
     if (!isCollapseTriggered(state, countryId)) continue;
@@ -491,13 +545,45 @@ function checkNpcCollapseTelegraphs(state: GameState): void {
     state.collapseTelegraphedNations.push(countryId);
     state.history.push(`Turn ${state.turn}: ${country.name} — ${telegraphEvent.title}`);
 
+    // Informational only for the player — never queue NPC crisis events onto the player modal
     const atWar = state.wars.some(
       w => w.belligerents.includes(countryId) && w.belligerents.includes(playerId)
     );
     const rel = getRelation(state.relations, playerId, countryId);
     if (atWar || Math.abs(rel) > 25) {
-      triggerEventById(state, telegraphId, playerId);
+      state.history.push(
+        `Turn ${state.turn}: Intelligence brief — crisis in ${country.name} may reshape the board.`
+      );
     }
+
+    // After telegraph grace for hard NPC collapses, mark them collapsed next pass
+    // (telegraph already recorded; finish on subsequent turns while still triggered)
+  }
+
+  // Second pass: NPCs who were telegraphed and still triggered become collapsedNations
+  for (const countryId of [...state.collapseTelegraphedNations]) {
+    if (countryId === playerId) continue;
+    if ((state.collapsedNations ?? []).includes(countryId)) continue;
+    const country = state.countries[countryId];
+    if (!country || country.collapseCondition.type !== 'hard') continue;
+    if (!isCollapseTriggered(state, countryId)) continue;
+
+    state.collapsedNations ??= [];
+    state.collapsedNations.push(countryId);
+    state.history.push(
+      `Turn ${state.turn}: ${country.name} collapses — the regime exits the strategic fight.`
+    );
+
+    // Pull collapsed nation out of wars
+    for (const war of state.wars) {
+      if (!war.belligerents.includes(countryId)) continue;
+      war.belligerents = war.belligerents.filter(b => b !== countryId);
+      delete war.isDefensive[countryId];
+    }
+    state.wars = state.wars.filter(w => w.belligerents.length >= 2);
+    state.fronts = state.fronts.filter(
+      f => f.attackerCountryId !== countryId && f.defenderCountryId !== countryId
+    );
   }
 }
 

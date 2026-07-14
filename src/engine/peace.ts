@@ -1,7 +1,8 @@
-import type { GameState, PeaceTermsType } from '../types/game';
+import type { GameState, PeaceTermsType, War } from '../types/game';
 import { getRelation, modifyRelation } from '../data/relations';
 import { isAtWarWith } from './actions';
 import { recordConflictBaseline, applyPeaceReconciliation } from './conflictRelations';
+import { syncWarTheaters } from './warTheater';
 
 export interface PeaceResult {
   accepted: boolean;
@@ -25,15 +26,12 @@ export function calculatePeaceAcceptance(
 
   let score = 0.3;
 
-  // War exhaustion drives peace desire
   score += target.stats.warExhaustion * 0.5;
   score += player.stats.warExhaustion * 0.2;
 
-  // Relations
   const relation = getRelation(state.relations, state.playerCountryId, targetId);
   score += relation / 200;
 
-  // Front pressure — if target is losing, less likely to accept reparations
   const targetFronts = state.fronts.filter(
     f => f.defenderCountryId === targetId || f.attackerCountryId === targetId
   );
@@ -46,16 +44,49 @@ export function calculatePeaceAcceptance(
 
   if (terms === 'white_peace') {
     score += 0.2;
-    if (avgPressure < -20) score += 0.15; // target losing, wants out
+    if (avgPressure < -20) score += 0.15;
   } else if (terms === 'ceasefire') {
     score += 0.25;
   } else if (terms === 'reparations') {
     score -= 0.2;
-    if (avgPressure > 20) score += 0.3; // player winning, target may capitulate
+    if (avgPressure > 20) score += 0.3;
     else score -= 0.3;
   }
 
   return Math.max(0, Math.min(1, score));
+}
+
+/** Player leaves a war without dissolving coalition conflicts among remaining parties */
+function playerLeaveWar(state: GameState, war: War, peaceTargetId: string): { warEnded: boolean } {
+  const playerId = state.playerCountryId;
+
+  // Clear fronts involving the player in this conflict
+  state.fronts = state.fronts.filter(f => {
+    const involvesPlayer =
+      f.attackerCountryId === playerId || f.defenderCountryId === playerId;
+    if (!involvesPlayer) return true;
+    // Only drop fronts tied to this war's members
+    const other = f.attackerCountryId === playerId ? f.defenderCountryId : f.attackerCountryId;
+    return !war.belligerents.includes(other);
+  });
+
+  if (war.belligerents.length <= 2) {
+    state.wars = state.wars.filter(w => w.id !== war.id);
+    return { warEnded: true };
+  }
+
+  // Multi-party: player exits; war continues between remaining belligerents
+  war.belligerents = war.belligerents.filter(b => b !== playerId);
+  delete war.isDefensive[playerId];
+
+  if (war.belligerents.length < 2) {
+    state.wars = state.wars.filter(w => w.id !== war.id);
+    return { warEnded: true };
+  }
+
+  // If peace target is no longer opposed by anyone in this war, nothing else to do
+  void peaceTargetId;
+  return { warEnded: false };
 }
 
 export function proposePeace(
@@ -81,14 +112,7 @@ export function proposePeace(
     return { accepted: false, message: `${target.name} rejected the peace offer.` };
   }
 
-  // End war and clear related fronts
-  state.wars = state.wars.filter(w => w.id !== war.id);
-  state.fronts = state.fronts.filter(f => {
-    const involvesPlayer =
-      f.attackerCountryId === state.playerCountryId || f.defenderCountryId === state.playerCountryId;
-    const involvesTarget = f.attackerCountryId === targetId || f.defenderCountryId === targetId;
-    return !(involvesPlayer && involvesTarget);
-  });
+  const { warEnded } = playerLeaveWar(state, war, targetId);
 
   const player = state.countries[state.playerCountryId];
   player.stats.warExhaustion = Math.max(0, player.stats.warExhaustion - 0.25);
@@ -103,14 +127,24 @@ export function proposePeace(
   }
 
   applyPeaceReconciliation(state, state.playerCountryId, targetId, terms);
+  syncWarTheaters(state);
+
+  if (warEnded) {
+    state.history.push(
+      `Turn ${state.turn}: Peace with ${target.name} (${terms.replace('_', ' ')}). War ended.`
+    );
+    return {
+      accepted: true,
+      message: `${target.name} accepted ${terms.replace('_', ' ')}. War is over.`,
+    };
+  }
 
   state.history.push(
-    `Turn ${state.turn}: Peace with ${target.name} (${terms.replace('_', ' ')}). War ended.`
+    `Turn ${state.turn}: Peace with ${target.name} (${terms.replace('_', ' ')}). You leave the war; fighting continues among remaining parties.`
   );
-
   return {
     accepted: true,
-    message: `${target.name} accepted ${terms.replace('_', ' ')}. War is over.`,
+    message: `${target.name} accepted ${terms.replace('_', ' ')}. You withdrew — the wider war continues.`,
   };
 }
 

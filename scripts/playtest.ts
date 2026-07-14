@@ -229,7 +229,7 @@ function playthrough(nation: string, maxTurns: number, seed: number): PlayResult
       const pending = state.activeEvents.find(e => !e.resolved);
       if (!pending) break;
       try {
-        resolveEventChoice(state, pending.eventId, 0);
+        resolveEventChoice(state, pending.eventId, 0, state.playerCountryId);
       } catch {
         break;
       }
