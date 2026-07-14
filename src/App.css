@@ -1,18 +1,26 @@
-/* Let's Rule The World — Mobile-first PWA styles */
+﻿/* Let's Rule The World — Mobile-first PWA styles */
 
 :root {
-  --bg-primary: #0a0f1a;
-  --bg-secondary: #111827;
-  --bg-panel: #1a2332;
-  --text-primary: #e2e8f0;
-  --text-muted: #94a3b8;
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-  --success: #22c55e;
-  --border: #334155;
+  /* Sea-ink / brass — matches title screen */
+  --ink: #0c1614;
+  --sea: #14332e;
+  --foam: #c8d9d0;
+  --brass: #c9a96a;
+  --brass-deep: #a8843f;
+
+  --bg-primary: #0c1614;
+  --bg-secondary: #12201c;
+  --bg-panel: #1a2a26;
+  --text-primary: #e8eee9;
+  --text-muted: #8fa399;
+  --accent: #c9a96a;
+  --accent-hover: #d9ba7a;
+  --danger: #c45c4a;
+  --warning: #d4a04a;
+  --success: #5a9e82;
+  --border: #2a3d38;
   --radius: 8px;
+  --overlay: rgba(12, 22, 20, 0.92);
 }
 
 * {
@@ -32,19 +40,19 @@ body {
 
 /* ——— Title screen (brand hero) ——— */
 .title-root {
-  --title-ink: #0c1614;
-  --title-sea: #14332e;
-  --title-foam: #c8d9d0;
-  --title-brass: #c9a96a;
-  --title-brass-deep: #a8843f;
+  --title-ink: var(--ink);
+  --title-sea: var(--sea);
+  --title-foam: var(--foam);
+  --title-brass: var(--brass);
+  --title-brass-deep: var(--brass-deep);
 
   position: relative;
   isolation: isolate;
   min-height: 100dvh;
   min-height: 100svh;
   display: flex;
-  align-items: flex-end;
-  justify-content: flex-start;
+  align-items: center;
+  justify-content: center;
   padding: clamp(1.5rem, 5vw, 3.5rem);
   overflow: hidden;
   background:
@@ -90,10 +98,13 @@ body {
 .title-compose {
   position: relative;
   z-index: 1;
+  width: 100%;
   max-width: min(34rem, 100%);
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 1.25rem;
+  text-align: center;
 }
 
 .title-brand {
@@ -122,6 +133,7 @@ body {
   line-height: 1.45;
   color: rgba(200, 217, 208, 0.82);
   max-width: 28rem;
+  margin-inline: auto;
   animation: title-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
 }
 
@@ -131,6 +143,7 @@ body {
   align-items: stretch;
   gap: 0.65rem;
   margin-top: 0.5rem;
+  width: 100%;
   max-width: 22rem;
   animation: title-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.24s both;
 }
@@ -143,7 +156,7 @@ body {
   border: 1px solid transparent;
   border-radius: 4px;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
 }
 
@@ -213,18 +226,18 @@ body {
 
 /* ——— End screen (victory / collapse) ——— */
 .end-root {
-  --title-ink: #0c1614;
-  --title-foam: #c8d9d0;
-  --title-brass: #c9a96a;
-  --title-brass-deep: #a8843f;
+  --title-ink: var(--ink);
+  --title-foam: var(--foam);
+  --title-brass: var(--brass);
+  --title-brass-deep: var(--brass-deep);
 
   position: relative;
   isolation: isolate;
   min-height: 100dvh;
   min-height: 100svh;
   display: flex;
-  align-items: flex-end;
-  justify-content: flex-start;
+  align-items: center;
+  justify-content: center;
   padding: clamp(1.5rem, 5vw, 3.5rem);
   overflow: hidden;
   color: var(--title-foam);
@@ -250,10 +263,13 @@ body {
 .end-compose {
   position: relative;
   z-index: 1;
+  width: 100%;
   max-width: min(36rem, 100%);
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.85rem;
+  text-align: center;
 }
 
 .end-brand {
@@ -294,6 +310,7 @@ body {
   line-height: 1.5;
   color: rgba(200, 217, 208, 0.88);
   max-width: 32rem;
+  margin-inline: auto;
   animation: title-rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.14s both;
 }
 
@@ -318,6 +335,7 @@ body {
   flex-direction: column;
   gap: 0.55rem;
   margin-top: 0.75rem;
+  width: 100%;
   max-width: 22rem;
   animation: title-rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.26s both;
 }
@@ -357,11 +375,6 @@ body {
 }
 
 @media (min-width: 900px) {
-  .title-root,
-  .end-root {
-    align-items: center;
-  }
-
   .title-compose,
   .end-compose {
     margin-top: 0;
@@ -421,11 +434,12 @@ body {
   margin: 0 auto 2rem;
   padding: 0.75rem 2rem;
   background: var(--accent);
-  color: white;
+  color: var(--ink);
   border: none;
   border-radius: var(--radius);
   font-size: 1rem;
   cursor: pointer;
+  font-weight: 600;
 }
 
 .nation-grid {
@@ -521,8 +535,8 @@ body {
 
 .energy-display {
   font-size: 0.8rem;
-  color: var(--warning);
-  background: rgba(245, 158, 11, 0.12);
+  color: var(--brass);
+  background: rgba(201, 169, 106, 0.14);
   padding: 0.15rem 0.5rem;
   border-radius: 4px;
   font-weight: 600;
@@ -549,8 +563,8 @@ body {
 
 .btn-end-turn {
   background: var(--accent);
-  border-color: var(--accent);
-  color: white;
+  border-color: var(--brass-deep);
+  color: var(--ink);
   font-weight: 600;
 }
 
@@ -658,8 +672,8 @@ body {
 
 .layer-btn.active {
   background: var(--accent);
-  color: white;
-  border-color: var(--accent);
+  color: var(--ink);
+  border-color: var(--brass-deep);
 }
 
 .layer-btn.sub {
@@ -1216,7 +1230,7 @@ body {
 }
 
 .btn-small.war { color: var(--danger); }
-.btn-small.covert { color: #a855f7; }
+.btn-small.covert { color: #9a8570; }
 
 .relation-actions {
   display: flex;
@@ -1342,7 +1356,7 @@ body {
 .npc-quote {
   margin: 0.5rem 0;
   padding-left: 0.65rem;
-  border-left: 2px solid var(--accent, #3b82f6);
+  border-left: 2px solid var(--accent);
   font-style: italic;
   font-size: 0.82rem;
   color: var(--text-muted);
@@ -2171,7 +2185,7 @@ body {
 }
 
 .hemisphere-card--player {
-  border-color: #fbbf24;
+  border-color: var(--brass);
 }
 
 .hemisphere-card-title {
@@ -2200,7 +2214,7 @@ body {
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
   background: rgba(251, 191, 36, 0.2);
-  color: #fbbf24;
+  color: var(--brass);
   border: 1px solid rgba(251, 191, 36, 0.4);
 }
 
@@ -2262,7 +2276,7 @@ body {
   height: 2.25rem;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: rgba(15, 29, 46, 0.92);
+  background: var(--overlay);
   color: var(--text-primary);
   font-size: 1.1rem;
   line-height: 1;
@@ -2286,7 +2300,7 @@ body {
   left: 0.75rem;
   font-size: 0.68rem;
   color: var(--text-muted);
-  background: rgba(15, 29, 46, 0.88);
+  background: rgba(12, 22, 20, 0.88);
   padding: 0.3rem 0.55rem;
   border-radius: 6px;
   border: 1px solid var(--border);
@@ -2301,14 +2315,13 @@ body {
   transform: translateX(-50%);
   z-index: 25;
   padding: 0.45rem 0.9rem;
-  border-radius: 999px;
-  border: 1px solid #fbbf24;
-  background: rgba(15, 29, 46, 0.94);
-  color: #fbbf24;
+  border-radius: 4px;
+  border: 1px solid var(--brass);
+  background: var(--overlay);
+  color: var(--brass);
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
 @media (max-width: 768px) {
@@ -2323,7 +2336,7 @@ body {
     left: 0;
     right: 0;
     z-index: 100;
-    background: rgba(15, 29, 46, 0.96);
+    background: rgba(12, 22, 20, 0.96);
     border-top: 1px solid var(--border);
     padding: 0.35rem 0.5rem max(0.35rem, env(safe-area-inset-bottom));
     gap: 0.35rem;
@@ -2351,8 +2364,8 @@ body {
   .mobile-action-bar .mobile-end-turn {
     flex: 1.2;
     background: var(--accent);
-    border-color: var(--accent);
-    color: white;
+    border-color: var(--brass-deep);
+    color: var(--ink);
   }
 
   .game-main {
@@ -2513,7 +2526,7 @@ body {
 }
 
 .btn-header.theater-btn {
-  color: #fbbf24;
+  color: var(--brass);
   border-color: rgba(251, 191, 36, 0.45);
 }
 
@@ -2529,9 +2542,9 @@ body {
 
 .theater-saturated {
   background:
-    radial-gradient(ellipse at 15% 0%, rgba(234, 88, 12, 0.18), transparent 45%),
-    radial-gradient(ellipse at 90% 100%, rgba(14, 165, 233, 0.14), transparent 40%),
-    linear-gradient(160deg, #0a0f1a 0%, #111827 55%, #1a1208 100%);
+    radial-gradient(ellipse at 15% 0%, rgba(196, 92, 74, 0.16), transparent 45%),
+    radial-gradient(ellipse at 90% 100%, rgba(40, 90, 78, 0.22), transparent 40%),
+    linear-gradient(160deg, #0c1614 0%, #12201c 55%, #1a160e 100%);
 }
 
 .theater-saturated .theater-map-wrap {
@@ -2673,7 +2686,7 @@ body {
 .theater-feedback {
   margin: 0;
   font-size: 0.8rem;
-  color: #fbbf24;
+  color: var(--brass);
 }
 
 .theater-fate-modal {
