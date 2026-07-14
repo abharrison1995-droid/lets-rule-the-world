@@ -1,6 +1,7 @@
 import type { GameState } from '../types/game';
 import { formatDisplayGDP } from '../engine/treasuryDisplay';
 import { getActionEnergy } from '../engine/actionEnergy';
+import { formatModeLabel } from '../data/gameModes';
 
 interface GameHeaderProps {
   state: GameState;
@@ -22,6 +23,7 @@ export function GameHeader({ state, onEndTurn, onOpenDiplomacy, onOpenEconomy, o
       <div className="header-left">
         <h1 className="game-title">LET'S RULE THE WORLD</h1>
         <span className="turn-counter">Turn {state.turn}</span>
+        <span className="mode-badge">{formatModeLabel(state.gameMode ?? 'sandbox')}</span>
       </div>
 
       <div className="header-center">

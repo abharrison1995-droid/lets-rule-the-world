@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import type {
   GameState,
+  GameMode,
   TurnReportEntry,
   BudgetAllocation,
   MilitaryDev,
@@ -33,6 +34,7 @@ import { playerStartFacilityBuild, getFacilityConfirmPreview } from './engine/fa
 import { playerStartStrikeCampaign, playerCancelStrikeCampaign } from './engine/strikeCampaigns';
 import { getStrikeConfirmPreview, getCampaignConfirmPreview } from './engine/strikePreview';
 import { TitleScreen } from './components/TitleScreen';
+import { ModeSelect } from './components/ModeSelect';
 import { EndScreen } from './components/EndScreen';
 import { NationSelect } from './components/NationSelect';
 import { GameHeader } from './components/GameHeader';
@@ -57,7 +59,7 @@ import { useMobileLayout } from './hooks/useMobileLayout';
 import { getHemisphereForCountry, type HemisphereId } from './data/hemispheres';
 import './App.css';
 
-type Screen = 'title' | 'nation' | 'game';
+type Screen = 'title' | 'mode' | 'nation' | 'game';
 
 type StrikeConfirmRequest =
   | { kind: 'strike'; regionId: string; strikeType: StrikeType }
@@ -74,6 +76,7 @@ export default function App() {
     typeof window !== 'undefined' ? !window.matchMedia('(max-width: 768px)').matches : true
   );
   const [saveSummary, setSaveSummary] = useState(() => peekSaveSummary());
+  const [pendingMode, setPendingMode] = useState<GameMode>('campaign');
   const [feedback, setFeedback] = useState<string | null>(null);
   const [warConfirmTarget, setWarConfirmTarget] = useState<string | null>(null);
   const [strikeConfirm, setStrikeConfirm] = useState<StrikeConfirmRequest | null>(null);
@@ -113,7 +116,7 @@ export default function App() {
 
   const startGame = useCallback((countryId: string) => {
     deleteSave();
-    const newState = createInitialState(countryId);
+    const newState = createInitialState(countryId, pendingMode);
     setState(newState);
     setScreen('game');
     setShowDiplomacy(false);
@@ -124,7 +127,7 @@ export default function App() {
     setMobileWorldView('chooser');
     setLastHemisphere(getHemisphereForCountry(countryId));
     refreshSaveMeta();
-  }, [refreshSaveMeta]);
+  }, [pendingMode, refreshSaveMeta]);
 
   const loadSaved = useCallback(() => {
     const saved = loadGame<GameState>();
@@ -385,14 +388,32 @@ export default function App() {
     return (
       <TitleScreen
         saveSummary={saveSummary}
-        onNewGame={() => setScreen('nation')}
+        onNewGame={() => setScreen('mode')}
         onContinue={loadSaved}
       />
     );
   }
 
+  if (screen === 'mode') {
+    return (
+      <ModeSelect
+        onBack={() => setScreen('title')}
+        onSelect={(mode) => {
+          setPendingMode(mode);
+          setScreen('nation');
+        }}
+      />
+    );
+  }
+
   if (screen === 'nation') {
-    return <NationSelect onSelect={startGame} onBack={() => setScreen('title')} />;
+    return (
+      <NationSelect
+        gameMode={pendingMode}
+        onSelect={startGame}
+        onBack={() => setScreen('mode')}
+      />
+    );
   }
 
   if (!state) return null;
@@ -404,7 +425,7 @@ export default function App() {
         onReturnToTitle={returnToTitle}
         onNewGame={() => {
           setState(null);
-          setScreen('nation');
+          setScreen('mode');
           refreshSaveMeta();
         }}
       />

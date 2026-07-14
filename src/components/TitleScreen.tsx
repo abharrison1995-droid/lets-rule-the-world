@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { SaveSummary } from '../engine/saveLoad';
+import { formatModeLabel } from '../data/gameModes';
 import { AtlasBackdrop } from './AtlasBackdrop';
 
 interface TitleScreenProps {
@@ -43,7 +44,8 @@ export function TitleScreen({ saveSummary, onNewGame, onContinue }: TitleScreenP
                 <button type="button" className="title-cta title-cta-continue" onClick={onContinue}>
                   <span className="title-cta-label">Continue</span>
                   <span className="title-save-meta">
-                    {saveSummary.countryName} · Turn {saveSummary.turn}
+                    {formatModeLabel(saveSummary.gameMode)} · {saveSummary.countryName} · Turn{' '}
+                    {saveSummary.turn}
                     {saveSummary.ended ? ' · Ended' : ''}
                   </span>
                 </button>

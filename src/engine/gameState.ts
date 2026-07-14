@@ -1,4 +1,4 @@
-import type { GameState, LayerCategory } from '../types/game';
+import type { GameState, GameMode, LayerCategory } from '../types/game';
 import { COUNTRIES, ALLIANCES_DATA } from '../data/countries';
 import { REGIONS } from '../data/regions';
 import { buildRelationsMatrix } from '../data/relations';
@@ -28,8 +28,12 @@ import {
   applyDomesticPropagandaTick,
   DEFAULT_DOMESTIC_SPLIT,
 } from './propaganda';
+import { formatModeLabel } from '../data/gameModes';
 
-export function createInitialState(playerCountryId: string): GameState {
+export function createInitialState(
+  playerCountryId: string,
+  gameMode: GameMode = 'sandbox'
+): GameState {
   const countries = structuredClone(COUNTRIES);
   for (const c of Object.values(countries)) {
     c.militaryDev = scaleStartingMilitaryDev(c.militaryDev);
@@ -39,9 +43,11 @@ export function createInitialState(playerCountryId: string): GameState {
   const relations = buildRelationsMatrix();
   const alliances = ALLIANCES_DATA.map(a => ({ ...a, members: [...a.members] }));
 
+  const modeLabel = formatModeLabel(gameMode);
   const state: GameState = {
     turn: 1,
     playerCountryId,
+    gameMode,
     countries,
     regions,
     relations,
@@ -69,7 +75,9 @@ export function createInitialState(playerCountryId: string): GameState {
     selectedRegionId: null,
     visibleLayers: ['military', 'alliances'],
     showDefenseRanges: false,
-    history: [`Turn 0: ${countries[playerCountryId]?.name} assumes leadership.`],
+    history: [
+      `Turn 0: ${countries[playerCountryId]?.name} assumes leadership (${modeLabel}).`,
+    ],
     warsDeclaredThisTurn: 0,
     internationalPariahTurns: 0,
     talksAttemptedThisTurn: [],

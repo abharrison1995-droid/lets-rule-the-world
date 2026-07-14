@@ -1,4 +1,4 @@
-import type { GameState, StrikeCampaign } from '../types/game';
+import type { GameState, GameMode } from '../types/game';
 import { COUNTRIES } from '../data/countries';
 import {
   getDefaultCorporateTaxRate,
@@ -10,7 +10,7 @@ import { createDefaultNpcMechanicState } from './npcMechanics';
 import { syncWarTheaters } from './warTheater';
 
 const SAVE_KEY = 'lrw_save';
-export const SAVE_VERSION = 20;
+export const SAVE_VERSION = 21;
 
 interface SavePayload {
   version: number;
@@ -98,6 +98,10 @@ function migrateState(state: GameState, fromVersion: number): GameState {
     migrated.theaterSettlements ??= [];
   }
 
+  if (fromVersion < 21) {
+    migrated.gameMode ??= 'sandbox';
+  }
+
   return fillMissingSaveFields(migrated);
 }
 
@@ -146,6 +150,7 @@ function fillMissingSaveFields(state: GameState): GameState {
   state.warTheaters ??= [];
   state.vassalRegions ??= [];
   state.theaterSettlements ??= [];
+  state.gameMode ??= 'sandbox';
   state.interventionMeters ??= {};
   state.pendingTheaterNotices ??= [];
   state.collapsedNations ??= [];
@@ -204,6 +209,7 @@ export interface SaveSummary {
   turn: number;
   timestamp: number;
   ended: boolean;
+  gameMode: GameMode;
 }
 
 /** Lightweight read for the title screen — does not migrate full state. */
@@ -226,6 +232,7 @@ export function peekSaveSummary(): SaveSummary | null {
       turn: payload.state.turn ?? 0,
       timestamp: payload.timestamp,
       ended: !!(payload.state.gameOver || payload.state.playerWon),
+      gameMode: payload.state.gameMode === 'campaign' ? 'campaign' : 'sandbox',
     };
   } catch {
     return null;

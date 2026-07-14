@@ -1,32 +1,37 @@
 import { useState, useMemo } from 'react';
-import { COUNTRIES } from '../data/countries';
+import type { GameMode } from '../types/game';
 import { getWinCondition } from '../data/winConditions';
+import { getPlayableCountriesForMode, formatModeLabel } from '../data/gameModes';
 import { createInitialState } from '../engine/gameState';
 import { NationIntroModal } from './NationIntroModal';
 
 interface NationSelectProps {
+  gameMode: GameMode;
   onSelect: (countryId: string) => void;
   onBack: () => void;
 }
 
-export function NationSelect({ onSelect, onBack }: NationSelectProps) {
-  const playable = Object.values(COUNTRIES).filter(c => c.playable);
+export function NationSelect({ gameMode, onSelect, onBack }: NationSelectProps) {
+  const playable = getPlayableCountriesForMode(gameMode);
   const [previewId, setPreviewId] = useState<string | null>(null);
 
   const previewState = useMemo(
-    () => (previewId ? createInitialState(previewId) : null),
-    [previewId]
+    () => (previewId ? createInitialState(previewId, gameMode) : null),
+    [previewId, gameMode]
   );
 
   return (
     <div className="nation-select">
       <div className="nation-select-shell">
         <button type="button" className="nation-select-back" onClick={onBack}>
-          ← Title
+          ← Game Type
         </button>
+        <p className="nation-select-mode">{formatModeLabel(gameMode)}</p>
         <h2 className="nation-select-heading">Choose Your Nation</h2>
         <p className="muted nation-select-hint">
-          Tap a nation to preview — browse freely before committing.
+          {gameMode === 'campaign'
+            ? 'Eastern Escalation seats — Ukraine theater opens hot for every run.'
+            : 'Tap a nation to preview — browse freely before committing.'}
         </p>
         <div className="nation-grid">
           {playable.map(country => (

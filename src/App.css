@@ -415,6 +415,121 @@ body {
   border-color: var(--text-muted);
 }
 
+.nation-select-mode {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brass);
+  margin-bottom: 0.35rem;
+}
+
+.mode-badge {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--brass);
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+/* Mode select */
+.mode-select-compose {
+  gap: 1rem;
+}
+
+.mode-select-back {
+  align-self: center;
+  font-family: 'Sora', sans-serif;
+  background: transparent;
+  border: 1px solid rgba(200, 217, 208, 0.28);
+  color: rgba(200, 217, 208, 0.75);
+  padding: 0.4rem 0.85rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  animation: title-rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.mode-select-back:hover {
+  border-color: rgba(200, 217, 208, 0.55);
+  color: var(--foam);
+}
+
+.mode-select-brand {
+  margin: 0;
+  animation: title-rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+}
+
+.mode-select-heading {
+  font-family: 'Syne', 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.35rem, 3.5vw, 1.85rem);
+  letter-spacing: -0.02em;
+  color: #f2f5f0;
+  animation: title-rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+.mode-select-tagline {
+  animation: title-rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.14s both;
+}
+
+.mode-select-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  width: 100%;
+  max-width: 26rem;
+  margin-top: 0.35rem;
+  animation: title-rise 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.22s both;
+}
+
+.mode-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  text-align: left;
+  padding: 1rem 1.15rem;
+  border-radius: 4px;
+  border: 1px solid rgba(200, 217, 208, 0.28);
+  background: rgba(20, 40, 36, 0.55);
+  color: var(--foam);
+  cursor: pointer;
+  font-family: 'Sora', sans-serif;
+  transition: border-color 0.2s ease, transform 0.15s ease, background 0.2s ease;
+}
+
+.mode-option:hover {
+  border-color: rgba(201, 169, 106, 0.7);
+  transform: translateY(-1px);
+}
+
+.mode-option--campaign {
+  border-color: rgba(201, 169, 106, 0.45);
+  background: rgba(40, 36, 22, 0.45);
+}
+
+.mode-option-name {
+  font-family: 'Syne', 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: #f2f5f0;
+}
+
+.mode-option--campaign .mode-option-name {
+  color: var(--brass);
+}
+
+.mode-option-blurb {
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: rgba(200, 217, 208, 0.75);
+}
+
 .nation-select-heading {
   font-family: 'Syne', 'Sora', sans-serif;
   font-weight: 700;

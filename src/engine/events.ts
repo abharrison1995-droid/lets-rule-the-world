@@ -166,6 +166,9 @@ function filterEligibleEvents(state: GameState, countryId: string): GameEvent[] 
   return EVENTS.filter(event => {
     const cond = event.triggerConditions;
     if (cond.manualOnly) return false;
+    if (event.modes && event.modes.length > 0 && !event.modes.includes(state.gameMode ?? 'sandbox')) {
+      return false;
+    }
     if (cond.minTurn && state.turn < cond.minTurn) return false;
     if (cond.maxTurn && state.turn > cond.maxTurn) return false;
     if (cond.targetCountry && cond.targetCountry !== countryId) return false;

@@ -10,6 +10,8 @@ export type AllianceTier =
 
 export type EventScope = 'global' | 'regional' | 'national';
 
+export type GameMode = 'sandbox' | 'campaign';
+
 export type BudgetCategory =
   | 'military'
   | 'diplomacy'
@@ -466,6 +468,11 @@ export interface GameEvent {
   title: string;
   description: string;
   scope: EventScope;
+  /**
+   * If set, only rolls in those modes. Omit = available in all modes.
+   * Use `['campaign']` for scripted campaign beats; `['sandbox']` to keep noise out of campaign.
+   */
+  modes?: GameMode[];
   triggerConditions: {
     minTurn?: number;
     maxTurn?: number;
@@ -533,6 +540,8 @@ export interface WarDeclarationPreview {
 export interface GameState {
   turn: number;
   playerCountryId: string;
+  /** Sandbox = full playable roster; Campaign = Eastern Escalation subset + scripted events */
+  gameMode: GameMode;
   countries: Record<string, Country>;
   regions: Record<string, Region>;
   relations: Record<string, number>; // key: "a|b" sorted
