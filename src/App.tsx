@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import type {
   GameState,
   GameMode,
+  UkraineAlignment,
   TurnReportEntry,
   BudgetAllocation,
   MilitaryDev,
@@ -56,6 +57,8 @@ import { PeerChoiceModal } from './components/PeerChoiceModal';
 import { NationIntroModal } from './components/NationIntroModal';
 import { WarTheaterScreen } from './components/WarTheaterScreen';
 import { WarTheaterNoticeModal } from './components/WarTheaterNoticeModal';
+import { installCampaignClient, setUkraineAlignment } from './engine/usaCampaign';
+import { detectFronts } from './engine/combat';
 import type { StrikeType } from './engine/strikes';
 import { useMobileLayout } from './hooks/useMobileLayout';
 import { getHemisphereForCountry, type HemisphereId } from './data/hemispheres';
@@ -233,13 +236,35 @@ export default function App() {
     setWarConfirmTarget(targetId);
   }, []);
 
+  const handleInstallClient = useCallback((targetId: string) => {
+    if (!state) return;
+    const newState = structuredClone(state);
+    const err = installCampaignClient(newState, targetId);
+    if (err) showFeedback(err);
+    else {
+      updateState(newState);
+      showFeedback('Client government installed.');
+    }
+  }, [state, updateState]);
+
+  const handleSetUkraineAlignment = useCallback((alignment: UkraineAlignment) => {
+    if (!state) return;
+    const newState = structuredClone(state);
+    setUkraineAlignment(newState, alignment);
+    updateState(newState);
+  }, [state, updateState]);
+
   const handleConfirmWar = useCallback(() => {
     if (!state || !warConfirmTarget) return;
     const newState = structuredClone(state);
     const err = playerDeclareWar(newState, warConfirmTarget);
     setWarConfirmTarget(null);
     if (err) showFeedback(err);
-    else updateState(newState);
+    else {
+      newState.fronts = detectFronts(newState);
+      updateState(newState);
+      showFeedback(`War declared on ${newState.countries[warConfirmTarget]?.name ?? warConfirmTarget}.`);
+    }
   }, [state, warConfirmTarget, updateState]);
 
   const handleCancelWar = useCallback(() => {
@@ -521,7 +546,14 @@ export default function App() {
           )}
         </main>
 
-        <SidePanel state={state} open={showSidePanel} onToggle={() => setShowSidePanel(!showSidePanel)} />
+        <SidePanel
+          state={state}
+          open={showSidePanel}
+          onToggle={() => setShowSidePanel(!showSidePanel)}
+          onDeclareWar={handleRequestWar}
+          onInstallClient={handleInstallClient}
+          onFocusCountry={handleCountryClick}
+        />
       </div>
 
       {feedback && <div className="toast">{feedback}</div>}
@@ -538,6 +570,9 @@ export default function App() {
           onCovertOp={handleCovertOp}
           onProbePacts={handleProbePacts}
           onExecuteMechanic={handleMechanic}
+          onInstallClient={handleInstallClient}
+          onSetUkraineAlignment={handleSetUkraineAlignment}
+          onFocusCountry={handleCountryClick}
           onOpenTheater={(theaterId) => {
             setTheaterFocusId(theaterId);
             setShowTheater(true);

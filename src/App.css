@@ -548,9 +548,62 @@ body {
   color: rgba(200, 217, 208, 0.8);
 }
 
-.campaign-brief-go {
-  width: 100%;
-  text-align: center;
+.campaign-mission-panel {
+  background: rgba(40, 36, 22, 0.35);
+  border: 1px solid rgba(201, 169, 106, 0.28);
+  border-radius: 4px;
+  padding: 0.65rem 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.campaign-mission-title {
+  font-family: 'Syne', 'Sora', sans-serif;
+  font-weight: 700;
+  color: var(--brass);
+  margin-bottom: 0.25rem;
+}
+
+.campaign-mission-timer {
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+}
+
+.campaign-mission-paths {
+  list-style: none;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0.35rem 0 0.5rem;
+  padding: 0;
+}
+
+.campaign-mission-paths li {
+  padding: 0.15rem 0;
+}
+
+.campaign-mission-paths li.done {
+  color: var(--success);
+}
+
+.campaign-mission-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+.mission-war-flag {
+  font-size: 0.78rem;
+  color: var(--danger);
+  margin-top: 0.25rem;
+}
+
+.success-text {
+  color: var(--success);
+  font-size: 0.85rem;
+}
+
+.side-panel .campaign-mission-panel {
+  margin: 0.5rem 0.4rem;
 }
 
 /* Mode select */

@@ -14,14 +14,25 @@ import {
 } from '../engine/militaryDevUpgrades';
 import { getPlayerCampaigns, getCampaignsTargetingPlayer, CAMPAIGN_DEFS } from '../engine/strikeCampaigns';
 import { getWinProgress } from '../engine/winConditions';
+import { CampaignMissionPanel } from './CampaignMissionPanel';
 
 interface SidePanelProps {
   state: GameState;
   onToggle: () => void;
   open: boolean;
+  onDeclareWar?: (targetId: string) => void;
+  onInstallClient?: (targetId: string) => void;
+  onFocusCountry?: (countryId: string) => void;
 }
 
-export function SidePanel({ state, onToggle, open }: SidePanelProps) {
+export function SidePanel({
+  state,
+  onToggle,
+  open,
+  onDeclareWar,
+  onInstallClient,
+  onFocusCountry,
+}: SidePanelProps) {
   const wars = getPlayerWars(state);
   const player = state.countries[state.playerCountryId];
   const winProgress = getWinProgress(state);
@@ -38,8 +49,18 @@ export function SidePanel({ state, onToggle, open }: SidePanelProps) {
       </button>
       {open && (
         <aside className="side-panel">
+          {state.usaCampaign && onDeclareWar && onInstallClient && (
+            <CampaignMissionPanel
+              state={state}
+              compact
+              onDeclareWar={onDeclareWar}
+              onInstallClient={onInstallClient}
+              onFocusTarget={onFocusCountry}
+            />
+          )}
+
           <section className="side-section win-section">
-            <h4>Victory Progress</h4>
+            <h4>{state.usaCampaign ? 'Long-Term Victory' : 'Victory Progress'}</h4>
             <p className="win-desc">{winProgress.description}</p>
             <div className="win-progress-bar">
               <div className="win-progress-fill" style={{ width: `${winProgress.progress * 100}%` }} />

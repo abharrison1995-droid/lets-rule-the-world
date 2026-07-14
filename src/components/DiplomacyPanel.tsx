@@ -20,6 +20,8 @@ import { BottomSheet } from './BottomSheet';
 import { getActiveCovertAlliances } from '../engine/covertAlliances';
 import { getInvokeUsSupportChance } from '../engine/diplomaticMissions';
 import { getActiveTheaters, getTheaterForWar } from '../engine/warTheater';
+import { CampaignMissionPanel, UkraineAlignmentControls } from './CampaignMissionPanel';
+import type { UkraineAlignment } from '../types/game';
 
 interface DiplomacyPanelProps {
   state: GameState;
@@ -33,6 +35,9 @@ interface DiplomacyPanelProps {
   onProbePacts: (targetId: string) => void;
   onExecuteMechanic: (mechanicId: string, targetId?: string) => void;
   onOpenTheater?: (theaterId?: string) => void;
+  onInstallClient?: (targetId: string) => void;
+  onSetUkraineAlignment?: (alignment: UkraineAlignment) => void;
+  onFocusCountry?: (countryId: string) => void;
   feedback: string | null;
   talksResult: string | null;
 }
@@ -60,6 +65,9 @@ export function DiplomacyPanel({
   onProbePacts,
   onExecuteMechanic,
   onOpenTheater,
+  onInstallClient,
+  onSetUkraineAlignment,
+  onFocusCountry,
   feedback,
   talksResult,
 }: DiplomacyPanelProps) {
@@ -127,6 +135,28 @@ export function DiplomacyPanel({
       </div>
 
       {feedback && <p className="feedback-msg">{feedback}</p>}
+
+      {state.usaCampaign && onInstallClient && (
+        <CampaignMissionPanel
+          state={state}
+          onDeclareWar={(id) => {
+            onClose();
+            onRequestWar(id);
+          }}
+          onInstallClient={onInstallClient}
+          onFocusTarget={
+            onFocusCountry
+              ? (id) => {
+                  onClose();
+                  onFocusCountry(id);
+                }
+              : undefined
+          }
+        />
+      )}
+      {state.usaCampaign && onSetUkraineAlignment && (
+        <UkraineAlignmentControls state={state} onChange={onSetUkraineAlignment} />
+      )}
 
       {getActiveTheaters(state).length > 0 && (
         <section className="panel-section theater-war-section">

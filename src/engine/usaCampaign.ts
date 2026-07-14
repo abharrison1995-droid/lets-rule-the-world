@@ -8,6 +8,11 @@ import {
 } from '../data/campaignUsa';
 import { getRelation, modifyRelation } from '../data/relations';
 import { getRegionsForCountry } from '../data/regions';
+import { isAtWarWith } from './actions';
+import { ACTION_ENERGY_COSTS, canSpendActionEnergy, spendActionEnergy } from './actionEnergy';
+import { getEffectiveSpendCost } from './fiscal';
+
+export const INSTALL_CLIENT_TP_COST = 18;
 
 export function createUsaCampaignState(startTurn: number): UsaCampaignState {
   return {
@@ -72,33 +77,147 @@ export function setUkraineAlignment(state: GameState, alignment: UkraineAlignmen
   }
 }
 
-function cubaControlledByUsa(state: GameState): boolean {
-  const regions = getRegionsForCountry('cuba');
-  if (regions.length === 0) return false;
-  return regions.every(r => state.regions[r.id]?.controlledBy === 'usa');
+export function getNationControlByPlayer(
+  state: GameState,
+  nationId: string
+): { total: number; owned: number; avgUnrest: number } {
+  const regions = getRegionsForCountry(nationId);
+  let owned = 0;
+  let unrestSum = 0;
+  for (const r of regions) {
+    const rt = state.regions[r.id];
+    if (!rt) continue;
+    unrestSum += rt.unrest;
+    if (rt.controlledBy === state.playerCountryId) owned += 1;
+  }
+  return {
+    total: regions.length,
+    owned,
+    avgUnrest: regions.length ? unrestSum / regions.length : 0,
+  };
 }
 
-function cubaIsClient(state: GameState): boolean {
-  return (state.usaCampaign?.clientStates ?? []).includes('cuba');
+function missionTargetFullyConquered(state: GameState, targetId: string): boolean {
+  const { total, owned } = getNationControlByPlayer(state, targetId);
+  return total > 0 && owned === total;
 }
 
-/** Stub install — full puppet diplomacy comes later. */
+function isClient(state: GameState, nationId: string): boolean {
+  return (state.usaCampaign?.clientStates ?? []).includes(nationId);
+}
+
+export interface InstallClientPreview {
+  canInstall: boolean;
+  blockReason?: string;
+  costTp: number;
+  energyCost: number;
+  reasonsMet: string[];
+}
+
+export function getInstallClientPreview(
+  state: GameState,
+  nationId: string
+): InstallClientPreview {
+  const energyCost = ACTION_ENERGY_COSTS.install_client;
+  const costTp = getEffectiveSpendCost(
+    state.countries[state.playerCountryId]!,
+    INSTALL_CLIENT_TP_COST
+  );
+  const empty = { canInstall: false, costTp, energyCost, reasonsMet: [] as string[] };
+
+  if (!state.usaCampaign) {
+    return { ...empty, blockReason: 'Not in USA campaign.' };
+  }
+  const mission = state.usaCampaign.activeMission;
+  if (!mission || mission.status !== 'active' || mission.targetCountryId !== nationId) {
+    return { ...empty, blockReason: 'No active mission against this nation.' };
+  }
+  if (isClient(state, nationId)) {
+    return { ...empty, blockReason: 'Already a client government.' };
+  }
+  if (missionTargetFullyConquered(state, nationId)) {
+    return { ...empty, blockReason: 'Fully conquered — mission completes on conquer.' };
+  }
+  if (!isAtWarWith(state, state.playerCountryId, nationId)) {
+    return { ...empty, blockReason: 'Must be at war to force a client regime.' };
+  }
+
+  const control = getNationControlByPlayer(state, nationId);
+  const target = state.countries[nationId];
+  const reasonsMet: string[] = [];
+  if (control.owned >= 1) reasonsMet.push(`Occupy ${control.owned}/${control.total} regions`);
+  if ((target?.stats.warExhaustion ?? 0) >= 0.28) {
+    reasonsMet.push('Target war exhaustion high');
+  }
+  if (control.avgUnrest >= 40) reasonsMet.push('Island unrest critical');
+
+  if (reasonsMet.length === 0) {
+    return {
+      ...empty,
+      blockReason:
+        'Need occupation, high Cuban exhaustion, or average regional unrest ≥ 40.',
+    };
+  }
+  if (!canSpendActionEnergy(state, energyCost)) {
+    return { ...empty, blockReason: `Need ${energyCost} action energy.`, reasonsMet };
+  }
+  const player = state.countries[state.playerCountryId];
+  if (!player || player.stats.treasuryPoints < costTp) {
+    return { ...empty, blockReason: `Need $${costTp}B for transition package.`, reasonsMet };
+  }
+
+  return { canInstall: true, costTp, energyCost, reasonsMet };
+}
+
+/** Install a Washington-aligned government on the mission target. */
 export function installCampaignClient(state: GameState, nationId: string): string | null {
-  if (!state.usaCampaign) return 'Not in USA campaign.';
-  if (state.usaCampaign.clientStates.includes(nationId)) return 'Already a client.';
-  state.usaCampaign.clientStates.push(nationId);
+  const preview = getInstallClientPreview(state, nationId);
+  if (!preview.canInstall) return preview.blockReason ?? 'Cannot install client.';
+
+  const player = state.countries[state.playerCountryId]!;
+  if (!spendActionEnergy(state, preview.energyCost)) {
+    return 'Not enough action energy.';
+  }
+  player.stats.treasuryPoints -= preview.costTp;
+
+  state.usaCampaign!.clientStates.push(nationId);
   for (const region of getRegionsForCountry(nationId)) {
     const r = state.regions[region.id];
     if (r) {
       r.controlledBy = nationId;
-      r.unrest = Math.max(r.unrest, 35);
+      r.unrest = Math.max(r.unrest, 40);
     }
   }
-  modifyRelation(state.relations, 'usa', nationId, 40);
+
+  // End war with the new client — they are on your side now
+  state.wars = state.wars.filter(
+    w =>
+      !(
+        w.belligerents.includes(state.playerCountryId) &&
+        w.belligerents.includes(nationId) &&
+        w.belligerents.length === 2
+      )
+  );
+  state.fronts = state.fronts.filter(
+    f =>
+      !(
+        (f.attackerCountryId === state.playerCountryId && f.defenderCountryId === nationId) ||
+        (f.defenderCountryId === state.playerCountryId && f.attackerCountryId === nationId)
+      )
+  );
+
+  modifyRelation(state.relations, 'usa', nationId, 45);
+  modifyRelation(state.relations, 'usa', 'russia', -8);
+  modifyRelation(state.relations, 'usa', 'china', -6);
+  state.internationalPariahTurns = Math.max(state.internationalPariahTurns ?? 0, 2);
+
   const name = state.countries[nationId]?.name ?? nationId;
   state.history.push(
-    `Turn ${state.turn}: ${name} installs a Washington-aligned government (client state).`
+    `Turn ${state.turn}: ${name} installs a Washington-aligned government (client state). War ends; transition cost $${preview.costTp}B.`
   );
+
+  // Immediate mission check
+  tickUsaCampaign(state);
   return null;
 }
 
@@ -108,12 +227,17 @@ export function tickUsaCampaign(state: GameState): void {
   const mission = camp.activeMission;
 
   if (mission && mission.status === 'active') {
-    const won = cubaControlledByUsa(state) || cubaIsClient(state);
+    const targetId = mission.targetCountryId;
+    const won =
+      missionTargetFullyConquered(state, targetId) || isClient(state, targetId);
     if (won) {
       mission.status = 'won';
-      camp.completedMissions.push(mission.missionId);
+      if (!camp.completedMissions.includes(mission.missionId)) {
+        camp.completedMissions.push(mission.missionId);
+      }
+      const how = isClient(state, targetId) ? 'client government' : 'military conquest';
       state.history.push(
-        `Turn ${state.turn}: Mission complete — ${USA_MISSION_CUBA.title}. Cuba is secured.`
+        `Turn ${state.turn}: Mission complete — ${USA_MISSION_CUBA.title} (${how}).`
       );
     } else if (state.turn > mission.deadlineTurn) {
       mission.status = 'failed';
@@ -158,12 +282,57 @@ export function getCampaignBriefCopy() {
   return USA_CAMPAIGN_BRIEF;
 }
 
+export interface MissionHudInfo {
+  title: string;
+  targetName: string;
+  targetId: string;
+  status: string;
+  turnsLeft: number | null;
+  deadlineTurn: number;
+  controlOwned: number;
+  controlTotal: number;
+  isClient: boolean;
+  atWar: boolean;
+  winPaths: string[];
+  blurb: string;
+}
+
+export function getMissionHud(state: GameState): MissionHudInfo | null {
+  const camp = state.usaCampaign;
+  const mission = camp?.activeMission;
+  if (!camp || !mission) return null;
+
+  const target = state.countries[mission.targetCountryId];
+  const control = getNationControlByPlayer(state, mission.targetCountryId);
+  const turnsLeft =
+    mission.status === 'active' ? Math.max(0, mission.deadlineTurn - state.turn) : null;
+
+  return {
+    title: USA_MISSION_CUBA.title,
+    targetName: target?.name ?? mission.targetCountryId,
+    targetId: mission.targetCountryId,
+    status: mission.status,
+    turnsLeft,
+    deadlineTurn: mission.deadlineTurn,
+    controlOwned: control.owned,
+    controlTotal: control.total,
+    isClient: isClient(state, mission.targetCountryId),
+    atWar: isAtWarWith(state, state.playerCountryId, mission.targetCountryId),
+    winPaths: [
+      `Conquer all ${control.total} regions (${control.owned}/${control.total})`,
+      'Or install a client government while at war',
+    ],
+    blurb: USA_MISSION_CUBA.blurb,
+  };
+}
+
 export function getActiveMissionSummary(state: GameState): string | null {
-  const m = state.usaCampaign?.activeMission;
-  if (!m || m.status !== 'active') return null;
-  const target = state.countries[m.targetCountryId]?.name ?? m.targetCountryId;
-  const left = Math.max(0, m.deadlineTurn - state.turn);
-  return `${target} · ${left} turn${left !== 1 ? 's' : ''} left`;
+  const hud = getMissionHud(state);
+  if (!hud || hud.status !== 'active') {
+    if (hud?.status === 'won') return `${hud.title} · Complete`;
+    return null;
+  }
+  return `${hud.targetName} · ${hud.controlOwned}/${hud.controlTotal} · ${hud.turnsLeft}t left`;
 }
 
 export function getUkraineAlignmentLabel(a: UkraineAlignment): string {
@@ -172,7 +341,6 @@ export function getUkraineAlignmentLabel(a: UkraineAlignment): string {
   return 'Deniable';
 }
 
-/** Debug/helper — relation snapshot for brief UI */
 export function previewAlignmentHit(state: GameState, alignment: UkraineAlignment): string {
   const ua = getRelation(state.relations, 'usa', 'ukraine');
   const ru = getRelation(state.relations, 'usa', 'russia');

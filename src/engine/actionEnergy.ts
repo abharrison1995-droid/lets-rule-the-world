@@ -15,6 +15,7 @@ export const ACTION_ENERGY_COSTS = {
   nation_mechanic: 1,
   propaganda: 1,
   facility_build: 1,
+  install_client: 2,
 } as const;
 
 export function getMaxActionEnergy(state: GameState): number {
