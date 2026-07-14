@@ -16,13 +16,13 @@ export const GAME_MODES: Record<GameMode, GameModeDef> = {
   sandbox: {
     id: 'sandbox',
     name: 'Sandbox',
-    blurb: 'Any playable nation. Rule the world your way — no mission ladder.',
+    blurb: 'Any nation. Open board. Rule the world your way.',
     playableCountryIds: null,
   },
   campaign: {
     id: 'campaign',
     name: 'Campaign',
-    blurb: 'USA only. Restore hegemony — Mission 1 Cuba, then climb toward Russia or China.',
+    blurb: 'Scripted paths with clear pressure — start with the United States.',
     playableCountryIds: [...CAMPAIGN_PLAYABLE_IDS],
   },
 };

@@ -678,9 +678,66 @@ body {
   transform: translateY(-1px);
 }
 
+.mode-option--locked {
+  position: relative;
+  opacity: 0.55;
+  cursor: not-allowed;
+  border-color: rgba(200, 217, 208, 0.15);
+  background: rgba(12, 22, 20, 0.4);
+  pointer-events: none;
+}
+
 .mode-option--campaign {
   border-color: rgba(201, 169, 106, 0.45);
   background: rgba(40, 36, 22, 0.45);
+}
+
+.mode-locked-badge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.85rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: rgba(200, 217, 208, 0.55);
+  padding: 0.2rem 0.45rem;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.mode-option-meta {
+  font-size: 0.8rem;
+  color: rgba(201, 169, 106, 0.9);
+  margin-top: 0.15rem;
+}
+
+.save-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.15rem;
+  border-radius: 4px;
+  border: 1px solid rgba(200, 217, 208, 0.28);
+  background: rgba(20, 40, 36, 0.55);
+  text-align: left;
+}
+
+.save-slot-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.save-slot-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.save-slot-actions .title-cta {
+  width: 100%;
+  text-align: center;
 }
 
 .mode-option-name {

@@ -1,20 +1,19 @@
 import { useState } from 'react';
 import type { SaveSummary } from '../engine/saveLoad';
-import { formatModeLabel } from '../data/gameModes';
 import { AtlasBackdrop } from './AtlasBackdrop';
 
 interface TitleScreenProps {
   saveSummary: SaveSummary | null;
   onNewGame: () => void;
-  onContinue: () => void;
+  onOpenSaves: () => void;
 }
 
-/** Full-bleed brand title — nation select happens on the next screen. */
-export function TitleScreen({ saveSummary, onNewGame, onContinue }: TitleScreenProps) {
+/** Full-bleed brand title — mode / campaign / saves follow. */
+export function TitleScreen({ saveSummary, onNewGame, onOpenSaves }: TitleScreenProps) {
   const [confirmOverwrite, setConfirmOverwrite] = useState(false);
 
   const requestNewGame = () => {
-    if (saveSummary) {
+    if (saveSummary && !saveSummary.ended) {
       setConfirmOverwrite(true);
       return;
     }
@@ -41,11 +40,10 @@ export function TitleScreen({ saveSummary, onNewGame, onContinue }: TitleScreenP
                 New Game
               </button>
               {saveSummary && (
-                <button type="button" className="title-cta title-cta-continue" onClick={onContinue}>
-                  <span className="title-cta-label">Continue</span>
+                <button type="button" className="title-cta title-cta-continue" onClick={onOpenSaves}>
+                  <span className="title-cta-label">Load Game</span>
                   <span className="title-save-meta">
-                    {formatModeLabel(saveSummary.gameMode)} · {saveSummary.countryName} · Turn{' '}
-                    {saveSummary.turn}
+                    {saveSummary.countryName} · Turn {saveSummary.turn}
                     {saveSummary.ended ? ' · Ended' : ''}
                   </span>
                 </button>
@@ -53,10 +51,10 @@ export function TitleScreen({ saveSummary, onNewGame, onContinue }: TitleScreenP
             </>
           ) : (
             <div className="title-overwrite" role="alertdialog" aria-labelledby="overwrite-copy">
-              <p id="overwrite-copy">Starting a new game ends your saved campaign.</p>
+              <p id="overwrite-copy">Starting a new game will replace your current save when you commit to a campaign.</p>
               <div className="title-overwrite-actions">
                 <button type="button" className="title-cta title-cta-primary" onClick={onNewGame}>
-                  Start New Game
+                  Continue to Setup
                 </button>
                 <button
                   type="button"

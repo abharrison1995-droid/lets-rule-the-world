@@ -9,6 +9,7 @@ import { DEFAULT_DOMESTIC_SPLIT } from './propaganda';
 import { defaultBudget } from './economy';
 import { createDefaultNpcMechanicState } from './npcMechanics';
 import { syncWarTheaters } from './warTheater';
+import { formatModeLabel } from '../data/gameModes';
 
 const SAVE_KEY = 'lrw_save';
 export const SAVE_VERSION = 22;
@@ -224,12 +225,35 @@ export function hasSavedGame(): boolean {
 }
 
 export interface SaveSummary {
+  /** Slot id — currently a single autosave; structured for multi-slot later */
+  slotId: string;
   countryId: string;
   countryName: string;
   turn: number;
   timestamp: number;
   ended: boolean;
   gameMode: GameMode;
+  /** One-line description for the load screen */
+  description: string;
+}
+
+function buildSaveDescription(state: GameState, gameMode: GameMode, ended: boolean): string {
+  const mode = formatModeLabel(gameMode);
+  if (ended) {
+    if (state.playerWon) return `${mode} — victory.`;
+    return `${mode} — campaign ended.`;
+  }
+  if (gameMode === 'campaign' && state.usaCampaign?.activeMission?.status === 'active') {
+    const target =
+      state.countries[state.usaCampaign.activeMission.targetCountryId]?.name ??
+      state.usaCampaign.activeMission.targetCountryId;
+    const left = Math.max(0, state.usaCampaign.activeMission.deadlineTurn - (state.turn ?? 0));
+    return `${mode} — mission pressure on ${target} (${left}t left).`;
+  }
+  if (gameMode === 'campaign') {
+    return `${mode} — USA hegemony path.`;
+  }
+  return `${mode} — open-world run.`;
 }
 
 /** Lightweight read for the title screen — does not migrate full state. */
@@ -245,18 +269,28 @@ export function peekSaveSummary(): SaveSummary | null {
     if (!countryId) return null;
     const countryName =
       payload.state.countries?.[countryId]?.name ?? COUNTRIES[countryId]?.name ?? countryId;
+    const gameMode: GameMode = payload.state.gameMode === 'campaign' ? 'campaign' : 'sandbox';
+    const ended = !!(payload.state.gameOver || payload.state.playerWon);
 
     return {
+      slotId: 'autosave',
       countryId,
       countryName,
       turn: payload.state.turn ?? 0,
       timestamp: payload.timestamp,
-      ended: !!(payload.state.gameOver || payload.state.playerWon),
-      gameMode: payload.state.gameMode === 'campaign' ? 'campaign' : 'sandbox',
+      ended,
+      gameMode,
+      description: buildSaveDescription(payload.state, gameMode, ended),
     };
   } catch {
     return null;
   }
+}
+
+/** All loadable slots (single autosave for now). */
+export function listSaveSummaries(): SaveSummary[] {
+  const one = peekSaveSummary();
+  return one ? [one] : [];
 }
 
 export function deleteSave(): void {

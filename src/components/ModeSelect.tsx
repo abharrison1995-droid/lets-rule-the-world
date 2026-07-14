@@ -3,11 +3,14 @@ import { GAME_MODES } from '../data/gameModes';
 import { AtlasBackdrop } from './AtlasBackdrop';
 
 interface ModeSelectProps {
-  onSelect: (mode: GameMode) => void;
+  onSelectCampaign: () => void;
   onBack: () => void;
 }
 
-export function ModeSelect({ onSelect, onBack }: ModeSelectProps) {
+export function ModeSelect({ onSelectCampaign, onBack }: ModeSelectProps) {
+  const campaign = GAME_MODES.campaign;
+  const sandbox = GAME_MODES.sandbox;
+
   return (
     <div className="title-root mode-select-root">
       <AtlasBackdrop />
@@ -20,24 +23,24 @@ export function ModeSelect({ onSelect, onBack }: ModeSelectProps) {
         </p>
         <h1 className="mode-select-heading">Choose Game Type</h1>
         <p className="title-tagline mode-select-tagline">
-          Sandbox keeps the full roster. Campaign narrows the board and scripts the opening war.
+          Campaigns put you on a focused path. Sandbox opens later.
         </p>
 
         <div className="mode-select-options">
-          {(['campaign', 'sandbox'] as GameMode[]).map(id => {
-            const def = GAME_MODES[id];
-            return (
-              <button
-                key={id}
-                type="button"
-                className={`mode-option mode-option--${id}`}
-                onClick={() => onSelect(id)}
-              >
-                <span className="mode-option-name">{def.name}</span>
-                <span className="mode-option-blurb">{def.blurb}</span>
-              </button>
-            );
-          })}
+          <button
+            type="button"
+            className="mode-option mode-option--campaign"
+            onClick={onSelectCampaign}
+          >
+            <span className="mode-option-name">{campaign.name}</span>
+            <span className="mode-option-blurb">{campaign.blurb}</span>
+          </button>
+
+          <div className="mode-option mode-option--locked" aria-disabled="true">
+            <span className="mode-option-name">{sandbox.name}</span>
+            <span className="mode-option-blurb">{sandbox.blurb}</span>
+            <span className="mode-locked-badge">Coming soon</span>
+          </div>
         </div>
       </div>
     </div>

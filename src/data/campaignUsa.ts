@@ -14,18 +14,47 @@ export const USA_CAMPAIGN_BRIEF = {
     'Russia’s war on Ukraine is already burning. Default posture is to back Kyiv — you may revisit alignment later, but every flip leaves scars.',
 } as const;
 
+/** Select-screen card — keep copy vague; no mission spoilers. */
+export const USA_CAMPAIGN_CARD = {
+  id: USA_CAMPAIGN_ID,
+  title: 'United States',
+  gist: 'Hegemony under pressure. Shape the century from Washington — friends, clients, and rivals included.',
+  difficultyLabel: 'Hard',
+  estimateTurnsLabel: '80–120 turns',
+} as const;
+
+export interface CampaignSelectEntry {
+  id: string;
+  title: string;
+  available: boolean;
+  gist?: string;
+  difficultyLabel?: string;
+  estimateTurnsLabel?: string;
+}
+
+export const CAMPAIGN_SELECT_ENTRIES: CampaignSelectEntry[] = [
+  {
+    id: USA_CAMPAIGN_CARD.id,
+    title: USA_CAMPAIGN_CARD.title,
+    available: true,
+    gist: USA_CAMPAIGN_CARD.gist,
+    difficultyLabel: USA_CAMPAIGN_CARD.difficultyLabel,
+    estimateTurnsLabel: USA_CAMPAIGN_CARD.estimateTurnsLabel,
+  },
+  { id: 'campaign_slot_b', title: 'Coming soon', available: false },
+  { id: 'campaign_slot_c', title: 'Coming soon', available: false },
+];
+
 export type { UkraineAlignment };
 
 export interface CampaignMissionDef {
   id: string;
   title: string;
   targetCountryId: string;
-  /** Turns from mission start to complete conquer or puppet install */
   durationTurns: number;
   blurb: string;
 }
 
-/** Mission 1 — concrete first target. */
 export const USA_MISSION_CUBA: CampaignMissionDef = {
   id: 'mission_cuba',
   title: 'Caribbean Restoration',
@@ -37,7 +66,6 @@ export const USA_MISSION_CUBA: CampaignMissionDef = {
 
 export const USA_CAMPAIGN_MISSIONS: CampaignMissionDef[] = [USA_MISSION_CUBA];
 
-/** If neither China nor Russia is at war with USA by this turn, force a peer pick. */
 export const PEER_FORCE_PICK_TURN = 60;
 
 export const PEER_THREAT_IDS = ['russia', 'china'] as const;

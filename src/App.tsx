@@ -14,7 +14,7 @@ import type {
   FacilityType,
 } from './types/game';
 import { createInitialState, advanceTurn } from './engine/gameState';
-import { saveGame, loadGame, peekSaveSummary, deleteSave } from './engine/saveLoad';
+import { saveGame, loadGame, peekSaveSummary, listSaveSummaries, deleteSave } from './engine/saveLoad';
 import { resolveEventChoice } from './engine/events';
 import { getEventById } from './data/events';
 import {
@@ -36,6 +36,8 @@ import { playerStartStrikeCampaign, playerCancelStrikeCampaign } from './engine/
 import { getStrikeConfirmPreview, getCampaignConfirmPreview } from './engine/strikePreview';
 import { TitleScreen } from './components/TitleScreen';
 import { ModeSelect } from './components/ModeSelect';
+import { CampaignSelect } from './components/CampaignSelect';
+import { SaveSelect } from './components/SaveSelect';
 import { EndScreen } from './components/EndScreen';
 import { NationSelect } from './components/NationSelect';
 import { GameHeader } from './components/GameHeader';
@@ -64,7 +66,7 @@ import { useMobileLayout } from './hooks/useMobileLayout';
 import { getHemisphereForCountry, type HemisphereId } from './data/hemispheres';
 import './App.css';
 
-type Screen = 'title' | 'mode' | 'nation' | 'game';
+type Screen = 'title' | 'mode' | 'campaigns' | 'saves' | 'nation' | 'game';
 
 type StrikeConfirmRequest =
   | { kind: 'strike'; regionId: string; strikeType: StrikeType }
@@ -119,9 +121,10 @@ export default function App() {
     setSaveSummary(peekSaveSummary());
   }, []);
 
-  const startGame = useCallback((countryId: string) => {
+  const startGame = useCallback((countryId: string, mode: GameMode = pendingMode) => {
     deleteSave();
-    const newState = createInitialState(countryId, pendingMode);
+    const newState = createInitialState(countryId, mode);
+    setPendingMode(mode);
     setState(newState);
     setScreen('game');
     setShowDiplomacy(false);
@@ -134,6 +137,10 @@ export default function App() {
     refreshSaveMeta();
   }, [pendingMode, refreshSaveMeta]);
 
+  const startUsaCampaign = useCallback(() => {
+    startGame('usa', 'campaign');
+  }, [startGame]);
+
   const loadSaved = useCallback(() => {
     const saved = loadGame<GameState>();
     if (saved) {
@@ -143,7 +150,14 @@ export default function App() {
     } else {
       showFeedback('Save file incompatible or missing.');
       refreshSaveMeta();
+      setScreen('title');
     }
+  }, [refreshSaveMeta]);
+
+  const handleDeleteSave = useCallback(() => {
+    deleteSave();
+    refreshSaveMeta();
+    setScreen('title');
   }, [refreshSaveMeta]);
 
   const endTurn = useCallback(() => {
@@ -416,7 +430,18 @@ export default function App() {
       <TitleScreen
         saveSummary={saveSummary}
         onNewGame={() => setScreen('mode')}
-        onContinue={loadSaved}
+        onOpenSaves={() => setScreen('saves')}
+      />
+    );
+  }
+
+  if (screen === 'saves') {
+    return (
+      <SaveSelect
+        saves={listSaveSummaries()}
+        onBack={() => setScreen('title')}
+        onLoad={() => loadSaved()}
+        onDelete={() => handleDeleteSave()}
       />
     );
   }
@@ -425,19 +450,26 @@ export default function App() {
     return (
       <ModeSelect
         onBack={() => setScreen('title')}
-        onSelect={(mode) => {
-          setPendingMode(mode);
-          setScreen('nation');
-        }}
+        onSelectCampaign={() => setScreen('campaigns')}
       />
     );
   }
 
+  if (screen === 'campaigns') {
+    return (
+      <CampaignSelect
+        onBack={() => setScreen('mode')}
+        onSelectUsa={startUsaCampaign}
+      />
+    );
+  }
+
+  // Nation select retained for future Sandbox unlock; not in current player flow
   if (screen === 'nation') {
     return (
       <NationSelect
         gameMode={pendingMode}
-        onSelect={startGame}
+        onSelect={(id) => startGame(id, pendingMode)}
         onBack={() => setScreen('mode')}
       />
     );
