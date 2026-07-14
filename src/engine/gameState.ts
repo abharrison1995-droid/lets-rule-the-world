@@ -16,7 +16,7 @@ import { resolveStrikeCampaigns } from './strikeCampaigns';
 import { runNpcGreyZoneStrikes, runNpcWartimeStrikes } from './npcStrikes';
 import { tickNpcWorldActivity } from './npcNation';
 import { createDefaultNpcMechanicState, tickNpcMechanics } from './npcMechanics';
-import { syncWarTheaters, tickWarTheaters } from './warTheater';
+import { syncWarTheaters, tickVassalRegions, tickWarTheaters } from './warTheater';
 import { tickWarReadiness, forceHaltCampaignsFromWeariness } from './warReadiness';
 import { buildTurnReport } from './turnReport';
 import { resetActionEnergy } from './actionEnergy';
@@ -88,6 +88,7 @@ export function createInitialState(playerCountryId: string): GameState {
     npcMechanicState: createDefaultNpcMechanicState(),
     warTheaters: [],
     vassalRegions: [],
+    theaterSettlements: [],
     interventionMeters: {},
     pendingTheaterNotices: [],
     collapsedNations: [],
@@ -152,6 +153,7 @@ export function advanceTurn(state: GameState): GameState {
   tickCovertAllianceExposure(newState);
   resolveCombat(newState);
   decayUnrest(newState);
+  tickVassalRegions(newState);
   cleanStrikeAnimations(newState);
   checkCollapseConditions(newState);
   checkWinConditions(newState);

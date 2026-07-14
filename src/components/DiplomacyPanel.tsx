@@ -41,6 +41,9 @@ const PEACE_LABELS: Record<PeaceTermsType, string> = {
   white_peace: 'White Peace',
   ceasefire: 'Ceasefire',
   reparations: 'Demand Reparations',
+  freeze_lines: 'Freeze Front Lines',
+  territorial_cede: 'Force Territorial Cession',
+  dmz: 'Demilitarized Zone',
 };
 
 type DiplomacyView = 'main' | 'talks' | 'press';

@@ -2,7 +2,12 @@ import type { GameState, PeaceTermsType, War } from '../types/game';
 import { getRelation, modifyRelation } from '../data/relations';
 import { isAtWarWith } from './actions';
 import { recordConflictBaseline, applyPeaceReconciliation } from './conflictRelations';
-import { syncWarTheaters } from './warTheater';
+import {
+  applyTheaterPeaceSettlement,
+  getTheaterControlShare,
+  getTheaterForWar,
+  syncWarTheaters,
+} from './warTheater';
 
 export interface PeaceResult {
   accepted: boolean;
@@ -42,6 +47,13 @@ export function calculatePeaceAcceptance(
       }, 0) / targetFronts.length
     : 0;
 
+  const war = getWarWithTarget(state, targetId);
+  const theater = war ? getTheaterForWar(state, war.id) : undefined;
+  const theaterEdge = theater
+    ? getTheaterControlShare(theater, state.playerCountryId) -
+      getTheaterControlShare(theater, targetId)
+    : 0;
+
   if (terms === 'white_peace') {
     score += 0.2;
     if (avgPressure < -20) score += 0.15;
@@ -51,6 +63,19 @@ export function calculatePeaceAcceptance(
     score -= 0.2;
     if (avgPressure > 20) score += 0.3;
     else score -= 0.3;
+  } else if (terms === 'freeze_lines') {
+    score += 0.05;
+    score += theaterEdge * 0.4;
+    if (theaterEdge < 0.05) score -= 0.2;
+  } else if (terms === 'territorial_cede') {
+    score -= 0.25;
+    score += Math.max(0, theaterEdge) * 0.9;
+    if (theaterEdge < 0.12) score -= 0.35;
+    if (avgPressure > 25) score += 0.15;
+  } else if (terms === 'dmz') {
+    score -= 0.1;
+    score += Math.abs(theaterEdge) < 0.2 ? 0.15 : 0;
+    score += theaterEdge * 0.35;
   }
 
   return Math.max(0, Math.min(1, score));
@@ -107,11 +132,12 @@ export function proposePeace(
   if (Math.random() > acceptance) {
     modifyRelation(state.relations, state.playerCountryId, targetId, -5);
     state.history.push(
-      `Turn ${state.turn}: ${target.name} rejected peace proposal (${terms.replace('_', ' ')}).`
+      `Turn ${state.turn}: ${target.name} rejected peace proposal (${terms.replace(/_/g, ' ')}).`
     );
     return { accepted: false, message: `${target.name} rejected the peace offer.` };
   }
 
+  const warId = war.id;
   const { warEnded } = playerLeaveWar(state, war, targetId);
 
   const player = state.countries[state.playerCountryId];
@@ -126,29 +152,33 @@ export function proposePeace(
     player.stats.treasuryPoints += payment * 0.8;
   }
 
+  if (warEnded) {
+    applyTheaterPeaceSettlement(state, warId, terms);
+  }
+
   applyPeaceReconciliation(state, state.playerCountryId, targetId, terms);
   syncWarTheaters(state);
 
   if (warEnded) {
     state.history.push(
-      `Turn ${state.turn}: Peace with ${target.name} (${terms.replace('_', ' ')}). War ended.`
+      `Turn ${state.turn}: Peace with ${target.name} (${terms.replace(/_/g, ' ')}). War ended.`
     );
     return {
       accepted: true,
-      message: `${target.name} accepted ${terms.replace('_', ' ')}. War is over.`,
+      message: `${target.name} accepted ${terms.replace(/_/g, ' ')}. War is over.`,
     };
   }
 
   state.history.push(
-    `Turn ${state.turn}: Peace with ${target.name} (${terms.replace('_', ' ')}). You leave the war; fighting continues among remaining parties.`
+    `Turn ${state.turn}: Peace with ${target.name} (${terms.replace(/_/g, ' ')}). You leave the war; fighting continues among remaining parties.`
   );
   return {
     accepted: true,
-    message: `${target.name} accepted ${terms.replace('_', ' ')}. You withdrew — the wider war continues.`,
+    message: `${target.name} accepted ${terms.replace(/_/g, ' ')}. You withdrew — the wider war continues.`,
   };
 }
 
-export function getPeaceOptions(state: GameState, _targetId: string): PeaceTermsType[] {
+export function getPeaceOptions(state: GameState, targetId: string): PeaceTermsType[] {
   const playerFronts = state.fronts.filter(
     f => f.attackerCountryId === state.playerCountryId || f.defenderCountryId === state.playerCountryId
   );
@@ -157,6 +187,23 @@ export function getPeaceOptions(state: GameState, _targetId: string): PeaceTerms
   );
 
   const options: PeaceTermsType[] = ['white_peace', 'ceasefire'];
+
+  const war = getWarWithTarget(state, targetId);
+  const theater = war ? getTheaterForWar(state, war.id) : undefined;
+  if (theater) {
+    const edge =
+      getTheaterControlShare(theater, state.playerCountryId) -
+      getTheaterControlShare(theater, targetId);
+    if (edge > 0.06) options.push('freeze_lines');
+    if (edge > 0.12) {
+      options.push('territorial_cede');
+      options.push('dmz');
+    } else if (Math.abs(edge) < 0.1 && edge > -0.05) {
+      // Stalemate front — DMZ is a natural ask
+      options.push('dmz');
+    }
+  }
+
   if (winning) options.push('reparations');
   return options;
 }

@@ -12,6 +12,44 @@ export function formatRelationValue(value: number): string {
   return `${value > 0 ? '+' : ''}${value}`;
 }
 
+function warScarForTerms(terms: PeaceTermsType): number {
+  switch (terms) {
+    case 'reparations':
+      return 22;
+    case 'territorial_cede':
+      return 28;
+    case 'dmz':
+      return 14;
+    case 'freeze_lines':
+      return 16;
+    case 'white_peace':
+      return 15;
+    case 'ceasefire':
+      return 10;
+    default:
+      return 12;
+  }
+}
+
+function fallbackBumpForTerms(terms: PeaceTermsType): number {
+  switch (terms) {
+    case 'ceasefire':
+      return 12;
+    case 'white_peace':
+      return 8;
+    case 'dmz':
+      return 6;
+    case 'freeze_lines':
+      return 5;
+    case 'territorial_cede':
+      return 2;
+    case 'reparations':
+      return 4;
+    default:
+      return 4;
+  }
+}
+
 /** Preview bilateral ties after peace without mutating state */
 export function previewPeaceReconciliation(
   state: GameState,
@@ -22,7 +60,7 @@ export function previewPeaceReconciliation(
   const current = getRelation(state.relations, a, b);
   const key = relationKey(a, b);
   const baseline = state.conflictBaselines?.[key];
-  const warScar = terms === 'reparations' ? 22 : terms === 'white_peace' ? 15 : 10;
+  const warScar = warScarForTerms(terms);
 
   if (baseline !== undefined) {
     const target = Math.max(-100, baseline - warScar);
@@ -30,7 +68,7 @@ export function previewPeaceReconciliation(
     return { current, projected, warScar, hasBaseline: true };
   }
 
-  const fallback = terms === 'ceasefire' ? 12 : terms === 'white_peace' ? 8 : 4;
+  const fallback = fallbackBumpForTerms(terms);
   const projected = Math.max(-100, Math.min(100, current + fallback));
   return { current, projected, warScar, hasBaseline: false };
 }
@@ -55,7 +93,7 @@ export function applyPeaceReconciliation(
   const baseline = state.conflictBaselines?.[key];
   const current = getRelation(state.relations, a, b);
 
-  const warScar = terms === 'reparations' ? 22 : terms === 'white_peace' ? 15 : 10;
+  const warScar = warScarForTerms(terms);
 
   if (baseline !== undefined) {
     const target = Math.max(-100, baseline - warScar);
@@ -70,6 +108,6 @@ export function applyPeaceReconciliation(
     return;
   }
 
-  const fallback = terms === 'ceasefire' ? 12 : terms === 'white_peace' ? 8 : 4;
+  const fallback = fallbackBumpForTerms(terms);
   modifyRelation(state.relations, a, b, fallback);
 }

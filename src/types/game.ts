@@ -246,6 +246,25 @@ export interface VassalRegion {
   formedTurn: number;
 }
 
+export type PeaceTermsType =
+  | 'white_peace'
+  | 'ceasefire'
+  | 'reparations'
+  | 'freeze_lines'
+  | 'territorial_cede'
+  | 'dmz';
+
+/** Map settlement after peace involving a war theater */
+export interface TheaterSettlement {
+  warId: string;
+  theaterId: string;
+  terms: PeaceTermsType;
+  /** Ceasefire / DMZ hold until this turn (exclusive); undefined = permanent freeze */
+  freezeUntilTurn?: number;
+  dmzHexIds: string[];
+  settledTurn: number;
+}
+
 export type HexTerrain = 'urban' | 'plains' | 'forest' | 'river' | 'fort';
 
 export type TheaterUnitTag = 'infantry' | 'armor' | 'artillery' | 'air' | 'drone';
@@ -395,8 +414,6 @@ export interface WinConditionDef {
   /** Absolute earliest turn any path may fire (safety floor) */
   absoluteMinTurns?: number;
 }
-
-export type PeaceTermsType = 'white_peace' | 'ceasefire' | 'reparations';
 
 export interface BudgetAllocation {
   military: number;
@@ -586,6 +603,8 @@ export interface GameState {
   warTheaters: WarTheaterState[];
   /** Regions held as vassals rather than fully absorbed */
   vassalRegions: VassalRegion[];
+  /** Settled theater maps after peace (freeze / DMZ / cession) */
+  theaterSettlements: TheaterSettlement[];
   /** Intervention pressure by warId (0–100); expeditionary builds this toward auto-war */
   interventionMeters: Record<string, number>;
   /** Theater IDs awaiting “war theater opened” modal acknowledgment */
