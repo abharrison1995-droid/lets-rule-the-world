@@ -41,7 +41,10 @@ export function rollEvents(state: GameState): ActiveEvent[] {
 
   for (const npcId of Object.keys(state.countries)) {
     if (npcId === state.playerCountryId) continue;
-    const npcEligible = filterEligibleEvents(state, npcId);
+    if ((state.collapsedNations ?? []).includes(npcId)) continue;
+    const npcEligible = filterEligibleEvents(state, npcId).filter(
+      e => !e.choices.every(c => c.effects.some(fx => fx.stat === 'gameOver'))
+    );
     const npcEvent = weightedRandomSelect(npcEligible, 1);
     for (const event of npcEvent) {
       applyEventSilentlyForNpc(state, event, npcId);
@@ -49,6 +52,8 @@ export function rollEvents(state: GameState): ActiveEvent[] {
   }
 
   state.activeEvents.push(...newEvents);
+  // Drop resolved clutter so the log does not grow forever
+  state.activeEvents = state.activeEvents.filter(e => !e.resolved).slice(-12);
   return newEvents;
 }
 
@@ -311,8 +316,19 @@ function applyEffect(
   active?: ActiveEvent
 ): void {
   if (stat === 'gameOver') {
-    state.gameOver = true;
-    state.gameOverReason = `${country.name} has collapsed.`;
+    // Only the player collapsing ends the campaign — NPC regime falls are world events
+    if (country.id === state.playerCountryId) {
+      state.gameOver = true;
+      state.gameOverReason = `${country.name} has collapsed.`;
+    } else {
+      state.collapsedNations ??= [];
+      if (!state.collapsedNations.includes(country.id)) {
+        state.collapsedNations.push(country.id);
+        state.history.push(
+          `Turn ${state.turn}: ${country.name} collapses — chaos consumes the regime (you may keep playing).`
+        );
+      }
+    }
     return;
   }
 
@@ -387,13 +403,16 @@ function applyEffect(
 }
 
 export function applyEventSilentlyForNpc(state: GameState, event: GameEvent, countryId: string): void {
+  if ((state.collapsedNations ?? []).includes(countryId)) return;
   if (event.choices.length > 0) {
-    const choice = event.choices[Math.floor(Math.random() * event.choices.length)];
     const country = state.countries[countryId];
-    if (country) {
-      for (const effect of choice.effects) {
-        applyEffect(state, country, effect.stat, effect.target, effect.delta * 0.5);
-      }
+    if (!country) return;
+    // Prefer survival/reform choices over instant collapse when multiple options exist
+    const nonFatal = event.choices.filter(c => !c.effects.some(e => e.stat === 'gameOver'));
+    const pool = nonFatal.length > 0 ? nonFatal : event.choices;
+    const choice = pool[Math.floor(Math.random() * pool.length)];
+    for (const effect of choice.effects) {
+      applyEffect(state, country, effect.stat, effect.target, effect.delta * 0.5);
     }
   }
 }

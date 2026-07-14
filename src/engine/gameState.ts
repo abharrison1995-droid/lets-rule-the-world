@@ -90,6 +90,7 @@ export function createInitialState(playerCountryId: string): GameState {
     vassalRegions: [],
     interventionMeters: {},
     pendingTheaterNotices: [],
+    collapsedNations: [],
   };
 
   resetActionEnergy(state);

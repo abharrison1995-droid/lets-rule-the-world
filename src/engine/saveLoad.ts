@@ -10,7 +10,7 @@ import { createDefaultNpcMechanicState } from './npcMechanics';
 import { syncWarTheaters } from './warTheater';
 
 const SAVE_KEY = 'lrw_save';
-export const SAVE_VERSION = 18;
+export const SAVE_VERSION = 19;
 
 interface SavePayload {
   version: number;
@@ -90,6 +90,10 @@ function migrateState(state: GameState, fromVersion: number): GameState {
     }
   }
 
+  if (fromVersion < 19) {
+    migrated.collapsedNations ??= [];
+  }
+
   return fillMissingSaveFields(migrated);
 }
 
@@ -139,6 +143,7 @@ function fillMissingSaveFields(state: GameState): GameState {
   state.vassalRegions ??= [];
   state.interventionMeters ??= {};
   state.pendingTheaterNotices ??= [];
+  state.collapsedNations ??= [];
   for (const t of state.warTheaters) {
     t.playerDoctrineAi ??= true;
     t.combatLog ??= [];

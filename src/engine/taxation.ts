@@ -50,8 +50,8 @@ export function computeTaxBreakdown(state: GameState, countryId: string): TaxBre
   const income = state.incomeTaxRate ?? DEFAULT_INCOME_TAX;
   const treasury = country.stats.treasuryPoints;
 
-  const corporateRevenue = treasury * corporate * 0.048;
-  const incomeRevenue = treasury * income * 0.042;
+  const corporateRevenue = treasury * corporate * 0.006;
+  const incomeRevenue = treasury * income * 0.005;
   const organicGrowth = treasury * country.stats.baseGrowthRate * getGrowthMultiplier(corporate);
   const facilityBonus = countryId === state.playerCountryId ? getFacilityIncomeBonus(state) : 0;
   const reserveBoost = countryId === state.playerCountryId ? treasury * state.budget.reserve * 0.006 : 0;
@@ -59,7 +59,8 @@ export function computeTaxBreakdown(state: GameState, countryId: string): TaxBre
   const suezDrag = getSuezTransitDrag(state, countryId);
   const pariahDrag = getPariahIncomeDrag(state, countryId);
 
-  const total = corporateRevenue + incomeRevenue + organicGrowth + facilityBonus + reserveBoost - oilShockDrag - suezDrag - pariahDrag;
+  // organicGrowth is tracked for UI; treasury growth itself applies in tickEconomy — do not double-count here
+  const total = corporateRevenue + incomeRevenue + facilityBonus + reserveBoost - oilShockDrag - suezDrag - pariahDrag;
   return { corporateRevenue, incomeRevenue, organicGrowth, facilityBonus, reserveBoost, oilShockDrag, suezDrag, pariahDrag, total };
 }
 

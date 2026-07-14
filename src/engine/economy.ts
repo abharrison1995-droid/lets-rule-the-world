@@ -22,7 +22,9 @@ export function tickEconomy(state: GameState): void {
     country.stats.treasuryPoints *= (1 + regionBonus);
 
     const modifiers = computeGrowthModifiers(state, country);
-    const growth = country.stats.baseGrowthRate + modifiers;
+    // Diminishing returns so long campaigns don't explode treasuries
+    const sizeDrag = Math.min(0.028, Math.log10(Math.max(10, country.stats.treasuryPoints)) * 0.009);
+    const growth = Math.max(0, country.stats.baseGrowthRate + modifiers - sizeDrag);
     country.stats.treasuryPoints *= (1 + growth);
 
     const techInvestment = country.stats.treasuryPoints * country.stats.defenseBudget * 0.0002;
@@ -40,9 +42,9 @@ export function tickEconomy(state: GameState): void {
       const war = state.wars.find(w => w.belligerents.includes(country.id));
       const turnsAtWar = war ? state.turn - war.startTurn : 0;
       const exhaustionRate =
-        0.02 * Math.max(1, frontCount) * (1 - country.stats.warPopularity) * (1 + turnsAtWar * 0.05);
+        0.0045 * Math.max(1, Math.min(3, frontCount)) * (1 - country.stats.warPopularity * 0.9) * (1 + turnsAtWar * 0.01);
       country.stats.warExhaustion = Math.min(1, country.stats.warExhaustion + exhaustionRate);
-      country.stats.moraleBase = Math.max(0.1, country.stats.moraleBase - exhaustionRate * 0.3);
+      country.stats.moraleBase = Math.max(0.1, country.stats.moraleBase - exhaustionRate * 0.22);
     } else {
       country.stats.warExhaustion = Math.max(0, country.stats.warExhaustion - 0.02);
     }
@@ -57,7 +59,7 @@ function computeGrowthModifiers(state: GameState, country: Country): number {
   const positiveRelations = Object.keys(state.countries)
     .filter(id => id !== country.id)
     .filter(id => getRelationValue(state, country.id, id) > 40).length;
-  mod += positiveRelations * 0.001;
+  mod += Math.min(0.005, positiveRelations * 0.0004);
   mod -= country.stats.warExhaustion * 0.03;
 
   const majorEconomies = ['usa', 'china', 'germany', 'japan', 'england', 'france'];

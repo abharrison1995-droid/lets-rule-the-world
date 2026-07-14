@@ -265,7 +265,7 @@ export const EVENTS: GameEvent[] = [
     title: 'Growing Unrest in Russian Cities',
     description: 'Protests spread in major cities. Oligarchs quietly move assets abroad. The regime shows cracks.',
     scope: 'national',
-    triggerConditions: { targetCountry: 'russia', requiredState: [{ key: 'moraleBase', op: 'lt', value: 0.35 }] },
+    triggerConditions: { targetCountry: 'russia', requiredState: [{ key: 'moraleBase', op: 'lt', value: 0.28 }] },
     weight: 20,
     telegraph: true,
     choices: [
@@ -279,7 +279,7 @@ export const EVENTS: GameEvent[] = [
     title: 'Regime Collapse',
     description: 'The government falls amid mass uprising and elite defections. Game over.',
     scope: 'national',
-    triggerConditions: { targetCountry: 'russia', requiredState: [{ key: 'moraleBase', op: 'lt', value: 0.25 }] },
+    triggerConditions: { targetCountry: 'russia', requiredState: [{ key: 'moraleBase', op: 'lt', value: 0.18 }] },
     weight: 100,
     choices: [
       { label: 'Accept fate', effects: [{ stat: 'gameOver', target: 'self', delta: 1 }] },

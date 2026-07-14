@@ -84,7 +84,7 @@ export const COUNTRIES: Record<string, Country> = {
     startingRelations: {},
     difficultyRating: { score: 6, blurb: 'Hard — sanctions vulnerability and morale collapse risk under prolonged war.' },
     uniqueMechanics: ['troll_farm', 'tommy_ten_names'],
-    collapseCondition: { type: 'hard', triggerStats: { moraleBase: 0.25, warExhaustion: 0.7 }, telegraphEventId: 'russia_uprising_warning' },
+    collapseCondition: { type: 'hard', triggerStats: { moraleBase: 0.18, warExhaustion: 0.88 }, telegraphEventId: 'russia_uprising_warning' },
   },
   china: {
     id: 'china',

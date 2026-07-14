@@ -590,6 +590,8 @@ export interface GameState {
   interventionMeters: Record<string, number>;
   /** Theater IDs awaiting “war theater opened” modal acknowledgment */
   pendingTheaterNotices: string[];
+  /** Nations that collapsed while the player continues */
+  collapsedNations: string[];
 }
 
 /** Per-NPC runtime state for automated world-power mechanics */
