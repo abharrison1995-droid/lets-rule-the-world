@@ -1,4 +1,3 @@
-import type { GameMode } from '../types/game';
 import { GAME_MODES } from '../data/gameModes';
 import { AtlasBackdrop } from './AtlasBackdrop';
 

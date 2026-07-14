@@ -1,4 +1,4 @@
-import type { GameState, GameMode } from '../types/game';
+import type { GameState, GameMode, StrikeCampaign } from '../types/game';
 import { COUNTRIES } from '../data/countries';
 import { REGIONS } from '../data/regions';
 import {
