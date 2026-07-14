@@ -6,11 +6,10 @@ import { NationIntroModal } from './NationIntroModal';
 
 interface NationSelectProps {
   onSelect: (countryId: string) => void;
-  onLoad: () => void;
-  hasSave: boolean;
+  onBack: () => void;
 }
 
-export function NationSelect({ onSelect, onLoad, hasSave }: NationSelectProps) {
+export function NationSelect({ onSelect, onBack }: NationSelectProps) {
   const playable = Object.values(COUNTRIES).filter(c => c.playable);
   const [previewId, setPreviewId] = useState<string | null>(null);
 
@@ -21,16 +20,14 @@ export function NationSelect({ onSelect, onLoad, hasSave }: NationSelectProps) {
 
   return (
     <div className="nation-select">
-      <div className="title-screen">
-        <h1>LET'S RULE THE WORLD</h1>
-        <p className="subtitle">A turn-based geopolitical strategy game</p>
-
-        {hasSave && (
-          <button className="btn-load" onClick={onLoad}>Continue Saved Game</button>
-        )}
-
-        <h2>Choose Your Nation</h2>
-        <p className="muted nation-select-hint">Tap a nation to preview — you can browse as many as you like before committing.</p>
+      <div className="nation-select-shell">
+        <button type="button" className="nation-select-back" onClick={onBack}>
+          ← Title
+        </button>
+        <h2 className="nation-select-heading">Choose Your Nation</h2>
+        <p className="muted nation-select-hint">
+          Tap a nation to preview — browse freely before committing.
+        </p>
         <div className="nation-grid">
           {playable.map(country => (
             <button
@@ -44,11 +41,12 @@ export function NationSelect({ onSelect, onLoad, hasSave }: NationSelectProps) {
                 {country.name}
               </span>
               <span className="difficulty">
-                {'★'.repeat(country.difficultyRating.score)}{'☆'.repeat(10 - country.difficultyRating.score)}
+                {'★'.repeat(country.difficultyRating.score)}
+                {'☆'.repeat(10 - country.difficultyRating.score)}
               </span>
               <span className="difficulty-blurb">{country.difficultyRating.blurb}</span>
               <span className="win-condition-blurb">
-                🎯 {getWinCondition(country.id)?.description ?? 'Survive and expand.'}
+                Goal: {getWinCondition(country.id)?.description ?? 'Survive and expand.'}
               </span>
             </button>
           ))}

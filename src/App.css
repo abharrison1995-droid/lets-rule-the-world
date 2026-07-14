@@ -22,7 +22,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Sora', 'Segoe UI', sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100dvh;
@@ -30,25 +30,254 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Title / Nation Select */
+/* ——— Title screen (brand hero) ——— */
+.title-root {
+  --title-ink: #0c1614;
+  --title-sea: #14332e;
+  --title-foam: #c8d9d0;
+  --title-brass: #c9a96a;
+  --title-brass-deep: #a8843f;
+
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  min-height: 100svh;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: clamp(1.5rem, 5vw, 3.5rem);
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 90% 70% at 70% 25%, rgba(40, 90, 78, 0.45), transparent 55%),
+    radial-gradient(ellipse 60% 50% at 15% 80%, rgba(120, 90, 40, 0.18), transparent 50%),
+    linear-gradient(165deg, #122722 0%, var(--title-ink) 45%, #08110f 100%);
+  color: var(--title-foam);
+}
+
+.title-atlas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.title-atlas-grid {
+  width: 100%;
+  height: 100%;
+  animation: title-atlas-drift 48s ease-in-out infinite alternate;
+}
+
+.title-atlas-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(8, 16, 14, 0.88) 0%, rgba(8, 16, 14, 0.35) 45%, rgba(8, 16, 14, 0.55) 100%),
+    linear-gradient(0deg, rgba(8, 16, 14, 0.92) 0%, transparent 42%);
+}
+
+.title-compose {
+  position: relative;
+  z-index: 1;
+  max-width: min(34rem, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.title-brand {
+  font-family: 'Syne', 'Sora', sans-serif;
+  font-weight: 800;
+  font-size: clamp(2.6rem, 9vw, 5.2rem);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  color: #f2f5f0;
+  text-wrap: balance;
+  animation: title-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.title-brand-line {
+  display: block;
+}
+
+.title-brand-emphasis {
+  color: var(--title-brass);
+}
+
+.title-tagline {
+  font-family: 'Sora', sans-serif;
+  font-weight: 400;
+  font-size: clamp(0.95rem, 2.4vw, 1.15rem);
+  line-height: 1.45;
+  color: rgba(200, 217, 208, 0.82);
+  max-width: 28rem;
+  animation: title-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+
+.title-ctas {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+  max-width: 22rem;
+  animation: title-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.24s both;
+}
+
+.title-cta {
+  font-family: 'Sora', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.9rem 1.25rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.title-cta-primary {
+  background: var(--title-brass);
+  color: #1a1408;
+  border-color: var(--title-brass-deep);
+}
+
+.title-cta-primary:hover {
+  background: #d9ba7a;
+  transform: translateY(-1px);
+}
+
+.title-cta-continue {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: rgba(20, 40, 36, 0.55);
+  color: var(--title-foam);
+  border-color: rgba(200, 217, 208, 0.28);
+  backdrop-filter: blur(6px);
+}
+
+.title-cta-continue:hover {
+  border-color: rgba(201, 169, 106, 0.65);
+  transform: translateY(-1px);
+}
+
+.title-cta-label {
+  font-weight: 600;
+}
+
+.title-save-meta {
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: rgba(200, 217, 208, 0.65);
+}
+
+.title-cta-ghost {
+  background: transparent;
+  color: var(--title-foam);
+  border-color: rgba(200, 217, 208, 0.28);
+}
+
+.title-cta-ghost:hover {
+  border-color: rgba(200, 217, 208, 0.55);
+}
+
+.title-overwrite {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.title-overwrite p {
+  font-size: 0.92rem;
+  color: rgba(200, 217, 208, 0.85);
+  line-height: 1.4;
+}
+
+.title-overwrite-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+@keyframes title-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes title-atlas-drift {
+  from {
+    transform: scale(1.05) translate(0, 0);
+  }
+  to {
+    transform: scale(1.12) translate(-2.5%, 1.5%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title-brand,
+  .title-tagline,
+  .title-ctas,
+  .title-atlas-grid {
+    animation: none;
+  }
+}
+
+@media (min-width: 900px) {
+  .title-root {
+    align-items: center;
+  }
+
+  .title-compose {
+    margin-top: 0;
+  }
+}
+
+/* Nation select (post-title) */
 .nation-select {
   min-height: 100dvh;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 1rem;
+  padding: 1.25rem 1rem 2rem;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(40, 90, 78, 0.22), transparent 55%),
+    var(--bg-primary);
 }
 
-.title-screen {
-  max-width: 800px;
+.nation-select-shell {
+  max-width: 900px;
   width: 100%;
-  text-align: center;
 }
 
-.title-screen h1 {
-  font-size: clamp(1.5rem, 5vw, 2.5rem);
-  letter-spacing: 0.05em;
-  margin-bottom: 0.25rem;
+.nation-select-back {
+  font-family: 'Sora', sans-serif;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.45rem 0.85rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 1.25rem;
+  font-size: 0.85rem;
+}
+
+.nation-select-back:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.nation-select-heading {
+  font-family: 'Syne', 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.35rem;
 }
 
 .subtitle {
@@ -67,12 +296,6 @@ body {
   border-radius: var(--radius);
   font-size: 1rem;
   cursor: pointer;
-}
-
-.title-screen h2 {
-  font-size: 1.1rem;
-  color: var(--text-muted);
-  margin-bottom: 1rem;
 }
 
 .nation-grid {

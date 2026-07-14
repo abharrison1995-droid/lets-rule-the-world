@@ -12,7 +12,7 @@ import type {
   FacilityType,
 } from './types/game';
 import { createInitialState, advanceTurn } from './engine/gameState';
-import { saveGame, loadGame, hasSavedGame, deleteSave } from './engine/saveLoad';
+import { saveGame, loadGame, peekSaveSummary, deleteSave } from './engine/saveLoad';
 import { resolveEventChoice } from './engine/events';
 import { getEventById } from './data/events';
 import {
@@ -32,6 +32,7 @@ import { playerDomesticPropaganda, playerForeignInfluence } from './engine/propa
 import { playerStartFacilityBuild, getFacilityConfirmPreview } from './engine/facilities';
 import { playerStartStrikeCampaign, playerCancelStrikeCampaign } from './engine/strikeCampaigns';
 import { getStrikeConfirmPreview, getCampaignConfirmPreview } from './engine/strikePreview';
+import { TitleScreen } from './components/TitleScreen';
 import { NationSelect } from './components/NationSelect';
 import { GameHeader } from './components/GameHeader';
 import { WorldMap } from './components/WorldMap';
@@ -55,7 +56,7 @@ import { useMobileLayout } from './hooks/useMobileLayout';
 import { getHemisphereForCountry, type HemisphereId } from './data/hemispheres';
 import './App.css';
 
-type Screen = 'menu' | 'game';
+type Screen = 'title' | 'nation' | 'game';
 
 type StrikeConfirmRequest =
   | { kind: 'strike'; regionId: string; strikeType: StrikeType }
@@ -64,14 +65,14 @@ type StrikeConfirmRequest =
 type FacilityConfirmRequest = { regionId: string; facilityType: FacilityType };
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('menu');
+  const [screen, setScreen] = useState<Screen>('title');
   const [state, setState] = useState<GameState | null>(null);
   const [showDiplomacy, setShowDiplomacy] = useState(false);
   const [showEconomy, setShowEconomy] = useState(false);
   const [showSidePanel, setShowSidePanel] = useState(() =>
     typeof window !== 'undefined' ? !window.matchMedia('(max-width: 768px)').matches : true
   );
-  const [saveExists, setSaveExists] = useState(hasSavedGame());
+  const [saveSummary, setSaveSummary] = useState(() => peekSaveSummary());
   const [feedback, setFeedback] = useState<string | null>(null);
   const [warConfirmTarget, setWarConfirmTarget] = useState<string | null>(null);
   const [strikeConfirm, setStrikeConfirm] = useState<StrikeConfirmRequest | null>(null);
@@ -85,6 +86,19 @@ export default function App() {
   const [mobileWorldView, setMobileWorldView] = useState<'chooser' | HemisphereId>('chooser');
   const [lastHemisphere, setLastHemisphere] = useState<HemisphereId>('eurasia');
 
+  const refreshSaveMeta = useCallback(() => {
+    setSaveSummary(peekSaveSummary());
+  }, []);
+
+  const returnToTitle = useCallback(() => {
+    setScreen('title');
+    setState(null);
+    setShowDiplomacy(false);
+    setShowEconomy(false);
+    setShowTheater(false);
+    refreshSaveMeta();
+  }, [refreshSaveMeta]);
+
   const showFeedback = (msg: string | null) => {
     setFeedback(msg);
     if (msg) setTimeout(() => setFeedback(null), 3000);
@@ -93,7 +107,7 @@ export default function App() {
   const updateState = useCallback((newState: GameState) => {
     setState(newState);
     saveGame(newState);
-    setSaveExists(true);
+    setSaveSummary(peekSaveSummary());
   }, []);
 
   const startGame = useCallback((countryId: string) => {
@@ -108,17 +122,20 @@ export default function App() {
     setShowNationIntro(false);
     setMobileWorldView('chooser');
     setLastHemisphere(getHemisphereForCountry(countryId));
-  }, []);
+    refreshSaveMeta();
+  }, [refreshSaveMeta]);
 
   const loadSaved = useCallback(() => {
     const saved = loadGame<GameState>();
     if (saved) {
       setState(saved);
       setScreen('game');
+      refreshSaveMeta();
     } else {
       showFeedback('Save file incompatible or missing.');
+      refreshSaveMeta();
     }
-  }, []);
+  }, [refreshSaveMeta]);
 
   const endTurn = useCallback(() => {
     if (!state || state.gameOver || state.playerWon) return;
@@ -130,10 +147,10 @@ export default function App() {
   const handleSave = useCallback(() => {
     if (state) {
       saveGame(state);
-      setSaveExists(true);
+      refreshSaveMeta();
       showFeedback('Game saved.');
     }
-  }, [state]);
+  }, [state, refreshSaveMeta]);
 
   const handleCountryClick = useCallback((countryId: string) => {
     if (!state) return;
@@ -363,8 +380,18 @@ export default function App() {
   );
   const pendingEventData = pendingEvent ? getEventById(pendingEvent.eventId) : null;
 
-  if (screen === 'menu') {
-    return <NationSelect onSelect={startGame} onLoad={loadSaved} hasSave={saveExists} />;
+  if (screen === 'title') {
+    return (
+      <TitleScreen
+        saveSummary={saveSummary}
+        onNewGame={() => setScreen('nation')}
+        onContinue={loadSaved}
+      />
+    );
+  }
+
+  if (screen === 'nation') {
+    return <NationSelect onSelect={startGame} onBack={() => setScreen('title')} />;
   }
 
   if (!state) return null;
@@ -375,7 +402,7 @@ export default function App() {
         <h1>Game Over</h1>
         <p>{state.gameOverReason}</p>
         <p>Survived {state.turn} turns.</p>
-        <button onClick={() => { setScreen('menu'); setState(null); }}>Return to Menu</button>
+        <button type="button" onClick={returnToTitle}>Return to Title</button>
       </div>
     );
   }
@@ -386,7 +413,7 @@ export default function App() {
         <h1>Victory!</h1>
         <p>{state.winReason}</p>
         <p>Completed in {state.turn} turns.</p>
-        <button onClick={() => { setScreen('menu'); setState(null); }}>Return to Menu</button>
+        <button type="button" onClick={returnToTitle}>Return to Title</button>
       </div>
     );
   }

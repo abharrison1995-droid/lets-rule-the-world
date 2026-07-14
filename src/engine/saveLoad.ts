@@ -198,6 +198,38 @@ export function hasSavedGame(): boolean {
   return localStorage.getItem(SAVE_KEY) !== null;
 }
 
+export interface SaveSummary {
+  countryId: string;
+  countryName: string;
+  turn: number;
+  timestamp: number;
+}
+
+/** Lightweight read for the title screen — does not migrate full state. */
+export function peekSaveSummary(): SaveSummary | null {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const payload = JSON.parse(raw) as SavePayload;
+    if (!payload.state || typeof payload.version !== 'number') return null;
+    if (payload.version > SAVE_VERSION) return null;
+
+    const countryId = payload.state.playerCountryId;
+    if (!countryId) return null;
+    const countryName =
+      payload.state.countries?.[countryId]?.name ?? COUNTRIES[countryId]?.name ?? countryId;
+
+    return {
+      countryId,
+      countryName,
+      turn: payload.state.turn ?? 0,
+      timestamp: payload.timestamp,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function deleteSave(): void {
   localStorage.removeItem(SAVE_KEY);
 }
