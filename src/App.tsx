@@ -33,6 +33,7 @@ import { playerStartFacilityBuild, getFacilityConfirmPreview } from './engine/fa
 import { playerStartStrikeCampaign, playerCancelStrikeCampaign } from './engine/strikeCampaigns';
 import { getStrikeConfirmPreview, getCampaignConfirmPreview } from './engine/strikePreview';
 import { TitleScreen } from './components/TitleScreen';
+import { EndScreen } from './components/EndScreen';
 import { NationSelect } from './components/NationSelect';
 import { GameHeader } from './components/GameHeader';
 import { WorldMap } from './components/WorldMap';
@@ -396,25 +397,17 @@ export default function App() {
 
   if (!state) return null;
 
-  if (state.gameOver) {
+  if (state.gameOver || state.playerWon) {
     return (
-      <div className="game-over-screen">
-        <h1>Game Over</h1>
-        <p>{state.gameOverReason}</p>
-        <p>Survived {state.turn} turns.</p>
-        <button type="button" onClick={returnToTitle}>Return to Title</button>
-      </div>
-    );
-  }
-
-  if (state.playerWon) {
-    return (
-      <div className="game-over-screen victory">
-        <h1>Victory!</h1>
-        <p>{state.winReason}</p>
-        <p>Completed in {state.turn} turns.</p>
-        <button type="button" onClick={returnToTitle}>Return to Title</button>
-      </div>
+      <EndScreen
+        state={state}
+        onReturnToTitle={returnToTitle}
+        onNewGame={() => {
+          setState(null);
+          setScreen('nation');
+          refreshSaveMeta();
+        }}
+      />
     );
   }
 

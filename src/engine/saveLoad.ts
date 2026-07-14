@@ -203,6 +203,7 @@ export interface SaveSummary {
   countryName: string;
   turn: number;
   timestamp: number;
+  ended: boolean;
 }
 
 /** Lightweight read for the title screen — does not migrate full state. */
@@ -224,6 +225,7 @@ export function peekSaveSummary(): SaveSummary | null {
       countryName,
       turn: payload.state.turn ?? 0,
       timestamp: payload.timestamp,
+      ended: !!(payload.state.gameOver || payload.state.playerWon),
     };
   } catch {
     return null;
