@@ -49,6 +49,7 @@ import { SidePanel } from './components/SidePanel';
 import { TurnSummaryModal } from './components/TurnSummaryModal';
 import { NationIntroModal } from './components/NationIntroModal';
 import { WarTheaterScreen } from './components/WarTheaterScreen';
+import { WarTheaterNoticeModal } from './components/WarTheaterNoticeModal';
 import type { StrikeType } from './engine/strikes';
 import { useMobileLayout } from './hooks/useMobileLayout';
 import { getHemisphereForCountry, type HemisphereId } from './data/hemispheres';
@@ -79,6 +80,7 @@ export default function App() {
   const [talksResult, setTalksResult] = useState<string | null>(null);
   const [showNationIntro, setShowNationIntro] = useState(false);
   const [showTheater, setShowTheater] = useState(false);
+  const [theaterFocusId, setTheaterFocusId] = useState<string | undefined>(undefined);
   const isMobile = useMobileLayout();
   const [mobileWorldView, setMobileWorldView] = useState<'chooser' | HemisphereId>('chooser');
   const [lastHemisphere, setLastHemisphere] = useState<HemisphereId>('eurasia');
@@ -396,7 +398,12 @@ export default function App() {
         onEndTurn={endTurn}
         onOpenDiplomacy={() => { setShowDiplomacy(true); setShowEconomy(false); setShowTheater(false); }}
         onOpenEconomy={() => { setShowEconomy(true); setShowDiplomacy(false); setShowTheater(false); }}
-        onOpenTheater={() => { setShowTheater(true); setShowDiplomacy(false); setShowEconomy(false); }}
+        onOpenTheater={() => {
+          setTheaterFocusId(undefined);
+          setShowTheater(true);
+          setShowDiplomacy(false);
+          setShowEconomy(false);
+        }}
         onSave={handleSave}
       />
 
@@ -405,7 +412,8 @@ export default function App() {
           {showTheater ? (
             <WarTheaterScreen
               state={state}
-              onClose={() => setShowTheater(false)}
+              initialTheaterId={theaterFocusId}
+              onClose={() => { setShowTheater(false); setTheaterFocusId(undefined); }}
               onUpdate={updateState}
             />
           ) : state.selectedMapTier === 1 ? (
@@ -481,8 +489,24 @@ export default function App() {
           onCovertOp={handleCovertOp}
           onProbePacts={handleProbePacts}
           onExecuteMechanic={handleMechanic}
+          onOpenTheater={(theaterId) => {
+            setTheaterFocusId(theaterId);
+            setShowTheater(true);
+            setShowDiplomacy(false);
+          }}
           feedback={feedback}
           talksResult={talksResult}
+        />
+      )}
+      {state && (state.pendingTheaterNotices?.length ?? 0) > 0 && !showTheater && (
+        <WarTheaterNoticeModal
+          state={state}
+          onDismiss={updateState}
+          onOpenTheater={(theaterId) => {
+            setTheaterFocusId(theaterId);
+            setShowTheater(true);
+            setShowDiplomacy(false);
+          }}
         />
       )}
       {turnSummary && state && (

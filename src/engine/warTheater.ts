@@ -19,13 +19,35 @@ import { getEffectiveSpendCost } from './fiscal';
 
 const TERRAIN_DEF_BONUS: Record<string, number> = {
   plains: 0,
-  forest: 0.12,
-  river: 0.1,
-  urban: 0.18,
-  fort: 0.28,
+  forest: 0.14,
+  river: 0.12,
+  urban: 0.2,
+  fort: 0.32,
 };
 
+/** Pass 2 weight order: stack > fort/city > terrain > air/drone > morale/exhaust > supply */
+const W = {
+  stack: 1,
+  fortCity: 0.22,
+  terrain: 0.16,
+  airDrone: 0.12,
+  moraleExhaust: 0.1,
+  supply: 0.08,
+} as const;
+
 const REINFORCE_COST = 4;
+const AID_REINFORCE_COST = 5;
+const INTERVENTION_THRESHOLD = 100;
+const INTERVENTION_PER_DEPLOY = 28;
+
+export interface HexBattlePreview {
+  atkPower: number;
+  defPower: number;
+  ratio: number;
+  winChance: number;
+  label: 'Strongly favored' | 'Favored' | 'Even' | 'Uphill' | 'Long shot';
+  breakdown: string[];
+}
 
 function playerCanPay(state: GameState, costTp: number): boolean {
   const country = state.countries[state.playerCountryId];
@@ -105,6 +127,8 @@ export function createTheaterFromWar(state: GameState, warId: string, def: Theat
     impulsesThisWorldTurn: 0,
     pendingFate: null,
     closed: false,
+    playerDoctrineAi: true,
+    combatLog: [],
   };
 }
 
@@ -129,6 +153,8 @@ export function syncWarTheaters(state: GameState): void {
     if (exists) continue;
     const theater = createTheaterFromWar(state, war.id, def);
     state.warTheaters.push(theater);
+    state.pendingTheaterNotices ??= [];
+    state.pendingTheaterNotices.push(theater.id);
     state.history.push(`Turn ${state.turn}: ${def.name} opens — operational hex board active.`);
   }
 }
@@ -173,17 +199,121 @@ export function canSeeHex(
 
 function supplyModifier(theater: WarTheaterState, countryId: string): number {
   const doctrine = theater.doctrineByCountry[countryId] ?? 'hold';
-  if (doctrine === 'withdraw') return 0.85;
-  if (doctrine === 'attack') return 0.95;
-  return 1;
+  // Abstract front supply — doctrine stance is the alpha proxy
+  const base = doctrine === 'withdraw' ? 0.88 : doctrine === 'attack' ? 0.94 : 1;
+  return 1 + (base - 1) * (W.supply / 0.1);
 }
 
 function contextRoll(atk: number, def: number): number {
-  // High drama but weighted: mean biased by power ratio
   const ratio = atk / Math.max(1, def);
   const bias = Math.tanh((ratio - 1) * 1.2) * 0.35;
-  const drama = (Math.random() + Math.random() + Math.random()) / 3; // ~bell curve 0–1
+  const drama = (Math.random() + Math.random() + Math.random()) / 3;
   return drama + bias;
+}
+
+function computeBattlePowers(
+  state: GameState,
+  theater: WarTheaterState,
+  hexDef: TheaterHexDef,
+  attackerId: string,
+  fromHexId: string
+): { atkPower: number; defPower: number; defenderId: string; breakdown: string[] } | null {
+  const target = theater.hexes[hexDef.id];
+  const from = theater.hexes[fromHexId];
+  if (!target || !from?.stack || from.stack.countryId !== attackerId) return null;
+
+  const defenderId = target.stack?.countryId ?? target.ownerId;
+  const attacker = state.countries[attackerId];
+  const defender = state.countries[defenderId];
+  if (!attacker || !defender) return null;
+
+  const breakdown: string[] = [];
+  const atkStack = from.stack.strength * W.stack;
+  breakdown.push(`ATK stack ${Math.round(from.stack.strength)}`);
+
+  let atkPower = atkStack;
+  atkPower *= 1 + attacker.militaryDev.troopQuality * 0.06;
+  if (from.stack.tags.includes('armor')) {
+    atkPower *= 1.1;
+    breakdown.push('armor +10%');
+  }
+  if (from.stack.tags.includes('artillery')) {
+    atkPower *= 1.08;
+    breakdown.push('artillery +8%');
+  }
+  if (from.stack.tags.includes('air') || from.stack.tags.includes('drone')) {
+    atkPower *= 1 + W.airDrone;
+    breakdown.push(`air/drone +${Math.round(W.airDrone * 100)}%`);
+  }
+  const atkMorale = 1 + (attacker.stats.moraleBase - 0.5) * W.moraleExhaust * 2
+    - attacker.stats.warExhaustion * W.moraleExhaust;
+  atkPower *= Math.max(0.7, atkMorale);
+  atkPower *= supplyModifier(theater, attackerId);
+
+  const defStr = target.stack?.strength ?? 8;
+  let defPower = defStr * W.stack;
+  breakdown.push(`DEF stack ${Math.round(defStr)}`);
+  defPower *= 1 + defender.militaryDev.troopQuality * 0.06;
+
+  const terrainBonus = TERRAIN_DEF_BONUS[hexDef.terrain] ?? 0;
+  defPower *= 1 + terrainBonus * (W.terrain / 0.16);
+  if (terrainBonus > 0) breakdown.push(`${hexDef.terrain} terrain`);
+
+  const fortCity = target.fortLevel * 0.15 + (hexDef.isCity ? 0.18 : 0);
+  defPower *= 1 + fortCity * (W.fortCity / 0.22);
+  if (hexDef.isCity) breakdown.push('city defense');
+  if (target.fortLevel > 0) breakdown.push(`fort ×${target.fortLevel}`);
+
+  if (target.stack?.tags.includes('air') || target.stack?.tags.includes('drone')) {
+    defPower *= 1 + W.airDrone * 0.7;
+  }
+
+  const defMorale = 1 + (defender.stats.moraleBase - 0.5) * W.moraleExhaust * 2
+    - defender.stats.warExhaustion * W.moraleExhaust;
+  defPower *= Math.max(0.7, defMorale);
+  defPower *= supplyModifier(theater, defenderId);
+
+  return { atkPower, defPower, defenderId, breakdown };
+}
+
+function labelFromRatio(ratio: number): HexBattlePreview['label'] {
+  if (ratio >= 1.75) return 'Strongly favored';
+  if (ratio >= 1.25) return 'Favored';
+  if (ratio >= 0.85) return 'Even';
+  if (ratio >= 0.6) return 'Uphill';
+  return 'Long shot';
+}
+
+export function previewHexBattle(
+  state: GameState,
+  theaterId: string,
+  fromHexId: string,
+  toHexId: string
+): HexBattlePreview | null {
+  const theater = getTheater(state, theaterId);
+  const def = theater ? getTheaterDef(theater.defId) : undefined;
+  const hexDef = def?.hexes.find(h => h.id === toHexId);
+  if (!theater || !hexDef) return null;
+
+  const powers = computeBattlePowers(state, theater, hexDef, state.playerCountryId, fromHexId);
+  if (!powers) return null;
+
+  const ratio = powers.atkPower / Math.max(1, powers.defPower);
+  // Soft logistic for display win chance (context-weighted, not pure RNG)
+  const winChance = Math.max(0.08, Math.min(0.92, 1 / (1 + Math.exp(-(ratio - 1) * 2.4))));
+
+  return {
+    atkPower: powers.atkPower,
+    defPower: powers.defPower,
+    ratio,
+    winChance,
+    label: labelFromRatio(ratio),
+    breakdown: powers.breakdown,
+  };
+}
+
+function pushCombatLog(theater: WarTheaterState, line: string): void {
+  theater.combatLog = [line, ...(theater.combatLog ?? [])].slice(0, 8);
 }
 
 export function resolveHexBattle(
@@ -205,30 +335,16 @@ export function resolveHexBattle(
     return 'Hex already friendly.';
   }
 
-  const defenderId = target.stack?.countryId ?? target.ownerId;
-  const attacker = state.countries[attackerId];
-  const defender = state.countries[defenderId];
-  if (!attacker || !defender) return 'Invalid belligerent.';
+  const powers = computeBattlePowers(state, theater, hexDef, attackerId, fromHexId);
+  if (!powers) return 'Invalid belligerent.';
 
-  const atkBase =
-    from.stack.strength *
-    (1 + attacker.militaryDev.troopQuality * 0.08) *
-    (1 + (from.stack.tags.includes('armor') ? 0.1 : 0)) *
-    (1 + (from.stack.tags.includes('artillery') ? 0.08 : 0)) *
-    supplyModifier(theater, attackerId);
-
-  const defStackStr = target.stack?.strength ?? 8;
-  const defBase =
-    defStackStr *
-    (1 + defender.militaryDev.troopQuality * 0.08) *
-    (1 + (TERRAIN_DEF_BONUS[hexDef.terrain] ?? 0)) *
-    (1 + target.fortLevel * 0.15) *
-    (1 + (hexDef.isCity ? 0.12 : 0)) *
-    supplyModifier(theater, defenderId);
+  const { atkPower: atkBase, defPower: defBase, defenderId } = powers;
+  const attacker = state.countries[attackerId]!;
+  const defender = state.countries[defenderId]!;
 
   const roll = contextRoll(atkBase, defBase);
   const atkScore = atkBase * (0.65 + roll * 0.7);
-  const defScore = defBase * (0.65 + (1 - roll) * 0.5 + Math.random() * 0.15);
+  const defScore = defBase * (0.65 + (1 - roll) * 0.5 + Math.random() * 0.12);
 
   const atkLoss = Math.max(2, Math.round(defScore * 0.12));
   const defLoss = Math.max(3, Math.round(atkScore * 0.14));
@@ -241,12 +357,12 @@ export function resolveHexBattle(
   attacker.stats.warExhaustion = Math.min(1, attacker.stats.warExhaustion + atkLoss * 0.0015);
   defender.stats.warExhaustion = Math.min(1, defender.stats.warExhaustion + defLoss * 0.002);
 
+  const ratio = atkBase / Math.max(1, defBase);
   let result: string;
 
   if (atkScore > defScore * 1.05) {
-    const remnants = target.stack && target.stack.strength > 4 ? Math.floor(target.stack.strength * 0.4) : 0;
     target.ownerId = attackerId;
-    target.contested = remnants > 0;
+    target.contested = false;
     target.stack = makeStack(
       attackerId,
       Math.max(6, Math.floor(from.stack.strength * 0.55)),
@@ -254,10 +370,6 @@ export function resolveHexBattle(
       hexDef.facilityHint ? [hexDef.facilityHint] : []
     );
     from.stack.strength = Math.max(4, Math.floor(from.stack.strength * 0.45));
-    if (remnants > 0) {
-      // Defender shattered in place as contested pressure
-      target.contested = true;
-    }
 
     if (hexDef.isCity) {
       defender.stats.warExhaustion = Math.min(1, defender.stats.warExhaustion + 0.04);
@@ -266,9 +378,10 @@ export function resolveHexBattle(
       state.history.push(
         `Turn ${state.turn}: ${attacker.name} seizes ${hexDef.cityName ?? 'city'} in ${theater.name}.`
       );
+      checkCapitalCollapseRisk(state, theater, hexDef, defenderId);
     }
 
-    result = `${attacker.name} takes hex${hexDef.cityName ? ` (${hexDef.cityName})` : ''} — ATK ${Math.round(atkScore)} vs DEF ${Math.round(defScore)}.`;
+    result = `✓ ${attacker.name} takes${hexDef.cityName ? ` ${hexDef.cityName}` : ' hex'} (${labelFromRatio(ratio)}, ${Math.round(atkScore)}–${Math.round(defScore)}).`;
     checkRegionCapture(state, theater, hexDef.regionId, attackerId);
   } else {
     target.contested = true;
@@ -278,11 +391,33 @@ export function resolveHexBattle(
     if (from.stack.strength <= 0) {
       from.stack = null;
     }
-    result = `${defender.name} holds hex${hexDef.cityName ? ` (${hexDef.cityName})` : ''} — ATK ${Math.round(atkScore)} vs DEF ${Math.round(defScore)}.`;
+    result = `✗ ${defender.name} holds${hexDef.cityName ? ` ${hexDef.cityName}` : ''} (${labelFromRatio(ratio)}, ${Math.round(atkScore)}–${Math.round(defScore)}).`;
   }
 
   target.revealedUntilTurn = state.turn + 1;
+  pushCombatLog(theater, result);
   return result;
+}
+
+function checkCapitalCollapseRisk(
+  state: GameState,
+  theater: WarTheaterState,
+  hexDef: TheaterHexDef,
+  defenderId: string
+): void {
+  // Alpha: Kyiv (or any capital-tagged city) loss feeds collapse telegraphs + hard risk event line
+  const isCapital = hexDef.cityName === 'Kyiv' || hexDef.facilityHint === 'capital';
+  if (!isCapital) return;
+  const defender = state.countries[defenderId];
+  if (!defender) return;
+  defender.stats.moraleBase = Math.max(0.08, defender.stats.moraleBase - 0.08);
+  defender.stats.regimeSecurity = Math.max(0.1, defender.stats.regimeSecurity - 0.1);
+  if (!state.collapseTelegraphedNations.includes(defenderId)) {
+    state.collapseTelegraphedNations.push(defenderId);
+  }
+  state.history.push(
+    `Turn ${state.turn}: COLLAPSE RISK — ${defender.name} capital falls in ${theater.name}; regime telegraphs soar.`
+  );
 }
 
 function checkRegionCapture(
@@ -466,9 +601,6 @@ function enemyHexTargets(
 function runDoctrineImpulse(state: GameState, theater: WarTheaterState, countryId: string): void {
   const def = getTheaterDef(theater.defId);
   if (!def) return;
-  if (countryId === state.playerCountryId && theater.resolveMode === 'play_out') {
-    // Player micro — only auto-fill if they set attack and we do a light support impulse
-  }
 
   const doctrine = theater.doctrineByCountry[countryId] ?? 'hold';
   if (doctrine === 'hold') return;
@@ -477,23 +609,31 @@ function runDoctrineImpulse(state: GameState, theater: WarTheaterState, countryI
   if (pairs.length === 0) return;
 
   const attacks = doctrine === 'attack' ? Math.min(3, pairs.length) : Math.min(1, pairs.length);
-  // Prefer city / contested
   pairs.sort((a, b) => {
-    const score = (p: typeof a) =>
-      (p.to.isCity ? 5 : 0) + (theater.hexes[p.to.id]?.contested ? 2 : 0) + Math.random();
+    const score = (p: typeof a) => {
+      const previewRatio = (() => {
+        const powers = computeBattlePowers(state, theater, p.to, countryId, p.from.id);
+        if (!powers) return 1;
+        return powers.atkPower / Math.max(1, powers.defPower);
+      })();
+      return (p.to.isCity ? 5 : 0) + (theater.hexes[p.to.id]?.contested ? 2 : 0) + previewRatio * 3;
+    };
     return score(b) - score(a);
   });
 
   for (let i = 0; i < attacks; i++) {
     const { from, to } = pairs[i];
     if (doctrine === 'withdraw') {
-      // Pull strength back toward home regions
       const rt = theater.hexes[from.id];
       if (rt?.stack && rt.stack.strength > 10) {
         rt.stack.strength = Math.max(6, Math.floor(rt.stack.strength * 0.85));
       }
       continue;
     }
+    // Prefer favourable attacks; still press cities when attack doctrine
+    const powers = computeBattlePowers(state, theater, to, countryId, from.id);
+    const ratio = powers ? powers.atkPower / Math.max(1, powers.defPower) : 1;
+    if (ratio < 0.85 && !to.isCity) continue;
     resolveHexBattle(state, theater, to, countryId, from.id);
   }
 }
@@ -502,6 +642,9 @@ function runDoctrineImpulse(state: GameState, theater: WarTheaterState, countryI
 export function resolveTheaterImpulse(state: GameState, theaterId: string): void {
   const theater = getTheater(state, theaterId);
   if (!theater || theater.closed || theater.pendingFate) return;
+
+  theater.playerDoctrineAi ??= true;
+  theater.combatLog ??= [];
 
   const war = state.wars.find(w => w.id === theater.warId);
   const actors = new Set<string>([
@@ -512,32 +655,26 @@ export function resolveTheaterImpulse(state: GameState, theaterId: string): void
   ]);
 
   for (const countryId of actors) {
-    if (countryId === state.playerCountryId && theater.resolveMode === 'play_out') continue;
+    const isPlayer = countryId === state.playerCountryId;
+    if (isPlayer && !theater.playerDoctrineAi) continue;
     runDoctrineImpulse(state, theater, countryId);
-  }
-
-  // Player with attack doctrine still gets one auto pulse even in play_out as "supporting fires"
-  if (
-    theater.resolveMode === 'play_out' &&
-    theater.doctrineByCountry[state.playerCountryId] === 'attack'
-  ) {
-    // leave micro to player — no forced attacks
   }
 
   theater.impulsesThisWorldTurn += 1;
 }
 
-/** Called each world turn — quick resolve runs impulses; play_out expects player actions + light AI */
+/** Called each world turn — doctrine AI always runs; quick resolve doubles impulses */
 export function tickWarTheaters(state: GameState): void {
   syncWarTheaters(state);
 
   for (const theater of getActiveTheaters(state)) {
     theater.impulsesThisWorldTurn = 0;
+    theater.playerDoctrineAi ??= true;
+    theater.combatLog ??= [];
     if (theater.resolveMode === 'quick_resolve') {
       resolveTheaterImpulse(state, theater.id);
       resolveTheaterImpulse(state, theater.id);
     } else {
-      // Enemy + ally AI act once; player micros separately
       resolveTheaterImpulse(state, theater.id);
     }
   }
@@ -630,12 +767,104 @@ export function playerDeployExpeditionary(
     rt.ownerId = supportCountryId;
   }
 
-  // Soft escalation if not already at war
   const war = state.wars.find(w => w.id === theater.warId);
+  state.history.push(
+    `Turn ${state.turn}: ${state.countries[state.playerCountryId]?.name} deploys expeditionary forces into ${theater.name} in support of ${state.countries[supportCountryId]?.name}.`
+  );
+
   if (war && !war.belligerents.includes(state.playerCountryId)) {
-    state.history.push(
-      `Turn ${state.turn}: ${state.countries[state.playerCountryId]?.name} deploys expeditionary forces into ${theater.name} in support of ${state.countries[supportCountryId]?.name}.`
-    );
+    bumpInterventionMeter(state, war.id, INTERVENTION_PER_DEPLOY);
   }
+
   return 'Expeditionary detachment deployed.';
+}
+
+export function getInterventionMeter(state: GameState, warId: string): number {
+  return state.interventionMeters?.[warId] ?? 0;
+}
+
+function bumpInterventionMeter(state: GameState, warId: string, amount: number): void {
+  state.interventionMeters ??= {};
+  const next = Math.min(INTERVENTION_THRESHOLD, (state.interventionMeters[warId] ?? 0) + amount);
+  state.interventionMeters[warId] = next;
+  state.history.push(
+    `Turn ${state.turn}: Intervention meter ${Math.round(next)}/${INTERVENTION_THRESHOLD} for this war.`
+  );
+  if (next >= INTERVENTION_THRESHOLD) {
+    const war = state.wars.find(w => w.id === warId);
+    if (war && !war.belligerents.includes(state.playerCountryId)) {
+      // Soft pull-in at threshold — join as co-belligerent
+      war.belligerents.push(state.playerCountryId);
+      war.isDefensive[state.playerCountryId] = false;
+      state.interventionMeters[warId] = 0;
+      state.history.push(
+        `Turn ${state.turn}: Intervention threshold reached — ${state.countries[state.playerCountryId]?.name} is pulled into the war.`
+      );
+    }
+  }
+}
+
+export type TheaterAidPackage = 'reinforce' | 'weapons_armor' | 'weapons_drone';
+
+/** Aid stub — reinforce recipient stacks and/or unlock weapon tags */
+export function playerSendTheaterAid(
+  state: GameState,
+  theaterId: string,
+  recipientId: string,
+  pkg: TheaterAidPackage
+): string | null {
+  const theater = getTheater(state, theaterId);
+  if (!theater || theater.closed) return 'Theater not found.';
+
+  const cost = pkg === 'reinforce' ? AID_REINFORCE_COST : AID_REINFORCE_COST + 2;
+  if (!playerCanPay(state, cost)) return 'Insufficient treasury for aid package.';
+  playerPay(state, cost);
+
+  const friendly = Object.entries(theater.hexes).filter(
+    ([, rt]) => rt.ownerId === recipientId || rt.stack?.countryId === recipientId
+  );
+  if (friendly.length === 0) return 'No recipient hexes to aid.';
+
+  friendly.sort((a, b) => (b[1].stack?.strength ?? 0) - (a[1].stack?.strength ?? 0));
+  const targets = friendly.slice(0, pkg === 'reinforce' ? 3 : 2);
+
+  for (const [, rt] of targets) {
+    if (!rt.stack) {
+      rt.stack = makeStack(recipientId, 8, ['infantry'], ['aid']);
+    } else {
+      if (pkg === 'reinforce') rt.stack.strength += 8;
+      if (pkg === 'weapons_armor' && !rt.stack.tags.includes('armor')) rt.stack.tags.push('armor');
+      if (pkg === 'weapons_drone' && !rt.stack.tags.includes('drone')) rt.stack.tags.push('drone');
+      if (pkg !== 'reinforce') rt.stack.strength += 4;
+      rt.stack.specialists.push(`aid_${pkg}`);
+    }
+  }
+
+  const labels: Record<TheaterAidPackage, string> = {
+    reinforce: 'reinforcement convoy',
+    weapons_armor: 'armor package',
+    weapons_drone: 'drone package',
+  };
+  state.history.push(
+    `Turn ${state.turn}: ${state.countries[state.playerCountryId]?.name} sends ${labels[pkg]} to ${state.countries[recipientId]?.name} in ${theater.name}.`
+  );
+  return `Aid delivered: ${labels[pkg]} (−${cost} TP).`;
+}
+
+export function setPlayerDoctrineAi(state: GameState, theaterId: string, enabled: boolean): void {
+  const theater = getTheater(state, theaterId);
+  if (!theater) return;
+  theater.playerDoctrineAi = enabled;
+}
+
+export function dismissTheaterNotice(state: GameState, theaterId: string): void {
+  state.pendingTheaterNotices = (state.pendingTheaterNotices ?? []).filter(id => id !== theaterId);
+}
+
+export function acknowledgeAllTheaterNotices(state: GameState): void {
+  state.pendingTheaterNotices = [];
+}
+
+export function getTheaterForWar(state: GameState, warId: string): WarTheaterState | undefined {
+  return getActiveTheaters(state).find(t => t.warId === warId);
 }

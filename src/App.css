@@ -2204,6 +2204,119 @@ body {
   overflow: auto;
 }
 
+.theater-saturated {
+  background:
+    radial-gradient(ellipse at 15% 0%, rgba(234, 88, 12, 0.18), transparent 45%),
+    radial-gradient(ellipse at 90% 100%, rgba(14, 165, 233, 0.14), transparent 40%),
+    linear-gradient(160deg, #0a0f1a 0%, #111827 55%, #1a1208 100%);
+}
+
+.theater-saturated .theater-map-wrap {
+  border: 2px solid rgba(251, 146, 60, 0.35);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.45), 0 0 24px rgba(234, 88, 12, 0.12);
+  background:
+    repeating-linear-gradient(
+      -12deg,
+      transparent,
+      transparent 10px,
+      rgba(251, 191, 36, 0.025) 10px,
+      rgba(251, 191, 36, 0.025) 11px
+    ),
+    radial-gradient(ellipse at 30% 20%, rgba(56, 189, 248, 0.1), transparent 50%),
+    #071018;
+}
+
+.theater-odds {
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.85);
+}
+
+.odds-strongly-favored,
+.odds-favored {
+  border-color: rgba(34, 197, 94, 0.45);
+  color: #86efac;
+}
+
+.odds-even {
+  border-color: rgba(148, 163, 184, 0.4);
+}
+
+.odds-uphill,
+.odds-long-shot {
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
+}
+
+.theater-intervention {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #fdba74;
+}
+
+.theater-ai-toggle {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.35rem !important;
+  font-size: 0.75rem !important;
+  color: #e2e8f0 !important;
+}
+
+.theater-city-star {
+  fill: #fef3c7;
+  font-size: 8px;
+  pointer-events: none;
+}
+
+.theater-combat-log {
+  padding: 0.5rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid rgba(251, 146, 60, 0.25);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.theater-combat-log h5 {
+  margin: 0 0 0.3rem;
+  font-size: 0.75rem;
+  color: #fdba74;
+}
+
+.theater-combat-log ul {
+  margin: 0;
+  padding-left: 1rem;
+  font-size: 0.7rem;
+  color: #cbd5e1;
+}
+
+.theater-war-section .theater-war-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.theater-notice-modal {
+  max-width: 26rem;
+}
+
+.theater-notice-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fdba74;
+  margin: 0.25rem 0;
+}
+
+.theater-notice-modal .modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
 .theater-header {
   display: flex;
   align-items: center;

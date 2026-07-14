@@ -88,6 +88,8 @@ export function createInitialState(playerCountryId: string): GameState {
     npcMechanicState: createDefaultNpcMechanicState(),
     warTheaters: [],
     vassalRegions: [],
+    interventionMeters: {},
+    pendingTheaterNotices: [],
   };
 
   resetActionEnergy(state);

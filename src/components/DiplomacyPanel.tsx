@@ -19,6 +19,7 @@ import { PressConferenceScreen } from './PressConferenceScreen';
 import { BottomSheet } from './BottomSheet';
 import { getActiveCovertAlliances } from '../engine/covertAlliances';
 import { getInvokeUsSupportChance } from '../engine/diplomaticMissions';
+import { getActiveTheaters, getTheaterForWar } from '../engine/warTheater';
 
 interface DiplomacyPanelProps {
   state: GameState;
@@ -31,6 +32,7 @@ interface DiplomacyPanelProps {
   onCovertOp: (targetId: string) => void;
   onProbePacts: (targetId: string) => void;
   onExecuteMechanic: (mechanicId: string, targetId?: string) => void;
+  onOpenTheater?: (theaterId?: string) => void;
   feedback: string | null;
   talksResult: string | null;
 }
@@ -54,6 +56,7 @@ export function DiplomacyPanel({
   onCovertOp,
   onProbePacts,
   onExecuteMechanic,
+  onOpenTheater,
   feedback,
   talksResult,
 }: DiplomacyPanelProps) {
@@ -121,6 +124,38 @@ export function DiplomacyPanel({
       </div>
 
       {feedback && <p className="feedback-msg">{feedback}</p>}
+
+      {getActiveTheaters(state).length > 0 && (
+        <section className="panel-section theater-war-section">
+          <h4>Active War Theaters</h4>
+          {state.wars.map(w => {
+            const theater = getTheaterForWar(state, w.id);
+            if (!theater) return null;
+            const names = w.belligerents
+              .map(id => state.countries[id]?.name ?? id)
+              .join(' vs ');
+            return (
+              <div key={w.id} className="theater-war-row">
+                <div>
+                  <strong>{theater.name}</strong>
+                  <p className="muted small">{names} · t{state.turn - w.startTurn}</p>
+                </div>
+                {onOpenTheater && (
+                  <button
+                    className="btn-small meeting"
+                    onClick={() => {
+                      onClose();
+                      onOpenTheater(theater.id);
+                    }}
+                  >
+                    Open Theater
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </section>
+      )}
 
       <div className="diplomacy-quick-actions">
         <button className="btn-diplomacy-nav press" onClick={() => setView('press')}>

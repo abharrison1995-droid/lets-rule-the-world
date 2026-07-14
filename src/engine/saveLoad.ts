@@ -10,7 +10,7 @@ import { createDefaultNpcMechanicState } from './npcMechanics';
 import { syncWarTheaters } from './warTheater';
 
 const SAVE_KEY = 'lrw_save';
-export const SAVE_VERSION = 17;
+export const SAVE_VERSION = 18;
 
 interface SavePayload {
   version: number;
@@ -81,6 +81,15 @@ function migrateState(state: GameState, fromVersion: number): GameState {
     syncWarTheaters(migrated);
   }
 
+  if (fromVersion < 18) {
+    migrated.interventionMeters ??= {};
+    migrated.pendingTheaterNotices ??= [];
+    for (const t of migrated.warTheaters ?? []) {
+      t.playerDoctrineAi ??= true;
+      t.combatLog ??= [];
+    }
+  }
+
   return fillMissingSaveFields(migrated);
 }
 
@@ -128,6 +137,12 @@ function fillMissingSaveFields(state: GameState): GameState {
   state.npcMechanicState ??= createDefaultNpcMechanicState();
   state.warTheaters ??= [];
   state.vassalRegions ??= [];
+  state.interventionMeters ??= {};
+  state.pendingTheaterNotices ??= [];
+  for (const t of state.warTheaters) {
+    t.playerDoctrineAi ??= true;
+    t.combatLog ??= [];
+  }
 
   for (const campaign of state.strikeCampaigns) {
     campaign.startedUnprovoked ??= false;

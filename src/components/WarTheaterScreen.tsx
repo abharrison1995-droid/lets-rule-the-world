@@ -9,11 +9,15 @@ import {
 import {
   canSeeHex,
   getActiveTheaters,
+  getInterventionMeter,
   getRegionHexControl,
   playerDeployExpeditionary,
   playerReinforceTheater,
+  playerSendTheaterAid,
   playerTheaterMove,
+  previewHexBattle,
   resolveRegionFate,
+  setPlayerDoctrineAi,
   setTheaterDoctrine,
   setTheaterResolveMode,
 } from '../engine/warTheater';
@@ -22,13 +26,14 @@ interface WarTheaterScreenProps {
   state: GameState;
   onClose: () => void;
   onUpdate: (state: GameState) => void;
+  initialTheaterId?: string;
 }
 
 const HEX_SIZE = 14;
 
-export function WarTheaterScreen({ state, onClose, onUpdate }: WarTheaterScreenProps) {
+export function WarTheaterScreen({ state, onClose, onUpdate, initialTheaterId }: WarTheaterScreenProps) {
   const theaters = getActiveTheaters(state);
-  const [theaterId, setTheaterId] = useState(theaters[0]?.id ?? '');
+  const [theaterId, setTheaterId] = useState(initialTheaterId || theaters[0]?.id || '');
   const theater = theaters.find(t => t.id === theaterId) ?? theaters[0];
   const def = theater ? getTheaterDef(theater.defId) : undefined;
 
@@ -37,31 +42,29 @@ export function WarTheaterScreen({ state, onClose, onUpdate }: WarTheaterScreenP
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const layout = useMemo(() => {
-    if (!def) return { points: [] as Array<{ id: string; x: number; y: number }>, vb: '0 0 100 100' };
+    if (!def) return { vb: '0 0 100 100' };
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    const points = def.hexes.map(h => {
+    for (const h of def.hexes) {
       const [x, y] = hexToPixel(h.q, h.r, HEX_SIZE);
       minX = Math.min(minX, x);
       minY = Math.min(minY, y);
       maxX = Math.max(maxX, x);
       maxY = Math.max(maxY, y);
-      return { id: h.id, x, y };
-    });
+    }
     const pad = HEX_SIZE * 2.2;
     return {
-      points,
       vb: `${minX - pad} ${minY - pad} ${maxX - minX + pad * 2} ${maxY - minY + pad * 2}`,
     };
   }, [def]);
 
   if (!theater || !def) {
     return (
-      <div className="theater-screen">
+      <div className="theater-screen theater-saturated">
         <div className="theater-header">
           <button className="btn-back" onClick={onClose}>← Back</button>
           <h3>War Theater</h3>
         </div>
-        <p className="muted">No active operational theaters. Theaters open automatically when a defined war starts.</p>
+        <p className="muted">No active operational theaters.</p>
       </div>
     );
   }
@@ -71,6 +74,11 @@ export function WarTheaterScreen({ state, onClose, onUpdate }: WarTheaterScreenP
   const war = state.wars.find(w => w.id === theater.warId);
   const isBelligerent = war?.belligerents.includes(state.playerCountryId) ?? false;
   const playerDoctrine = theater.doctrineByCountry[state.playerCountryId] ?? 'hold';
+  const intervention = war ? getInterventionMeter(state, war.id) : 0;
+  const odds =
+    moveFromId && selectedHexId && moveFromId !== selectedHexId
+      ? previewHexBattle(state, theater.id, moveFromId, selectedHexId)
+      : null;
 
   const mutate = (fn: (s: GameState) => string | null | void) => {
     const next = structuredClone(state);
@@ -87,9 +95,13 @@ export function WarTheaterScreen({ state, onClose, onUpdate }: WarTheaterScreenP
     }
 
     if (moveFromId && moveFromId !== hexId) {
+      const preview = previewHexBattle(state, theater.id, moveFromId, hexId);
       mutate(s => playerTheaterMove(s, theater.id, moveFromId, hexId));
       setMoveFromId(null);
       setSelectedHexId(hexId);
+      if (preview) {
+        setFeedback(`Engaged — was ${preview.label} (~${Math.round(preview.winChance * 100)}%)`);
+      }
       return;
     }
 
@@ -97,11 +109,16 @@ export function WarTheaterScreen({ state, onClose, onUpdate }: WarTheaterScreenP
     const rt = theater.hexes[hexId];
     if (rt?.stack?.countryId === state.playerCountryId) {
       setMoveFromId(hexId);
-      setFeedback('Stack selected — click an adjacent hex to move or attack.');
+      setFeedback('Stack selected — click adjacent hex. Odds show before you attack.');
     } else {
       setMoveFromId(null);
     }
   };
+
+  const aidRecipient =
+    war?.belligerents.find(b => b !== state.playerCountryId && b !== 'russia') ??
+    war?.belligerents.find(b => b !== state.playerCountryId) ??
+    'ukraine';
 
   const regionSummary = def.regionIds.map(rid => {
     const ctrl = getRegionHexControl(theater, rid);
@@ -113,7 +130,7 @@ export function WarTheaterScreen({ state, onClose, onUpdate }: WarTheaterScreenP
   });
 
   return (
-    <div className="theater-screen">
+    <div className="theater-screen theater-saturated">
       <div className="theater-header">
         <button className="btn-back" onClick={onClose}>← Back</button>
         <h3>{theater.name}</h3>
@@ -134,11 +151,6 @@ export function WarTheaterScreen({ state, onClose, onUpdate }: WarTheaterScreenP
         )}
       </div>
 
-      <p className="muted small">
-        Hexes nest inside regions. Capture all hexes in a region to seize it, then choose vassal or absorb.
-        Visibility: your stacks, adjacent, and contested hexes.
-      </p>
-
       <div className="theater-controls">
         <label>
           Resolve
@@ -146,7 +158,7 @@ export function WarTheaterScreen({ state, onClose, onUpdate }: WarTheaterScreenP
             value={theater.resolveMode}
             onChange={e => mutate(s => setTheaterResolveMode(s, theater.id, e.target.value as TheaterResolveMode))}
           >
-            <option value="play_out">Play out (micro)</option>
+            <option value="play_out">Play out + AI</option>
             <option value="quick_resolve">Quick resolve</option>
           </select>
         </label>
@@ -161,25 +173,42 @@ export function WarTheaterScreen({ state, onClose, onUpdate }: WarTheaterScreenP
             <option value="withdraw">Withdraw</option>
           </select>
         </label>
+        <label className="theater-ai-toggle">
+          <input
+            type="checkbox"
+            checked={theater.playerDoctrineAi !== false}
+            onChange={e => mutate(s => setPlayerDoctrineAi(s, theater.id, e.target.checked))}
+          />
+          Doctrine AI
+        </label>
       </div>
 
+      {!isBelligerent && war && (
+        <p className="theater-intervention">
+          Intervention meter: {Math.round(intervention)}/100
+          <span className="muted"> — expeditionary deploys fill this toward auto-entry</span>
+        </p>
+      )}
+
       {feedback && <p className="theater-feedback">{feedback}</p>}
+
+      {odds && (
+        <div className={`theater-odds odds-${odds.label.replace(/\s+/g, '-').toLowerCase()}`}>
+          <strong>{odds.label}</strong>
+          <span> ~{Math.round(odds.winChance * 100)}% · ratio {odds.ratio.toFixed(2)}</span>
+          <span className="muted small"> · {odds.breakdown.join(' · ')}</span>
+        </div>
+      )}
 
       {theater.pendingFate && theater.pendingFate.conquerorId === state.playerCountryId && (
         <div className="theater-fate-modal">
           <h4>Region secured: {state.regions[theater.pendingFate.regionId]?.name}</h4>
           <p className="muted small">Choose the political fate of this territory.</p>
           <div className="theater-fate-actions">
-            <button
-              className="btn-small"
-              onClick={() => mutate(s => resolveRegionFate(s, theater.id, 'vassal'))}
-            >
+            <button className="btn-small" onClick={() => mutate(s => resolveRegionFate(s, theater.id, 'vassal'))}>
               Install vassal
             </button>
-            <button
-              className="btn-small meeting"
-              onClick={() => mutate(s => resolveRegionFate(s, theater.id, 'absorb'))}
-            >
+            <button className="btn-small meeting" onClick={() => mutate(s => resolveRegionFate(s, theater.id, 'absorb'))}>
               Absorb directly
             </button>
           </div>
@@ -193,9 +222,7 @@ export function WarTheaterScreen({ state, onClose, onUpdate }: WarTheaterScreenP
             const [cx, cy] = hexToPixel(h.q, h.r, HEX_SIZE);
             const visible = canSeeHex(state, theater, h, state.playerCountryId);
             const owner = state.countries[rt?.ownerId ?? ''];
-            const fill = !visible
-              ? '#1a1f2a'
-              : owner?.color ?? '#334155';
+            const fill = !visible ? '#0c1220' : owner?.color ?? '#334155';
             const selected = selectedHexId === h.id;
             const moveFrom = moveFromId === h.id;
             return (
@@ -203,9 +230,9 @@ export function WarTheaterScreen({ state, onClose, onUpdate }: WarTheaterScreenP
                 <polygon
                   points={hexPolygonPoints(cx, cy, HEX_SIZE * 0.95)}
                   fill={fill}
-                  opacity={visible ? (rt?.contested ? 0.75 : 0.9) : 0.35}
-                  stroke={selected ? '#f8fafc' : moveFrom ? '#38bdf8' : rt?.contested ? '#f59e0b' : '#0f172a'}
-                  strokeWidth={selected || moveFrom ? 2.2 : 1}
+                  opacity={visible ? (rt?.contested ? 0.78 : 0.95) : 0.28}
+                  stroke={selected ? '#fff7ed' : moveFrom ? '#38bdf8' : rt?.contested ? '#fbbf24' : '#020617'}
+                  strokeWidth={selected || moveFrom ? 2.4 : 1.1}
                 />
                 {visible && rt?.stack && (
                   <text x={cx} y={cy + 1} textAnchor="middle" className="theater-hex-str">
@@ -213,7 +240,7 @@ export function WarTheaterScreen({ state, onClose, onUpdate }: WarTheaterScreenP
                   </text>
                 )}
                 {visible && h.isCity && (
-                  <circle cx={cx} cy={cy - HEX_SIZE * 0.45} r={2.2} fill="#f8fafc" />
+                  <text x={cx} y={cy - HEX_SIZE * 0.42} textAnchor="middle" className="theater-city-star">★</text>
                 )}
               </g>
             );
@@ -229,7 +256,7 @@ export function WarTheaterScreen({ state, onClose, onUpdate }: WarTheaterScreenP
               {selectedDef.isCity ? ' · City' : ''}
             </h4>
             <p className="muted small">
-              {HEX_TERRAIN_LABELS[selectedDef.terrain]} · Region: {state.regions[selectedDef.regionId]?.name}
+              {HEX_TERRAIN_LABELS[selectedDef.terrain]} · {state.regions[selectedDef.regionId]?.name}
             </p>
             <p>
               Owner: {state.countries[selectedRt.ownerId]?.name ?? selectedRt.ownerId}
@@ -245,11 +272,10 @@ export function WarTheaterScreen({ state, onClose, onUpdate }: WarTheaterScreenP
               <p className="muted">No stack</p>
             )}
             {selectedDef.facilityHint && (
-              <p className="muted small">Intel: facility hint — {selectedDef.facilityHint}</p>
+              <p className="muted small">Intel: {selectedDef.facilityHint}</p>
             )}
             <div className="theater-hex-actions">
-              {(isBelligerent || selectedRt.ownerId === state.playerCountryId) &&
-                selectedRt.ownerId === state.playerCountryId && (
+              {selectedRt.ownerId === state.playerCountryId && (
                 <button
                   className="btn-small"
                   onClick={() => mutate(s => playerReinforceTheater(s, theater.id, selectedDef.id))}
@@ -260,34 +286,59 @@ export function WarTheaterScreen({ state, onClose, onUpdate }: WarTheaterScreenP
               {!isBelligerent && (
                 <button
                   className="btn-small"
-                  onClick={() => {
-                    const partner =
-                      war?.belligerents.find(b => b !== 'russia') ??
-                      war?.belligerents[0] ??
-                      'ukraine';
-                    mutate(s => playerDeployExpeditionary(s, theater.id, selectedDef.id, partner));
-                  }}
+                  onClick={() => mutate(s => playerDeployExpeditionary(s, theater.id, selectedDef.id, aidRecipient))}
                 >
-                  Deploy expeditionary (−8 TP)
+                  Expeditionary (−8 TP)
                 </button>
               )}
             </div>
           </div>
         ) : (
-          <p className="muted small">Select a visible hex for details. Select your stack, then an adjacent hex to move/attack.</p>
+          <p className="muted small">Select your stack, then an adjacent hex. Odds appear before attack.</p>
         )}
 
         <div className="theater-region-summary">
-          <h5>Region control</h5>
+          <h5>Region control · Aid</h5>
+          <div className="theater-hex-actions" style={{ marginBottom: '0.45rem' }}>
+            <button
+              className="btn-small"
+              onClick={() => mutate(s => playerSendTheaterAid(s, theater.id, aidRecipient, 'reinforce'))}
+            >
+              Aid reinforce
+            </button>
+            <button
+              className="btn-small"
+              onClick={() => mutate(s => playerSendTheaterAid(s, theater.id, aidRecipient, 'weapons_armor'))}
+            >
+              Armor package
+            </button>
+            <button
+              className="btn-small"
+              onClick={() => mutate(s => playerSendTheaterAid(s, theater.id, aidRecipient, 'weapons_drone'))}
+            >
+              Drone package
+            </button>
+          </div>
           <ul>
             {regionSummary.map(r => (
               <li key={r.rid}>
-                <strong>{r.name}</strong> ({r.total} hexes): {r.bits || '—'}
+                <strong>{r.name}</strong> ({r.total}): {r.bits || '—'}
               </li>
             ))}
           </ul>
         </div>
       </div>
+
+      {(theater.combatLog?.length ?? 0) > 0 && (
+        <div className="theater-combat-log">
+          <h5>Combat log</h5>
+          <ul>
+            {theater.combatLog.map((line, i) => (
+              <li key={i}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

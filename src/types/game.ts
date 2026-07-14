@@ -291,6 +291,10 @@ export interface WarTheaterState {
   impulsesThisWorldTurn: number;
   pendingFate: PendingRegionFate | null;
   closed: boolean;
+  /** When true, doctrine AI runs the player's side each impulse; micro remains optional */
+  playerDoctrineAi: boolean;
+  /** Recent combat lines for the theater UI */
+  combatLog: string[];
 }
 
 export interface GlobalOilShock {
@@ -582,6 +586,10 @@ export interface GameState {
   warTheaters: WarTheaterState[];
   /** Regions held as vassals rather than fully absorbed */
   vassalRegions: VassalRegion[];
+  /** Intervention pressure by warId (0–100); expeditionary builds this toward auto-war */
+  interventionMeters: Record<string, number>;
+  /** Theater IDs awaiting “war theater opened” modal acknowledgment */
+  pendingTheaterNotices: string[];
 }
 
 /** Per-NPC runtime state for automated world-power mechanics */
