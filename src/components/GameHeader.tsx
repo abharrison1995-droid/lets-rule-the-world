@@ -2,6 +2,7 @@ import type { GameState } from '../types/game';
 import { formatDisplayGDP } from '../engine/treasuryDisplay';
 import { getActionEnergy } from '../engine/actionEnergy';
 import { formatModeLabel } from '../data/gameModes';
+import { getActiveMissionSummary } from '../engine/usaCampaign';
 
 interface GameHeaderProps {
   state: GameState;
@@ -17,6 +18,7 @@ export function GameHeader({ state, onEndTurn, onOpenDiplomacy, onOpenEconomy, o
   const atWar = state.wars.some(w => w.belligerents.includes(state.playerCountryId));
   const hasTheater = (state.warTheaters ?? []).some(t => !t.closed);
   const energy = getActionEnergy(state);
+  const mission = getActiveMissionSummary(state);
 
   return (
     <header className="game-header">
@@ -24,6 +26,7 @@ export function GameHeader({ state, onEndTurn, onOpenDiplomacy, onOpenEconomy, o
         <h1 className="game-title">LET'S RULE THE WORLD</h1>
         <span className="turn-counter">Turn {state.turn}</span>
         <span className="mode-badge">{formatModeLabel(state.gameMode ?? 'sandbox')}</span>
+        {mission && <span className="mission-badge" title="Active campaign mission">{mission}</span>}
       </div>
 
       <div className="header-center">

@@ -51,6 +51,8 @@ import { EventModal } from './components/EventModal';
 import { RegionActionPanel } from './components/RegionActionPanel';
 import { SidePanel } from './components/SidePanel';
 import { TurnSummaryModal } from './components/TurnSummaryModal';
+import { CampaignBriefModal } from './components/CampaignBriefModal';
+import { PeerChoiceModal } from './components/PeerChoiceModal';
 import { NationIntroModal } from './components/NationIntroModal';
 import { WarTheaterScreen } from './components/WarTheaterScreen';
 import { WarTheaterNoticeModal } from './components/WarTheaterNoticeModal';
@@ -434,6 +436,12 @@ export default function App() {
 
   return (
     <div className="game-layout">
+      {state.usaCampaign && !state.usaCampaign.briefAcknowledged && (
+        <CampaignBriefModal state={state} onConfirm={updateState} />
+      )}
+      {state.usaCampaign?.peerChoicePending && state.usaCampaign.briefAcknowledged && (
+        <PeerChoiceModal state={state} onConfirm={updateState} />
+      )}
       <GameHeader
         state={state}
         onEndTurn={endTurn}

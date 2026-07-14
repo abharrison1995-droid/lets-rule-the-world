@@ -436,6 +436,123 @@ body {
   font-weight: 600;
 }
 
+.mission-badge {
+  font-family: 'Sora', sans-serif;
+  font-size: 0.68rem;
+  color: var(--foam);
+  background: rgba(196, 92, 74, 0.25);
+  border: 1px solid rgba(196, 92, 74, 0.45);
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  max-width: 14rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.campaign-brief-overlay {
+  z-index: 200;
+}
+
+.campaign-brief-modal {
+  max-width: 32rem;
+  width: calc(100% - 2rem);
+  max-height: min(90dvh, 40rem);
+  overflow: auto;
+  background: linear-gradient(165deg, #153028 0%, #0c1614 55%, #08110f 100%);
+  border: 1px solid rgba(201, 169, 106, 0.35);
+  border-radius: 6px;
+  padding: 1.5rem 1.35rem 1.35rem;
+  color: var(--foam);
+}
+
+.campaign-brief-kicker {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brass);
+  margin-bottom: 0.4rem;
+}
+
+.campaign-brief-modal h2 {
+  font-family: 'Syne', 'Sora', sans-serif;
+  font-size: clamp(1.4rem, 4vw, 1.85rem);
+  font-weight: 800;
+  color: #f2f5f0;
+  margin-bottom: 0.85rem;
+  letter-spacing: -0.02em;
+}
+
+.campaign-brief-body {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: rgba(200, 217, 208, 0.88);
+  margin-bottom: 0.65rem;
+}
+
+.campaign-brief-note {
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: rgba(200, 217, 208, 0.7);
+  margin: 0.85rem 0 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(200, 217, 208, 0.15);
+}
+
+.campaign-align-fieldset {
+  border: 1px solid rgba(200, 217, 208, 0.22);
+  border-radius: 4px;
+  padding: 0.75rem 0.85rem;
+  margin: 0 0 1rem;
+}
+
+.campaign-align-fieldset legend {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brass);
+  padding: 0 0.35rem;
+}
+
+.campaign-align-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.35rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.campaign-align-option.selected {
+  background: rgba(201, 169, 106, 0.12);
+}
+
+.campaign-mission-card {
+  margin-bottom: 1.1rem;
+  padding: 0.85rem;
+  border-left: 3px solid var(--brass);
+  background: rgba(20, 40, 36, 0.55);
+}
+
+.campaign-mission-card h3 {
+  font-family: 'Syne', 'Sora', sans-serif;
+  font-size: 1.05rem;
+  margin-bottom: 0.35rem;
+  color: #f2f5f0;
+}
+
+.campaign-mission-card p {
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: rgba(200, 217, 208, 0.8);
+}
+
+.campaign-brief-go {
+  width: 100%;
+  text-align: center;
+}
+
 /* Mode select */
 .mode-select-compose {
   gap: 1rem;

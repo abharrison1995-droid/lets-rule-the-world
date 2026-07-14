@@ -50,6 +50,9 @@ export interface HexBattlePreview {
   winChance: number;
   label: 'Strongly favored' | 'Favored' | 'Even' | 'Uphill' | 'Long shot';
   breakdown: string[];
+  /** Expected strength loss if battle resolves near forecast */
+  estAtkLoss: number;
+  estDefLoss: number;
 }
 
 function playerCanPay(state: GameState, costTp: number): boolean {
@@ -202,16 +205,31 @@ export function canSeeHex(
 
 function supplyModifier(theater: WarTheaterState, countryId: string): number {
   const doctrine = theater.doctrineByCountry[countryId] ?? 'hold';
-  // Abstract front supply — doctrine stance is the alpha proxy
-  const base = doctrine === 'withdraw' ? 0.88 : doctrine === 'attack' ? 0.94 : 1;
-  return 1 + (base - 1) * (W.supply / 0.1);
+  if (doctrine === 'withdraw') return 0.9;
+  if (doctrine === 'attack') return 0.96;
+  return 1;
+}
+
+function doctrineAtkMult(theater: WarTheaterState, countryId: string): number {
+  const doctrine = theater.doctrineByCountry[countryId] ?? 'hold';
+  if (doctrine === 'attack') return 1.14;
+  if (doctrine === 'withdraw') return 0.82;
+  return 1;
+}
+
+function doctrineDefMult(theater: WarTheaterState, countryId: string): number {
+  const doctrine = theater.doctrineByCountry[countryId] ?? 'hold';
+  if (doctrine === 'hold') return 1.16;
+  if (doctrine === 'withdraw') return 0.9;
+  if (doctrine === 'attack') return 0.92;
+  return 1;
 }
 
 function contextRoll(atk: number, def: number): number {
   const ratio = atk / Math.max(1, def);
-  const bias = Math.tanh((ratio - 1) * 1.2) * 0.35;
+  const bias = Math.tanh((ratio - 1) * 1.35) * 0.4;
   const drama = (Math.random() + Math.random() + Math.random()) / 3;
-  return drama + bias;
+  return Math.max(0.05, Math.min(0.95, drama + bias));
 }
 
 function computeBattlePowers(
@@ -231,52 +249,80 @@ function computeBattlePowers(
   if (!attacker || !defender) return null;
 
   const breakdown: string[] = [];
-  const atkStack = from.stack.strength * W.stack;
-  breakdown.push(`ATK stack ${Math.round(from.stack.strength)}`);
+  const atkTags = from.stack.tags;
+  const defTags = target.stack?.tags ?? [];
 
-  let atkPower = atkStack;
-  atkPower *= 1 + attacker.militaryDev.troopQuality * 0.06;
-  if (from.stack.tags.includes('armor')) {
-    atkPower *= 1.1;
-    breakdown.push('armor +10%');
+  let atkPower = from.stack.strength * W.stack;
+  breakdown.push(`ATK stack ${Math.round(from.stack.strength)}`);
+  atkPower *= 1 + attacker.militaryDev.troopQuality * 0.07;
+  atkPower *= doctrineAtkMult(theater, attackerId);
+  if (theater.doctrineByCountry[attackerId] === 'attack') breakdown.push('doctrine: attack');
+
+  if (atkTags.includes('armor')) {
+    const armorBonus = hexDef.terrain === 'plains' || hexDef.terrain === 'urban' ? 1.22 : hexDef.terrain === 'forest' ? 1.05 : 1.12;
+    atkPower *= armorBonus;
+    breakdown.push(`armor ×${armorBonus.toFixed(2)}`);
   }
-  if (from.stack.tags.includes('artillery')) {
-    atkPower *= 1.08;
-    breakdown.push('artillery +8%');
+  if (atkTags.includes('artillery')) {
+    const artyBonus = target.fortLevel > 0 || hexDef.isCity ? 1.2 : 1.1;
+    atkPower *= artyBonus;
+    breakdown.push(`artillery ×${artyBonus.toFixed(2)}`);
   }
-  if (from.stack.tags.includes('air') || from.stack.tags.includes('drone')) {
-    atkPower *= 1 + W.airDrone;
-    breakdown.push(`air/drone +${Math.round(W.airDrone * 100)}%`);
+  if (atkTags.includes('air') || atkTags.includes('drone')) {
+    const airBonus = hexDef.isCity ? 1 + W.airDrone * 1.4 : 1 + W.airDrone;
+    atkPower *= airBonus;
+    breakdown.push(hexDef.isCity ? 'air/drone (city)' : 'air/drone');
   }
-  const atkMorale = 1 + (attacker.stats.moraleBase - 0.5) * W.moraleExhaust * 2
-    - attacker.stats.warExhaustion * W.moraleExhaust;
-  atkPower *= Math.max(0.7, atkMorale);
+
+  const atkMorale = 1 + (attacker.stats.moraleBase - 0.5) * W.moraleExhaust * 2.2
+    - attacker.stats.warExhaustion * W.moraleExhaust * 1.2;
+  atkPower *= Math.max(0.65, atkMorale);
   atkPower *= supplyModifier(theater, attackerId);
 
   const defStr = target.stack?.strength ?? 8;
   let defPower = defStr * W.stack;
   breakdown.push(`DEF stack ${Math.round(defStr)}`);
-  defPower *= 1 + defender.militaryDev.troopQuality * 0.06;
+  defPower *= 1 + defender.militaryDev.troopQuality * 0.07;
+  defPower *= doctrineDefMult(theater, defenderId);
+  if (theater.doctrineByCountry[defenderId] === 'hold') breakdown.push('doctrine: hold');
 
   const terrainBonus = TERRAIN_DEF_BONUS[hexDef.terrain] ?? 0;
-  defPower *= 1 + terrainBonus * (W.terrain / 0.16);
+  defPower *= 1 + terrainBonus * (W.terrain / 0.16) * 1.15;
   if (terrainBonus > 0) breakdown.push(`${hexDef.terrain} terrain`);
 
-  const fortCity = target.fortLevel * 0.15 + (hexDef.isCity ? 0.18 : 0);
+  const fortCity = target.fortLevel * 0.18 + (hexDef.isCity ? 0.22 : 0);
   defPower *= 1 + fortCity * (W.fortCity / 0.22);
   if (hexDef.isCity) breakdown.push('city defense');
   if (target.fortLevel > 0) breakdown.push(`fort ×${target.fortLevel}`);
 
-  if (target.stack?.tags.includes('air') || target.stack?.tags.includes('drone')) {
-    defPower *= 1 + W.airDrone * 0.7;
+  if (defTags.includes('armor') && (hexDef.terrain === 'plains' || hexDef.isCity)) {
+    defPower *= 1.1;
+    breakdown.push('def armor');
+  }
+  if (defTags.includes('air') || defTags.includes('drone')) {
+    defPower *= 1 + W.airDrone * 0.75;
   }
 
-  const defMorale = 1 + (defender.stats.moraleBase - 0.5) * W.moraleExhaust * 2
-    - defender.stats.warExhaustion * W.moraleExhaust;
-  defPower *= Math.max(0.7, defMorale);
+  const defMorale = 1 + (defender.stats.moraleBase - 0.5) * W.moraleExhaust * 2.2
+    - defender.stats.warExhaustion * W.moraleExhaust * 1.2;
+  defPower *= Math.max(0.65, defMorale);
   defPower *= supplyModifier(theater, defenderId);
 
   return { atkPower, defPower, defenderId, breakdown };
+}
+
+function forecastCasualties(atkPower: number, defPower: number, atkStr: number, defStr: number): {
+  estAtkLoss: number;
+  estDefLoss: number;
+} {
+  const ratio = atkPower / Math.max(1, defPower);
+  const winChance = Math.max(0.08, Math.min(0.92, 1 / (1 + Math.exp(-(ratio - 1) * 2.6))));
+  const atkLoss = Math.max(2, Math.round(defStr * (0.18 + (1 - winChance) * 0.28)));
+  const defLoss = Math.max(3, Math.round(atkStr * (0.16 + winChance * 0.32)));
+  return {
+    estAtkLoss: Math.min(atkStr - 1, atkLoss),
+    estDefLoss: Math.min(defStr, defLoss),
+  };
 }
 
 function labelFromRatio(ratio: number): HexBattlePreview['label'] {
@@ -301,9 +347,13 @@ export function previewHexBattle(
   const powers = computeBattlePowers(state, theater, hexDef, state.playerCountryId, fromHexId);
   if (!powers) return null;
 
+  const from = theater.hexes[fromHexId];
+  const to = theater.hexes[toHexId];
+  const atkStr = from?.stack?.strength ?? 10;
+  const defStr = to?.stack?.strength ?? 8;
   const ratio = powers.atkPower / Math.max(1, powers.defPower);
-  // Soft logistic for display win chance (context-weighted, not pure RNG)
-  const winChance = Math.max(0.08, Math.min(0.92, 1 / (1 + Math.exp(-(ratio - 1) * 2.4))));
+  const winChance = Math.max(0.08, Math.min(0.92, 1 / (1 + Math.exp(-(ratio - 1) * 2.6))));
+  const losses = forecastCasualties(powers.atkPower, powers.defPower, atkStr, defStr);
 
   return {
     atkPower: powers.atkPower,
@@ -312,6 +362,8 @@ export function previewHexBattle(
     winChance,
     label: labelFromRatio(ratio),
     breakdown: powers.breakdown,
+    estAtkLoss: losses.estAtkLoss,
+    estDefLoss: losses.estDefLoss,
   };
 }
 
@@ -346,24 +398,49 @@ export function resolveHexBattle(
   const defender = state.countries[defenderId]!;
 
   const roll = contextRoll(atkBase, defBase);
-  const atkScore = atkBase * (0.65 + roll * 0.7);
-  const defScore = defBase * (0.65 + (1 - roll) * 0.5 + Math.random() * 0.12);
+  const atkScore = atkBase * (0.55 + roll * 0.9);
+  const defScore = defBase * (0.55 + (1 - roll) * 0.9);
 
-  const atkLoss = Math.max(2, Math.round(defScore * 0.12));
-  const defLoss = Math.max(3, Math.round(atkScore * 0.14));
+  const margin = atkScore / Math.max(1, defScore);
+  const atkLoss = Math.max(2, Math.round(defBase * (0.1 + (margin < 1 ? 0.14 : 0.06))));
+  const defLoss = Math.max(3, Math.round(atkBase * (0.1 + (margin > 1 ? 0.16 : 0.07))));
 
   from.stack.strength = Math.max(0, from.stack.strength - atkLoss);
   if (target.stack) {
     target.stack.strength = Math.max(0, target.stack.strength - defLoss);
   }
 
-  attacker.stats.warExhaustion = Math.min(1, attacker.stats.warExhaustion + atkLoss * 0.0015);
-  defender.stats.warExhaustion = Math.min(1, defender.stats.warExhaustion + defLoss * 0.002);
+  attacker.stats.warExhaustion = Math.min(1, attacker.stats.warExhaustion + atkLoss * 0.0018);
+  defender.stats.warExhaustion = Math.min(1, defender.stats.warExhaustion + defLoss * 0.0022);
 
   const ratio = atkBase / Math.max(1, defBase);
+  const place = hexDef.cityName ? ` ${hexDef.cityName}` : ' the hex';
   let result: string;
 
-  if (atkScore > defScore * 1.05) {
+  if (margin >= 1.45) {
+    // Decisive breakthrough
+    target.ownerId = attackerId;
+    target.contested = false;
+    const survivors = Math.max(8, Math.floor(from.stack.strength * 0.72));
+    target.stack = makeStack(
+      attackerId,
+      survivors,
+      from.stack.tags,
+      hexDef.facilityHint ? [hexDef.facilityHint] : []
+    );
+    from.stack.strength = Math.max(3, Math.floor(from.stack.strength * 0.35));
+    if (target.fortLevel > 0) target.fortLevel = Math.max(0, target.fortLevel - 1);
+    result = `Breakthrough — ${attacker.name} smashes through${place} (${labelFromRatio(ratio)}, ${Math.round(atkScore)}–${Math.round(defScore)}).`;
+    if (hexDef.isCity) {
+      defender.stats.warExhaustion = Math.min(1, defender.stats.warExhaustion + 0.05);
+      defender.stats.moraleBase = Math.max(0.1, defender.stats.moraleBase - 0.04);
+      attacker.stats.moraleBase = Math.min(0.95, attacker.stats.moraleBase + 0.02);
+      state.history.push(`Turn ${state.turn}: ${attacker.name} decisively seizes ${hexDef.cityName} in ${theater.name}.`);
+      checkCapitalCollapseRisk(state, theater, hexDef, defenderId);
+    }
+    checkRegionCapture(state, theater, hexDef.regionId, attackerId);
+  } else if (margin >= 1.05) {
+    // Clear take
     target.ownerId = attackerId;
     target.contested = false;
     target.stack = makeStack(
@@ -372,33 +449,50 @@ export function resolveHexBattle(
       from.stack.tags,
       hexDef.facilityHint ? [hexDef.facilityHint] : []
     );
-    from.stack.strength = Math.max(4, Math.floor(from.stack.strength * 0.45));
-
+    from.stack.strength = Math.max(4, Math.floor(from.stack.strength * 0.4));
+    result = `${attacker.name} takes${place} (${labelFromRatio(ratio)}, ${Math.round(atkScore)}–${Math.round(defScore)}).`;
     if (hexDef.isCity) {
-      defender.stats.warExhaustion = Math.min(1, defender.stats.warExhaustion + 0.04);
-      defender.stats.moraleBase = Math.max(0.1, defender.stats.moraleBase - 0.03);
-      attacker.stats.moraleBase = Math.min(0.95, attacker.stats.moraleBase + 0.015);
-      state.history.push(
-        `Turn ${state.turn}: ${attacker.name} seizes ${hexDef.cityName ?? 'city'} in ${theater.name}.`
-      );
+      defender.stats.warExhaustion = Math.min(1, defender.stats.warExhaustion + 0.035);
+      defender.stats.moraleBase = Math.max(0.1, defender.stats.moraleBase - 0.025);
+      attacker.stats.moraleBase = Math.min(0.95, attacker.stats.moraleBase + 0.012);
+      state.history.push(`Turn ${state.turn}: ${attacker.name} seizes ${hexDef.cityName} in ${theater.name}.`);
       checkCapitalCollapseRisk(state, theater, hexDef, defenderId);
     }
-
-    result = `✓ ${attacker.name} takes${hexDef.cityName ? ` ${hexDef.cityName}` : ' hex'} (${labelFromRatio(ratio)}, ${Math.round(atkScore)}–${Math.round(defScore)}).`;
     checkRegionCapture(state, theater, hexDef.regionId, attackerId);
-  } else {
+  } else if (margin >= 0.85) {
+    // Bloody stalemate — contested, both mauled
+    target.contested = true;
+    if (target.stack && target.stack.strength <= 0) {
+      target.stack = makeStack(defenderId, 5, ['infantry'], []);
+    }
+    if (from.stack.strength <= 0) from.stack = null;
+    result = `Bloody stalemate at${place} — no breakthrough (${labelFromRatio(ratio)}, ${Math.round(atkScore)}–${Math.round(defScore)}).`;
+  } else if (margin >= 0.65) {
+    // Repulse
     target.contested = true;
     if (target.stack && target.stack.strength <= 0) {
       target.stack = makeStack(defenderId, 6, ['infantry'], []);
     }
-    if (from.stack.strength <= 0) {
+    if (from.stack.strength <= 0) from.stack = null;
+    result = `${defender.name} repulses the assault on${place} (${labelFromRatio(ratio)}, ${Math.round(atkScore)}–${Math.round(defScore)}).`;
+  } else {
+    // Rout — attacker shattered
+    target.contested = false;
+    if (from.stack.strength <= 4) {
       from.stack = null;
+      result = `Rout — ${attacker.name} shattered before${place} (${labelFromRatio(ratio)}, ${Math.round(atkScore)}–${Math.round(defScore)}).`;
+    } else {
+      from.stack.strength = Math.max(3, Math.floor(from.stack.strength * 0.55));
+      result = `Crushing repulse at${place} — ${attacker.name} recoils (${labelFromRatio(ratio)}, ${Math.round(atkScore)}–${Math.round(defScore)}).`;
     }
-    result = `✗ ${defender.name} holds${hexDef.cityName ? ` ${hexDef.cityName}` : ''} (${labelFromRatio(ratio)}, ${Math.round(atkScore)}–${Math.round(defScore)}).`;
+    if (target.stack && target.stack.strength <= 0) {
+      target.stack = makeStack(defenderId, 7, ['infantry'], []);
+    }
   }
 
+  pushCombatLog(theater, `T${state.turn}: ${result}`);
+  state.history.push(`Turn ${state.turn}: ${theater.name} — ${result}`);
   target.revealedUntilTurn = state.turn + 1;
-  pushCombatLog(theater, result);
   return result;
 }
 

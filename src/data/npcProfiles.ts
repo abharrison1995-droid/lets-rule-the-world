@@ -124,6 +124,22 @@ export const NPC_PROFILES: Record<string, NpcProfile> = {
     keyPartners: ['usa', 'saudi_arabia', 'england'],
     keyRivals: ['iran'],
   },
+  cuba: {
+    role: 'regional_gatekeeper',
+    roleLabel: 'Caribbean holdout',
+    quote: 'Ninety miles from Florida — and ninety years of refusing to bend.',
+    summary:
+      'Hardened socialist holdout in the US near abroad. Thin economy, stubborn regime, symbolic prize for any Washington restoration project.',
+    foreignPolicy:
+      'Survival through Russian/Chinese patronage and anti-US bloc signaling; avoids direct peer war it cannot win.',
+    behaviorNotes: [
+      'Campaign Mission 1 target — conquer or install a client government',
+      'Hostile baseline toward USA; warmer to Russia/China',
+      'Island geography favors defense over projection',
+    ],
+    keyPartners: ['russia', 'china'],
+    keyRivals: ['usa'],
+  },
 };
 
 export function getNpcProfile(countryId: string): NpcProfile | undefined {

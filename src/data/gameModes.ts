@@ -9,20 +9,20 @@ export interface GameModeDef {
   playableCountryIds: string[] | null;
 }
 
-/** Opening Eastern Escalation — four great-power seats around the live Ukraine war. */
-export const CAMPAIGN_PLAYABLE_IDS = ['usa', 'russia', 'england', 'china'] as const;
+/** Opening USA campaign — only America is playable; everyone else is NPC. */
+export const CAMPAIGN_PLAYABLE_IDS = ['usa'] as const;
 
 export const GAME_MODES: Record<GameMode, GameModeDef> = {
   sandbox: {
     id: 'sandbox',
     name: 'Sandbox',
-    blurb: 'All playable nations. Open board — write your own century.',
+    blurb: 'Any playable nation. Rule the world your way — no mission ladder.',
     playableCountryIds: null,
   },
   campaign: {
     id: 'campaign',
     name: 'Campaign',
-    blurb: 'Eastern Escalation. Four seats, scripted pressure, and the Ukraine theater already hot.',
+    blurb: 'USA only. Restore hegemony — Mission 1 Cuba, then climb toward Russia or China.',
     playableCountryIds: [...CAMPAIGN_PLAYABLE_IDS],
   },
 };

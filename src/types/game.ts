@@ -12,6 +12,31 @@ export type EventScope = 'global' | 'regional' | 'national';
 
 export type GameMode = 'sandbox' | 'campaign';
 
+export type UkraineAlignment = 'ukraine' | 'russia' | 'deniable';
+
+export type CampaignMissionStatus = 'active' | 'won' | 'failed';
+
+export interface UsaCampaignMissionRuntime {
+  missionId: string;
+  targetCountryId: string;
+  startTurn: number;
+  deadlineTurn: number;
+  status: CampaignMissionStatus;
+}
+
+/** Runtime for the USA-only campaign ladder */
+export interface UsaCampaignState {
+  briefAcknowledged: boolean;
+  ukraineAlignment: UkraineAlignment;
+  activeMission: UsaCampaignMissionRuntime | null;
+  completedMissions: string[];
+  /** Nation ids under USA puppet/client governments */
+  clientStates: string[];
+  /** Set when turn ≥ 60 and neither Russia nor China is at war with USA */
+  peerChoicePending: boolean;
+  peerTargetId: string | null;
+}
+
 export type BudgetCategory =
   | 'military'
   | 'diplomacy'
@@ -540,8 +565,10 @@ export interface WarDeclarationPreview {
 export interface GameState {
   turn: number;
   playerCountryId: string;
-  /** Sandbox = full playable roster; Campaign = Eastern Escalation subset + scripted events */
+  /** Sandbox = full playable roster; Campaign = USA hegemony ladder */
   gameMode: GameMode;
+  /** USA campaign runtime (null outside campaign) */
+  usaCampaign: UsaCampaignState | null;
   countries: Record<string, Country>;
   regions: Record<string, Region>;
   relations: Record<string, number>; // key: "a|b" sorted

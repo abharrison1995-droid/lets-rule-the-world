@@ -196,6 +196,10 @@ export function WarTheaterScreen({ state, onClose, onUpdate, initialTheaterId }:
         <div className={`theater-odds odds-${odds.label.replace(/\s+/g, '-').toLowerCase()}`}>
           <strong>{odds.label}</strong>
           <span> ~{Math.round(odds.winChance * 100)}% · ratio {odds.ratio.toFixed(2)}</span>
+          <span className="muted small">
+            {' '}
+            · est. losses ATK −{odds.estAtkLoss} / DEF −{odds.estDefLoss}
+          </span>
           <span className="muted small"> · {odds.breakdown.join(' · ')}</span>
         </div>
       )}

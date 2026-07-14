@@ -16,7 +16,7 @@ export const HEMISPHERES: Record<HemisphereId, HemisphereDef> = {
     title: 'Americas',
     subtitle: 'North & South America',
     viewBox: '40 120 300 200',
-    countryIds: ['usa'],
+    countryIds: ['usa', 'cuba'],
   },
   eurasia: {
     id: 'eurasia',

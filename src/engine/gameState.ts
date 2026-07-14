@@ -29,6 +29,8 @@ import {
   DEFAULT_DOMESTIC_SPLIT,
 } from './propaganda';
 import { formatModeLabel } from '../data/gameModes';
+import { isUsaCampaignMode } from '../data/campaignUsa';
+import { createUsaCampaignState, tickUsaCampaign } from './usaCampaign';
 
 export function createInitialState(
   playerCountryId: string,
@@ -48,6 +50,7 @@ export function createInitialState(
     turn: 1,
     playerCountryId,
     gameMode,
+    usaCampaign: isUsaCampaignMode(gameMode) ? createUsaCampaignState(1) : null,
     countries,
     regions,
     relations,
@@ -164,6 +167,7 @@ export function advanceTurn(state: GameState): GameState {
   tickVassalRegions(newState);
   cleanStrikeAnimations(newState);
   checkCollapseConditions(newState);
+  tickUsaCampaign(newState);
   checkWinConditions(newState);
 
   newState.lastTurnReport = buildTurnReport(state, newState, historyFrom);

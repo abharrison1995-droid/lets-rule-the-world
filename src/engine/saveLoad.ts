@@ -1,5 +1,6 @@
 import type { GameState, GameMode } from '../types/game';
 import { COUNTRIES } from '../data/countries';
+import { REGIONS } from '../data/regions';
 import {
   getDefaultCorporateTaxRate,
   getDefaultIncomeTaxRate,
@@ -10,7 +11,7 @@ import { createDefaultNpcMechanicState } from './npcMechanics';
 import { syncWarTheaters } from './warTheater';
 
 const SAVE_KEY = 'lrw_save';
-export const SAVE_VERSION = 21;
+export const SAVE_VERSION = 22;
 
 interface SavePayload {
   version: number;
@@ -102,6 +103,24 @@ function migrateState(state: GameState, fromVersion: number): GameState {
     migrated.gameMode ??= 'sandbox';
   }
 
+  if (fromVersion < 22) {
+    migrated.usaCampaign ??= null;
+    if (!migrated.countries?.cuba && COUNTRIES.cuba) {
+      migrated.countries.cuba = structuredClone(COUNTRIES.cuba);
+    }
+    migrated.regions ??= {};
+    for (const id of ['cuba_west', 'cuba_central', 'cuba_east']) {
+      if (!migrated.regions[id] && REGIONS[id]) {
+        migrated.regions[id] = structuredClone(REGIONS[id]);
+      }
+    }
+    // Link SE USA to Cuba if an older save still has the pre-campaign neighbour list
+    const se = migrated.regions.usa_southeast;
+    if (se && !se.neighbours.includes('cuba_west')) {
+      se.neighbours = [...se.neighbours, 'cuba_west'];
+    }
+  }
+
   return fillMissingSaveFields(migrated);
 }
 
@@ -151,6 +170,7 @@ function fillMissingSaveFields(state: GameState): GameState {
   state.vassalRegions ??= [];
   state.theaterSettlements ??= [];
   state.gameMode ??= 'sandbox';
+  state.usaCampaign ??= null;
   state.interventionMeters ??= {};
   state.pendingTheaterNotices ??= [];
   state.collapsedNations ??= [];

@@ -8,6 +8,7 @@ const RELATION_PAIRS: Array<[string, string, number]> = [
   ['usa', 'ukraine', 70], ['usa', 'russia', -75], ['usa', 'china', -40],
   ['usa', 'iran', -80], ['usa', 'north_korea', -90], ['usa', 'pakistan', 20],
   ['usa', 'egypt', 40],
+  ['usa', 'cuba', -70],
 
   // Russia relations
   ['russia', 'china', 60], ['russia', 'iran', 55], ['russia', 'india', 45],
@@ -15,13 +16,15 @@ const RELATION_PAIRS: Array<[string, string, number]> = [
   ['russia', 'germany', -55], ['russia', 'france', -50], ['russia', 'israel', -20],
   ['russia', 'north_korea', 40], ['russia', 'pakistan', 25], ['russia', 'saudi_arabia', 15],
   ['russia', 'egypt', 35],
+  ['russia', 'cuba', 45],
 
   // China relations
   ['china', 'pakistan', 70], ['china', 'iran', 50], ['china', 'north_korea', 55],
   ['china', 'russia', 60], ['china', 'india', -25], ['china', 'japan', -35],
   ['china', 'south_korea', 10], ['china', 'turkey', 25], ['china', 'saudi_arabia', 40],
   ['china', 'israel', 15], ['china', 'england', -15], ['china', 'germany', 10],
-  ['china', 'france', 15], ['china', 'egypt', 30],
+  ['china', 'france', 15],   ['china', 'egypt', 30],
+  ['china', 'cuba', 35],
 
   // Iran relations
   ['iran', 'russia', 55], ['iran', 'china', 50], ['iran', 'pakistan', 35],

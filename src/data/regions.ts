@@ -31,7 +31,7 @@ export const REGIONS: Record<string, Region> = {
       'M 200,80 L 280,75 L 290,120 L 250,140 L 200,130 Z', [245, 105], 2),
     r('usa_mid_atlantic', 'usa', 'Mid-Atlantic', ['usa_ne', 'usa_southeast', 'usa_great_lakes'], 'urban', 42000000, 1800, 12000,
       'M 200,130 L 250,140 L 260,180 L 220,190 L 190,160 Z', [225, 160]),
-    r('usa_southeast', 'usa', 'Southeast', ['usa_mid_atlantic', 'usa_southwest', 'usa_great_lakes'], 'coastal', 65000000, 2200, 18000,
+    r('usa_southeast', 'usa', 'Southeast', ['usa_mid_atlantic', 'usa_southwest', 'usa_great_lakes', 'cuba_west'], 'coastal', 65000000, 2200, 18000,
       'M 190,160 L 220,190 L 240,240 L 200,250 L 170,210 Z', [205, 210]),
     r('usa_great_lakes', 'usa', 'Great Lakes', ['usa_ne', 'usa_mid_atlantic', 'usa_southeast', 'usa_plains'], 'urban', 48000000, 2400, 14000,
       'M 170,130 L 200,130 L 190,160 L 160,170 L 140,150 Z', [170, 150]),
@@ -267,6 +267,16 @@ export const REGIONS: Record<string, Region> = {
       'M 180,55 L 220,50 L 225,85 L 185,90 Z', [203, 70]),
     r('deu_east', 'germany', 'Eastern Germany', ['deu_south', 'deu_north'], 'plains', 8000000, 400, 4000,
       'M 225,85 L 265,80 L 270,120 L 230,125 Z', [248, 103]),
+  ].map(reg => [reg.id, reg])),
+
+  // Cuba — 3 regions (NPC / Campaign Mission 1)
+  ...Object.fromEntries([
+    r('cuba_west', 'cuba', 'Western Cuba', ['cuba_central', 'usa_southeast'], 'coastal', 3500000, 120, 4500,
+      'M 80,200 L 140,195 L 145,230 L 85,235 Z', [112, 215], 1),
+    r('cuba_central', 'cuba', 'Central Cuba', ['cuba_west', 'cuba_east'], 'plains', 4200000, 140, 5000,
+      'M 140,195 L 200,190 L 205,230 L 145,235 Z', [172, 212]),
+    r('cuba_east', 'cuba', 'Eastern Cuba', ['cuba_central'], 'mountain', 3400000, 100, 5500,
+      'M 200,190 L 255,200 L 250,240 L 205,235 Z', [228, 216], 1),
   ].map(reg => [reg.id, reg])),
 };
 

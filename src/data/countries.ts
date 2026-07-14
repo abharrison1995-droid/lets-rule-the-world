@@ -431,6 +431,26 @@ export const COUNTRIES: Record<string, Country> = {
     uniqueMechanics: ['suez_gatekeeper'],
     collapseCondition: { type: 'hard', triggerStats: { regimeSecurity: 0.25 }, telegraphEventId: 'egypt_crisis_warning' },
   },
+  cuba: {
+    id: 'cuba',
+    name: 'Cuba',
+    playable: false,
+    debtToGdp: 0.55,
+    governmentType: 'autocratic',
+    color: '#dc2626',
+    worldMapPath: 'M 195,255 L 225,250 L 235,262 L 220,272 L 198,270 Z',
+    worldMapLabel: [215, 262],
+    stats: {
+      treasuryPoints: 18, baseGrowthRate: 0.015, defenseBudget: 0.028, troopQuality: 0.48, techLevel: 0.35,
+      moraleBase: 0.55, regimeSecurity: 0.62, warPopularity: 0.45, warExhaustion: 0, propagandaSaturation: 0.1,
+    },
+    militaryDev: { troopQuality: 2, missileDefense: 1, droneProgram: 1, strikeCapability: 1, fortification: 2 },
+    startingAlliances: [],
+    startingRelations: {},
+    difficultyRating: { score: 5, blurb: 'NPC — Campaign Mission 1 target. Hardened island, thin economy.' },
+    uniqueMechanics: [],
+    collapseCondition: { type: 'hard', triggerStats: { regimeSecurity: 0.22 }, telegraphEventId: 'cuba_crisis_warning' },
+  },
 };
 
 export const ALLIANCES_DATA = [
