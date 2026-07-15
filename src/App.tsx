@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import type {
   GameState,
   GameMode,
-  UkraineAlignment,
   TurnReportEntry,
   BudgetAllocation,
   MilitaryDev,
@@ -61,7 +60,7 @@ import { WarTheaterNoticeModal } from './components/WarTheaterNoticeModal';
 import { CampaignMissionPanel } from './components/CampaignMissionPanel';
 import { CutsceneModal } from './components/CutsceneModal';
 import { BottomSheet } from './components/BottomSheet';
-import { installCampaignClient, setUkraineAlignment } from './engine/usaCampaign';
+import { installCampaignClient } from './engine/usaCampaign';
 import { hasBlockingCutscene } from './data/cutscenes';
 import { detectFronts } from './engine/combat';
 import type { StrikeType } from './engine/strikes';
@@ -266,13 +265,6 @@ export default function App() {
       updateState(newState);
       showFeedback('Client government installed.');
     }
-  }, [state, updateState]);
-
-  const handleSetUkraineAlignment = useCallback((alignment: UkraineAlignment) => {
-    if (!state) return;
-    const newState = structuredClone(state);
-    setUkraineAlignment(newState, alignment);
-    updateState(newState);
   }, [state, updateState]);
 
   const handleConfirmWar = useCallback(() => {
@@ -642,7 +634,6 @@ export default function App() {
           onProbePacts={handleProbePacts}
           onExecuteMechanic={handleMechanic}
           onInstallClient={handleInstallClient}
-          onSetUkraineAlignment={handleSetUkraineAlignment}
           onFocusCountry={handleCountryClick}
           onOpenTheater={(theaterId) => {
             setTheaterFocusId(theaterId);

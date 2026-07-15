@@ -1,8 +1,7 @@
-import type { GameState, UkraineAlignment } from '../types/game';
+import type { GameState } from '../types/game';
 import {
   getMissionHud,
   getInstallClientPreview,
-  getUkraineAlignmentLabel,
 } from '../engine/usaCampaign';
 
 interface CampaignMissionPanelProps {
@@ -26,7 +25,6 @@ export function CampaignMissionPanel({
   const install = hud.allowsClientInstall
     ? getInstallClientPreview(state, hud.targetId)
     : null;
-  const alignment = state.usaCampaign?.ukraineAlignment;
 
   return (
     <section className={`panel-section campaign-mission-panel ${compact ? 'compact' : ''}`}>
@@ -113,50 +111,6 @@ export function CampaignMissionPanel({
       {hud.status === 'failed' && (
         <p className="warning-text">Mission failed.</p>
       )}
-
-      {alignment && !compact && (
-        <p className="muted small campaign-align-note">
-          Ukraine alignment: <strong>{getUkraineAlignmentLabel(alignment)}</strong>
-          {' — change in Diplomacy.'}
-        </p>
-      )}
-    </section>
-  );
-}
-
-/** Standalone alignment controls for Diplomacy */
-export function UkraineAlignmentControls({
-  state,
-  onChange,
-}: {
-  state: GameState;
-  onChange: (alignment: UkraineAlignment) => void;
-}) {
-  if (!state.usaCampaign) return null;
-  const current = state.usaCampaign.ukraineAlignment;
-
-  return (
-    <section className="panel-section">
-      <h4>Ukraine Alignment</h4>
-      <div className="campaign-align-inline">
-        {(
-          [
-            ['ukraine', 'Back Ukraine'],
-            ['deniable', 'Deniable'],
-            ['russia', 'Tilt Moscow'],
-          ] as Array<[UkraineAlignment, string]>
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            className={`btn-small ${current === id ? 'meeting' : ''}`}
-            disabled={current === id}
-            onClick={() => onChange(id)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
     </section>
   );
 }
