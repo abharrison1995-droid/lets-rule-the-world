@@ -62,6 +62,7 @@ import { CutsceneModal } from './components/CutsceneModal';
 import { BottomSheet } from './components/BottomSheet';
 import { installCampaignClient } from './engine/usaCampaign';
 import { hasBlockingCutscene } from './data/cutscenes';
+import { maybeStartPostCubaCutscene } from './engine/cutscenes';
 import { detectFronts } from './engine/combat';
 import type { StrikeType } from './engine/strikes';
 import { useMobileLayout } from './hooks/useMobileLayout';
@@ -262,6 +263,7 @@ export default function App() {
     const err = installCampaignClient(newState, targetId);
     if (err) showFeedback(err);
     else {
+      maybeStartPostCubaCutscene(newState);
       updateState(newState);
       showFeedback('Client government installed.');
     }

@@ -731,6 +731,51 @@ button.mission-badge-btn:focus-visible {
   margin-top: 0.4rem;
 }
 
+.campaign-mission-paths {
+  margin: 0.35rem 0 0.55rem;
+  padding-left: 1.1rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.mission-howto {
+  margin: 0.55rem 0 0.35rem;
+  padding: 0.55rem 0.65rem;
+  border-left: 2px solid rgba(201, 169, 106, 0.45);
+  background: rgba(201, 169, 106, 0.06);
+}
+
+.mission-howto-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+
+.mission-howto-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--foam);
+}
+
+.mission-howto-list li + li {
+  margin-top: 0.28rem;
+}
+
+.mission-front-tip {
+  margin: 0.4rem 0 0;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: var(--foam);
+  background: rgba(201, 169, 106, 0.08);
+  border: 1px solid rgba(201, 169, 106, 0.25);
+  border-radius: 3px;
+}
+
 .mission-war-flag {
   font-size: 0.78rem;
   color: var(--danger);

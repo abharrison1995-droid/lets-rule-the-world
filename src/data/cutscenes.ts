@@ -28,6 +28,7 @@ export const CUTSCENE_SPEAKERS: Record<Exclude<CutsceneSpeakerId, 'narrator'>, C
 
 export type CutsceneEffectId =
   | 'acknowledge_usa_intro'
+  | 'complete_post_cuba'
   | 'tone_measured'
   | 'tone_hardline'
   | 'tone_probe';
@@ -103,8 +104,47 @@ export const CUTSCENE_USA_INTRO_CIA: CutsceneDef = {
   ],
 };
 
+/** After Mission 1 — CIA alone. Celebrate Cuba; point at peer horizon. */
+export const CUTSCENE_USA_POST_CUBA: CutsceneDef = {
+  id: 'usa_post_cuba',
+  title: 'Caribbean Secured',
+  startBeatId: 'open',
+  beats: [
+    {
+      id: 'open',
+      speaker: 'cia_director',
+      line:
+        'Cuba is in our orbit. The hemisphere felt that. Conquest or client — same signal: Washington still writes the map in the Caribbean.',
+      choices: [
+        { label: 'Good. What’s next.', nextBeatId: 'horizon' },
+        { label: 'Keep it quiet. No victory laps.', nextBeatId: 'horizon', effects: ['tone_measured'] },
+        { label: 'Then we tighten the screws.', nextBeatId: 'horizon', effects: ['tone_hardline'] },
+      ],
+    },
+    {
+      id: 'horizon',
+      speaker: 'cia_director',
+      line:
+        'Don’t mistake a local win for the century. Russia and China are still peers — the National Security Council will force a designation around turn sixty if you haven’t already drawn blood. Ukraine keeps burning in the background; you’ll learn that board when you choose to step in. For now: rebuild energy, watch the timer on the next mandate, and don’t sleep on Moscow or Beijing.',
+      choices: [
+        {
+          label: 'Understood. We pick the fight on our clock.',
+          resolve: true,
+          effects: ['complete_post_cuba'],
+        },
+        {
+          label: 'When they force the choice, I’ll be ready.',
+          resolve: true,
+          effects: ['complete_post_cuba', 'tone_measured'],
+        },
+      ],
+    },
+  ],
+};
+
 export const CUTSCENES: Record<string, CutsceneDef> = {
   [CUTSCENE_USA_INTRO_CIA.id]: CUTSCENE_USA_INTRO_CIA,
+  [CUTSCENE_USA_POST_CUBA.id]: CUTSCENE_USA_POST_CUBA,
 };
 
 export function getCutsceneDef(sceneId: string): CutsceneDef | undefined {

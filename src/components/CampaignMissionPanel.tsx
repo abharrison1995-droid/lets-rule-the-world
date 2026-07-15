@@ -3,6 +3,7 @@ import {
   getMissionHud,
   getInstallClientPreview,
 } from '../engine/usaCampaign';
+import { FiscalImpactLine } from './FiscalImpactLine';
 
 interface CampaignMissionPanelProps {
   state: GameState;
@@ -48,6 +49,18 @@ export function CampaignMissionPanel({
             </p>
           )}
           <p className="muted small">{hud.blurb}</p>
+
+          {!compact && hud.howToSteps.length > 0 && (
+            <div className="mission-howto">
+              <p className="mission-howto-label">How to play this</p>
+              <ol className="mission-howto-list">
+                {hud.howToSteps.map(step => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+            </div>
+          )}
+
           <ul className="campaign-mission-paths">
             {hud.winPaths.map(path => (
               <li key={path}>{path}</li>
@@ -91,13 +104,14 @@ export function CampaignMissionPanel({
                 onClick={() => onInstallClient(hud.targetId)}
               >
                 Install Client Gov
-                {install.canInstall
-                  ? ` ($${install.costTp}B · ${install.energyCost}⚡)`
-                  : ''}
+                {` (${install.costLabel} · ${install.energyCost}⚡)`}
               </button>
             )}
           </div>
-          {install && !install.canInstall && install.blockReason && hud.atWar && (
+          {install && install.fiscal && (
+            <FiscalImpactLine fiscal={install.fiscal} />
+          )}
+          {install && !install.canInstall && install.blockReason && (
             <p className="muted small">{install.blockReason}</p>
           )}
           {install && install.reasonsMet.length > 0 && (

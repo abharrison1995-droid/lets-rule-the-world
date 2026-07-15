@@ -31,7 +31,7 @@ import {
 import { formatModeLabel } from '../data/gameModes';
 import { isUsaCampaignMode } from '../data/campaignUsa';
 import { createUsaCampaignState, tickUsaCampaign } from './usaCampaign';
-import { startUsaIntroCutscene } from './cutscenes';
+import { startUsaIntroCutscene, maybeStartPostCubaCutscene } from './cutscenes';
 
 export function createInitialState(
   playerCountryId: string,
@@ -172,6 +172,7 @@ export function advanceTurn(state: GameState): GameState {
   cleanStrikeAnimations(newState);
   checkCollapseConditions(newState);
   tickUsaCampaign(newState);
+  maybeStartPostCubaCutscene(newState);
   checkWinConditions(newState);
 
   newState.lastTurnReport = buildTurnReport(state, newState, historyFrom);

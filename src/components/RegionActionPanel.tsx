@@ -15,6 +15,7 @@ import {
   hasCampaignOnTarget,
 } from '../engine/strikeCampaigns';
 import { getRegionsForCountry } from '../data/regions';
+import { getMissionHud } from '../engine/usaCampaign';
 
 interface RegionActionPanelProps {
   state: GameState;
@@ -59,6 +60,14 @@ export function RegionActionPanel({
     c => c.targetRegionId === regionId || c.sourceRegionId === regionId
   );
   const warReadiness = state.countries[state.playerCountryId]?.stats.warReadiness ?? 1;
+  const missionHud = getMissionHud(state);
+  const missionTargetHere =
+    missionHud?.status === 'active' &&
+    (region.countryId === missionHud.targetId ||
+      getRegionsForCountry(missionHud.targetId).some(r => r.id === regionId));
+  const frontHere = state.fronts.find(
+    f => f.attackerRegionId === regionId || f.defenderRegionId === regionId
+  );
 
   return (
     <div className="region-action-panel">
@@ -73,6 +82,29 @@ export function RegionActionPanel({
         <p><span className="label">Troops:</span> {region.garrison.troops.toLocaleString()}</p>
         <p><span className="label">Industry:</span> ${region.industryValue}B</p>
         {region.unrest > 0 && <p className="warning-text">Unrest: {region.unrest}%</p>}
+        {frontHere && (
+          <p className="mission-front-tip">
+            Front pressure: <strong>{Math.round(frontHere.pressure)}</strong> — builds each{' '}
+            <strong>End Turn</strong>. Cross the threshold to flip control (classic wars, not hex theaters).
+          </p>
+        )}
+        {missionTargetHere && atWar && !frontHere && isEnemy && (
+          <p className="mission-front-tip">
+            Mission target. Adjacent occupied land open fronts; End Turn pushes them. Strikes soften defenders first.
+          </p>
+        )}
+        {missionTargetHere && isOwn && region.countryId === missionHud?.targetId && (
+          <p className="mission-front-tip">
+            {missionHud.allowsClientInstall
+              ? 'You hold this mission region. Keep pushing remaining enemy regions, or Install Client from the mission panel when a gate is ready.'
+              : 'Foothold secured. Keep pushing exhaustion or more land — peer missions do not use Install Client.'}
+          </p>
+        )}
+        {missionTargetHere && !atWar && isEnemy && (
+          <p className="mission-front-tip">
+            Mission target — declare war from the mission badge / Diplomacy, then grind fronts with End Turn.
+          </p>
+        )}
         {facilities.length > 0 && (
           <p>
             <span className="label">Facilities:</span>{' '}

@@ -19,7 +19,8 @@ import { getRelation, modifyRelation } from '../data/relations';
 import { getRegionsForCountry } from '../data/regions';
 import { isAtWarWith } from './actions';
 import { ACTION_ENERGY_COSTS, canSpendActionEnergy, spendActionEnergy } from './actionEnergy';
-import { getEffectiveSpendCost } from './fiscal';
+import { getEffectiveSpendCost, previewSpendFiscalImpact, type SpendFiscalPreview } from './fiscal';
+import { formatDisplayCost } from './treasuryDisplay';
 
 export const INSTALL_CLIENT_TP_COST = 18;
 
@@ -220,9 +221,14 @@ function completeCampaignVictory(state: GameState, peerName: string): void {
 export interface InstallClientPreview {
   canInstall: boolean;
   blockReason?: string;
+  /** Package sticker price before debt surcharge */
+  baseCostTp: number;
+  /** Effective TP charged (debt tax included) */
   costTp: number;
   energyCost: number;
   reasonsMet: string[];
+  fiscal: SpendFiscalPreview | null;
+  costLabel: string;
 }
 
 export function getInstallClientPreview(
@@ -230,11 +236,23 @@ export function getInstallClientPreview(
   nationId: string
 ): InstallClientPreview {
   const energyCost = ACTION_ENERGY_COSTS.install_client;
-  const costTp = getEffectiveSpendCost(
-    state.countries[state.playerCountryId]!,
-    INSTALL_CLIENT_TP_COST
-  );
-  const empty = { canInstall: false, costTp, energyCost, reasonsMet: [] as string[] };
+  const player = state.countries[state.playerCountryId];
+  const baseCostTp = INSTALL_CLIENT_TP_COST;
+  const costTp = player ? getEffectiveSpendCost(player, baseCostTp) : baseCostTp;
+  const fiscal = previewSpendFiscalImpact(state, state.playerCountryId, baseCostTp);
+  const costLabel =
+    Math.abs(costTp - baseCostTp) > 0.05
+      ? `${formatDisplayCost(costTp)} (base ${formatDisplayCost(baseCostTp)} + debt tax)`
+      : formatDisplayCost(costTp);
+  const empty: InstallClientPreview = {
+    canInstall: false,
+    baseCostTp,
+    costTp,
+    energyCost,
+    reasonsMet: [],
+    fiscal,
+    costLabel,
+  };
 
   if (!state.usaCampaign) {
     return { ...empty, blockReason: 'Not in USA campaign.' };
@@ -276,12 +294,15 @@ export function getInstallClientPreview(
   if (!canSpendActionEnergy(state, energyCost)) {
     return { ...empty, blockReason: `Need ${energyCost} action energy.`, reasonsMet };
   }
-  const player = state.countries[state.playerCountryId];
   if (!player || player.stats.treasuryPoints < costTp) {
-    return { ...empty, blockReason: `Need $${costTp}B for transition package.`, reasonsMet };
+    return {
+      ...empty,
+      blockReason: `Need ${costLabel} for transition package.`,
+      reasonsMet,
+    };
   }
 
-  return { canInstall: true, costTp, energyCost, reasonsMet };
+  return { canInstall: true, baseCostTp, costTp, energyCost, reasonsMet, fiscal, costLabel };
 }
 
 /** Install a Washington-aligned government on the mission target. */
@@ -447,6 +468,8 @@ export interface MissionHudInfo {
   allowsClientInstall: boolean;
   kind: 'client_or_conquer' | 'peer_contest';
   winPaths: string[];
+  /** Short teaching steps for the active mission */
+  howToSteps: string[];
   blurb: string;
   peerWarByTurn: number | null;
   targetExhaustion: number;
@@ -483,6 +506,34 @@ export function getMissionHud(state: GameState): MissionHudInfo | null {
           'Or install a client government while at war',
         ];
 
+  const howToSteps: string[] =
+    kind === 'peer_contest'
+      ? atWar
+        ? [
+            'Push war exhaustion with strikes/campaigns, or take a foothold region.',
+            ...(mission.targetCountryId === 'russia'
+              ? ['Vs Russia you can also win by keeping Ukraine mostly sovereign while at war.']
+              : []),
+            'Watch the deadline — miss it and the campaign fails.',
+          ]
+        : [
+            `Declare war on ${target?.name ?? 'the peer'} before the war-by deadline.`,
+            mission.targetCountryId === 'russia'
+              ? 'Then break them via foothold, exhaustion, or Ukraine sovereignty.'
+              : 'Then break them via foothold or war exhaustion.',
+          ]
+      : atWar
+        ? [
+            'Open the island map — fronts push every End Turn from adjacent regions (start Southeast → Western Cuba).',
+            'Strikes soften garrisons; full conquest flips all regions, or install a client once a gate is met.',
+            'Bank ⚡ and treasury before Install Client — debt raises the package price.',
+          ]
+        : [
+            `Declare war on ${target?.name ?? 'the target'} from this panel or Diplomacy.`,
+            'Open their map and End Turn to grind front pressure — that is how land changes hands.',
+            'Win by conquering every region, or by installing a client government mid-war.',
+          ];
+
   return {
     title: def?.title ?? mission.missionId,
     targetName: target?.name ?? mission.targetCountryId,
@@ -497,6 +548,7 @@ export function getMissionHud(state: GameState): MissionHudInfo | null {
     allowsClientInstall: def?.allowsClientInstall ?? false,
     kind,
     winPaths,
+    howToSteps,
     blurb: def?.blurb ?? '',
     peerWarByTurn:
       kind === 'peer_contest' && mission.status === 'active'

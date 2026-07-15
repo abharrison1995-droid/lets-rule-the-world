@@ -1,16 +1,19 @@
 import type { GameState, ActiveCutscene } from '../types/game';
 import {
   CUTSCENE_USA_INTRO_CIA,
+  CUTSCENE_USA_POST_CUBA,
   getCutsceneBeat,
   getCutsceneDef,
   type CutsceneEffectId,
 } from '../data/cutscenes';
+import { USA_MISSION_CUBA } from '../data/campaignUsa';
 import { acknowledgeCampaignBrief } from './usaCampaign';
 import { modifyRelation } from '../data/relations';
 
 export function startCutscene(state: GameState, sceneId: string): void {
   const def = getCutsceneDef(sceneId);
   if (!def) return;
+  if (state.activeCutscene) return;
   state.activeCutscene = { sceneId: def.id, beatId: def.startBeatId };
 }
 
@@ -21,10 +24,24 @@ export function startUsaIntroCutscene(state: GameState): void {
   startCutscene(state, CUTSCENE_USA_INTRO_CIA.id);
 }
 
+/** Fire after Mission 1 (Cuba) completes — blocks until finished. */
+export function maybeStartPostCubaCutscene(state: GameState): void {
+  if (state.gameMode !== 'campaign' || !state.usaCampaign) return;
+  if (state.activeCutscene) return;
+  if ((state.completedCutscenes ?? []).includes(CUTSCENE_USA_POST_CUBA.id)) return;
+  if (!state.usaCampaign.completedMissions.includes(USA_MISSION_CUBA.id)) return;
+  startCutscene(state, CUTSCENE_USA_POST_CUBA.id);
+}
+
 function applyEffect(state: GameState, effect: CutsceneEffectId): void {
   switch (effect) {
     case 'acknowledge_usa_intro':
       acknowledgeCampaignBrief(state, 'ukraine');
+      break;
+    case 'complete_post_cuba':
+      state.history.push(
+        `Turn ${state.turn}: Situation Room — Caribbean secured; peer contest still ahead.`
+      );
       break;
     case 'tone_measured':
       modifyRelation(state.relations, 'usa', 'england', 2);
