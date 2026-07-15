@@ -119,6 +119,11 @@ export function usePanZoom({
       if (!enabled || e.button > 0) return;
       movedRef.current = false;
       blockClickRef.current = false;
+      // At fit scale, keep clicks clean — pan only once zoomed in
+      if (transform.scale <= 1) {
+        panStart.current = null;
+        return;
+      }
       panStart.current = {
         x: e.clientX,
         y: e.clientY,
@@ -127,12 +132,12 @@ export function usePanZoom({
       };
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     },
-    [enabled, transform.x, transform.y]
+    [enabled, transform.x, transform.y, transform.scale]
   );
 
   const onPointerMove = useCallback(
     (e: React.PointerEvent) => {
-      if (!enabled || !panStart.current) return;
+      if (!enabled || !panStart.current || transform.scale <= 1) return;
       const dx = e.clientX - panStart.current.x;
       const dy = e.clientY - panStart.current.y;
       if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {

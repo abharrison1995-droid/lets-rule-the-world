@@ -10,8 +10,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'democratic',
     color: '#4a7a9a',
     worldMapPath:
-      'M 88,188 L 132,172 L 178,175 L 218,198 L 228,232 L 205,262 L 158,268 L 118,252 L 92,218 Z',
-    worldMapLabel: [168, 228],
+      'M 72,185 L 125,168 L 178,172 L 218,200 L 225,238 L 198,268 L 145,272 L 100,248 L 78,212 Z',
+    worldMapLabel: [158, 225],
     stats: {
       treasuryPoints: 167,
       baseGrowthRate: 0.024,
@@ -39,8 +39,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'democratic',
     color: '#5c6b78',
     worldMapPath:
-      'M 408,132 L 428,126 L 438,142 L 430,158 L 412,162 L 402,148 Z',
-    worldMapLabel: [420, 148],
+      'M 398,128 L 420,122 L 430,138 L 422,154 L 404,158 L 394,144 Z',
+    worldMapLabel: [412, 142],
     stats: {
       treasuryPoints: 69,
       baseGrowthRate: 0.011,
@@ -68,8 +68,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'autocratic',
     color: '#8b5a52',
     worldMapPath:
-      'M 518,88 L 615,78 L 735,88 L 792,108 L 805,138 L 778,168 L 685,182 L 575,175 L 512,158 L 498,125 Z',
-    worldMapLabel: [655, 132],
+      'M 555,78 L 655,68 L 740,80 L 790,100 L 805,132 L 778,158 L 700,165 L 605,158 L 558,140 L 548,115 Z',
+    worldMapLabel: [675, 120],
     stats: {
       treasuryPoints: 56,
       baseGrowthRate: 0.018,
@@ -97,8 +97,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'autocratic',
     color: '#9a5550',
     worldMapPath:
-      'M 722,198 L 815,185 L 895,202 L 912,245 L 892,292 L 815,302 L 745,285 L 718,242 Z',
-    worldMapLabel: [815, 252],
+      'M 778,188 L 860,175 L 935,195 L 955,240 L 932,288 L 850,298 L 790,280 L 775,235 Z',
+    worldMapLabel: [865, 245],
     stats: {
       treasuryPoints: 137,
       baseGrowthRate: 0.048,
@@ -126,8 +126,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'hybrid',
     color: '#b08948',
     worldMapPath:
-      'M 508,202 L 542,198 L 552,218 L 538,238 L 512,232 L 502,215 Z',
-    worldMapLabel: [528, 222],
+      'M 512,208 L 552,202 L 565,222 L 548,242 L 515,236 L 505,220 Z',
+    worldMapLabel: [536, 226],
     stats: {
       treasuryPoints: 46,
       baseGrowthRate: 0.042,
@@ -155,8 +155,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'hybrid',
     color: '#4a8a92',
     worldMapPath:
-      'M 538,262 L 550,258 L 556,272 L 548,282 L 536,278 Z',
-    worldMapLabel: [546, 272],
+      'M 538,268 L 550,264 L 556,278 L 548,288 L 536,284 Z',
+    worldMapLabel: [546, 278],
     stats: {
       treasuryPoints: 37,
       baseGrowthRate: 0.032,
@@ -184,8 +184,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'hybrid',
     color: '#b07848',
     worldMapPath:
-      'M 662,282 L 715,272 L 742,305 L 728,345 L 682,352 L 658,318 Z',
-    worldMapLabel: [702, 318],
+      'M 695,288 L 752,275 L 782,312 L 765,358 L 712,365 L 688,328 Z',
+    worldMapLabel: [738, 325],
     stats: {
       treasuryPoints: 73,
       baseGrowthRate: 0.068,
@@ -213,8 +213,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'hybrid',
     color: '#4a7a62',
     worldMapPath:
-      'M 628,248 L 665,242 L 678,265 L 665,288 L 638,282 L 622,262 Z',
-    worldMapLabel: [652, 268],
+      'M 648,238 L 688,232 L 702,258 L 688,282 L 655,275 L 642,252 Z',
+    worldMapLabel: [672, 258],
     stats: {
       treasuryPoints: 34,
       baseGrowthRate: 0.025,
@@ -242,8 +242,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'autocratic',
     color: '#6a7a48',
     worldMapPath:
-      'M 568,268 L 605,262 L 618,285 L 605,308 L 575,302 L 562,282 Z',
-    worldMapLabel: [592, 288],
+      'M 582,255 L 622,248 L 638,272 L 622,295 L 588,288 L 575,268 Z',
+    worldMapLabel: [608, 275],
     stats: {
       treasuryPoints: 36,
       baseGrowthRate: 0.035,
@@ -271,8 +271,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'autocratic',
     color: '#5a5868',
     worldMapPath:
-      'M 882,172 L 908,168 L 918,188 L 908,208 L 885,202 L 878,185 Z',
-    worldMapLabel: [898, 192],
+      'M 955,168 L 982,162 L 992,182 L 982,200 L 958,195 L 952,180 Z',
+    worldMapLabel: [972, 184],
     stats: {
       treasuryPoints: 21,
       baseGrowthRate: 0.01,
@@ -300,8 +300,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'democratic',
     color: '#7a5560',
     worldMapPath:
-      'M 898,212 L 925,208 L 935,228 L 922,245 L 898,238 L 892,222 Z',
-    worldMapLabel: [915, 228],
+      'M 968,212 L 995,206 L 1005,226 L 992,242 L 968,236 L 962,222 Z',
+    worldMapLabel: [985, 228],
     stats: {
       treasuryPoints: 55,
       baseGrowthRate: 0.022,
@@ -330,8 +330,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'democratic',
     color: '#a8924a',
     worldMapPath:
-      'M 488,152 L 522,148 L 532,168 L 518,188 L 492,182 L 482,165 Z',
-    worldMapLabel: [508, 172],
+      'M 512,155 L 548,150 L 560,172 L 545,192 L 515,186 L 505,168 Z',
+    worldMapLabel: [532, 174],
     stats: {
       treasuryPoints: 29, baseGrowthRate: 0.03, defenseBudget: 0.22, troopQuality: 0.65, techLevel: 0.45,
       moraleBase: 0.75, regimeSecurity: 0.60, warPopularity: 0.7, warExhaustion: 0.3, propagandaSaturation: 0,
@@ -351,8 +351,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'autocratic',
     color: '#3d6b52',
     worldMapPath:
-      'M 548,312 L 592,308 L 605,332 L 588,355 L 552,352 L 542,328 Z',
-    worldMapLabel: [578, 335],
+      'M 548,318 L 598,312 L 612,338 L 592,362 L 548,358 L 538,332 Z',
+    worldMapLabel: [578, 340],
     stats: {
       treasuryPoints: 46, baseGrowthRate: 0.035, defenseBudget: 0.07, troopQuality: 0.50, techLevel: 0.55,
       moraleBase: 0.60, regimeSecurity: 0.70, warPopularity: 0.5, warExhaustion: 0, propagandaSaturation: 0,
@@ -372,8 +372,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'democratic',
     color: '#8a5558',
     worldMapPath:
-      'M 962,182 L 992,175 L 1005,205 L 988,232 L 962,225 L 955,200 Z',
-    worldMapLabel: [982, 208],
+      'M 1035,175 L 1068,168 L 1082,198 L 1062,228 L 1032,220 L 1025,192 Z',
+    worldMapLabel: [1055, 200],
     stats: {
       treasuryPoints: 73, baseGrowthRate: 0.012, defenseBudget: 0.012, troopQuality: 0.80, techLevel: 0.88,
       moraleBase: 0.65, regimeSecurity: 0.85, warPopularity: 0.4, warExhaustion: 0, propagandaSaturation: 0,
@@ -393,8 +393,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'democratic',
     color: '#4a6a8a',
     worldMapPath:
-      'M 428,168 L 452,162 L 462,182 L 450,198 L 428,192 L 422,178 Z',
-    worldMapLabel: [442, 182],
+      'M 422,172 L 448,166 L 458,186 L 446,202 L 422,196 L 416,182 Z',
+    worldMapLabel: [438, 186],
     stats: {
       treasuryPoints: 66, baseGrowthRate: 0.011, defenseBudget: 0.019, troopQuality: 0.82, techLevel: 0.80,
       moraleBase: 0.65, regimeSecurity: 0.80, warPopularity: 0.5, warExhaustion: 0, propagandaSaturation: 0,
@@ -414,8 +414,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'democratic',
     color: '#6a6a62',
     worldMapPath:
-      'M 458,142 L 485,138 L 495,155 L 488,172 L 462,168 L 452,155 Z',
-    worldMapLabel: [472, 158],
+      'M 468,138 L 498,132 L 508,152 L 498,168 L 470,164 L 462,150 Z',
+    worldMapLabel: [484, 152],
     stats: {
       treasuryPoints: 76, baseGrowthRate: 0.008, defenseBudget: 0.014, troopQuality: 0.75, techLevel: 0.82,
       moraleBase: 0.60, regimeSecurity: 0.85, warPopularity: 0.4, warExhaustion: 0, propagandaSaturation: 0,
@@ -435,8 +435,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'autocratic',
     color: '#9a8450',
     worldMapPath:
-      'M 488,298 L 522,292 L 535,318 L 522,342 L 495,338 L 482,318 Z',
-    worldMapLabel: [512, 322],
+      'M 478,305 L 518,298 L 532,325 L 518,350 L 488,346 L 472,325 Z',
+    worldMapLabel: [505, 328],
     stats: {
       treasuryPoints: 36, baseGrowthRate: 0.035, defenseBudget: 0.012, troopQuality: 0.55, techLevel: 0.40,
       moraleBase: 0.50, regimeSecurity: 0.55, warPopularity: 0.5, warExhaustion: 0, propagandaSaturation: 0,
@@ -456,8 +456,8 @@ export const COUNTRIES: Record<string, Country> = {
     governmentType: 'autocratic',
     color: '#7a4a48',
     worldMapPath:
-      'M 228,292 L 258,286 L 272,302 L 262,322 L 235,320 L 222,305 Z',
-    worldMapLabel: [248, 308],
+      'M 232,300 L 262,294 L 276,310 L 265,328 L 238,326 L 225,312 Z',
+    worldMapLabel: [252, 316],
     stats: {
       treasuryPoints: 18, baseGrowthRate: 0.015, defenseBudget: 0.028, troopQuality: 0.48, techLevel: 0.35,
       moraleBase: 0.55, regimeSecurity: 0.62, warPopularity: 0.45, warExhaustion: 0, propagandaSaturation: 0.1,

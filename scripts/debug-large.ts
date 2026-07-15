@@ -23,7 +23,9 @@ import {
 } from '../src/engine/npcNation.ts';
 import { chooseCutsceneOption, maybeStartPostCubaCutscene } from '../src/engine/cutscenes.ts';
 import { hasBlockingCutscene } from '../src/data/cutscenes.ts';
-import { REGIONS } from '../src/data/regions.ts';
+import { WORLD_MAP_HEIGHT, WORLD_MAP_WIDTH, getWorldMapShortLabel } from '../src/data/worldMap.ts';
+import { getNationalViewBox } from '../src/utils/mapUtils.ts';
+import { getRegionsForCountry, REGIONS } from '../src/data/regions.ts';
 import { COUNTRIES } from '../src/data/countries.ts';
 
 const g = globalThis as typeof globalThis & { localStorage?: Storage };
@@ -390,6 +392,89 @@ function cloneUsa() {
   if (hud?.targetId === 'china' && !ukraineLeak)
     pass('peer.chinaHowTo', 'China how-tos omit Ukraine');
   else fail('peer.chinaHowTo', JSON.stringify(hud?.howToSteps));
+}
+
+{
+  const ids = Object.keys(COUNTRIES);
+  if (ids.length === 18) pass('map.worldCount', '18 nations on board');
+  else fail('map.worldCount', String(ids.length));
+
+  let oob = 0;
+  let missingLabel = 0;
+  for (const c of Object.values(COUNTRIES)) {
+    const [lx, ly] = c.worldMapLabel;
+    if (lx < 0 || ly < 0 || lx > WORLD_MAP_WIDTH || ly > WORLD_MAP_HEIGHT) oob++;
+    if (!getWorldMapShortLabel(c.id, c.name)) missingLabel++;
+    const pts = [...c.worldMapPath.matchAll(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/g)].map(m => [
+      Number(m[1]),
+      Number(m[2]),
+    ]);
+    if (pts.some(([x, y]) => x < 0 || y < 0 || x > WORLD_MAP_WIDTH || y > WORLD_MAP_HEIGHT)) oob++;
+  }
+  if (oob === 0 && missingLabel === 0) pass('map.worldBounds', `labels+paths within ${WORLD_MAP_WIDTH}x${WORLD_MAP_HEIGHT}`);
+  else fail('map.worldBounds', `oob=${oob} missingLabel=${missingLabel}`);
+
+  // Heavy AABB overlaps (area > 400) signal layout regression
+  const boxes = Object.values(COUNTRIES).map(c => {
+    const pts = [...c.worldMapPath.matchAll(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/g)].map(m => [
+      Number(m[1]),
+      Number(m[2]),
+    ]);
+    const xs = pts.map(p => p[0]);
+    const ys = pts.map(p => p[1]);
+    return { id: c.id, minX: Math.min(...xs), minY: Math.min(...ys), maxX: Math.max(...xs), maxY: Math.max(...ys) };
+  });
+  const heavy: string[] = [];
+  for (let i = 0; i < boxes.length; i++) {
+    for (let j = i + 1; j < boxes.length; j++) {
+      const a = boxes[i];
+      const b = boxes[j];
+      const ix0 = Math.max(a.minX, b.minX);
+      const iy0 = Math.max(a.minY, b.minY);
+      const ix1 = Math.min(a.maxX, b.maxX);
+      const iy1 = Math.min(a.maxY, b.maxY);
+      if (ix1 > ix0 && iy1 > iy0) {
+        const area = (ix1 - ix0) * (iy1 - iy0);
+        if (area > 400) heavy.push(`${a.id}/${b.id}:${area}`);
+      }
+    }
+  }
+  if (heavy.length === 0) pass('map.worldOverlap', 'no heavy AABB overlaps');
+  else fail('map.worldOverlap', heavy.join(', '));
+}
+
+{
+  const usa = getRegionsForCountry('usa');
+  const vb = getNationalViewBox(usa, 32);
+  const [x, y, w, h] = vb.split(' ').map(Number);
+  let cropped = 0;
+  for (const r of usa) {
+    const pts = [...r.mapPath.matchAll(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/g)].map(m => [
+      Number(m[1]),
+      Number(m[2]),
+    ]);
+    for (const [px, py] of pts) {
+      if (px < x || py < y || px > x + w || py > y + h) cropped++;
+    }
+  }
+  if (cropped === 0) pass('map.nationalFit', `USA viewBox ${vb}`);
+  else fail('map.nationalFit', `croppedPts=${cropped} vb=${vb}`);
+
+  const cuba = getRegionsForCountry('cuba');
+  const cvb = getNationalViewBox([...cuba, ...Object.values(REGIONS).filter(r => r.id === 'usa_southeast')], 32);
+  const [cx, cy, cw, ch] = cvb.split(' ').map(Number);
+  let cubaCrop = 0;
+  for (const r of cuba) {
+    const pts = [...r.mapPath.matchAll(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/g)].map(m => [
+      Number(m[1]),
+      Number(m[2]),
+    ]);
+    for (const [px, py] of pts) {
+      if (px < cx || py < cy || px > cx + cw || py > cy + ch) cubaCrop++;
+    }
+  }
+  if (cubaCrop === 0) pass('map.cubaFit', 'Cuba+SE strip fits path viewBox');
+  else fail('map.cubaFit', `croppedPts=${cubaCrop} vb=${cvb}`);
 }
 
 const failed = rows.filter(r => !r.ok);
