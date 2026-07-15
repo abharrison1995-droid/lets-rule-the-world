@@ -2803,23 +2803,44 @@ button.mission-badge-btn:focus-visible {
   text-transform: uppercase;
 }
 
-.world-map--hemisphere .world-map-svg {
-  flex: 1;
-}
-
 .world-map-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 1rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 
-.world-map--mobile-fill .map-stage,
-.national-map--mobile-fill .map-stage {
-  min-height: 75dvh;
+.world-map-header h2 {
+  font-size: 0.95rem;
+  font-family: 'Syne', 'Sora', sans-serif;
+  letter-spacing: 0.03em;
 }
 
-.world-map--mobile-fill .map-stage .world-map-svg,
-.national-map--mobile-fill .map-stage .national-map-svg {
-  min-height: 75dvh;
-  height: 75dvh;
+.world-map-scope {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.world-map--fill,
+.national-map--fill {
+  flex: 1;
+  min-height: 0;
+}
+
+.world-map--fill .map-stage,
+.national-map--fill .map-stage {
+  flex: 1;
+  min-height: 0;
+}
+
+.world-map--fill .map-stage .world-map-svg,
+.national-map--fill .map-stage .national-map-svg {
+  height: 100%;
+  min-height: 0;
 }
 
 /* Pan & zoom */
@@ -2992,15 +3013,13 @@ button.mission-badge-btn:focus-visible {
     min-height: 140px;
   }
 
-  .world-map--mobile-fill .map-stage,
-  .national-map--mobile-fill .map-stage {
-    min-height: 72dvh;
+  .world-map--fill .map-stage,
+  .national-map--fill .map-stage {
+    min-height: 50dvh;
   }
 
-  .world-map--mobile-fill .map-stage .world-map-svg,
-  .national-map--mobile-fill .map-stage .national-map-svg {
-    min-height: 72dvh;
-    height: 72dvh;
+  .world-map-scope {
+    display: none;
   }
 
   .national-map-header,

@@ -486,7 +486,7 @@ export function NationalMap({ state, countryId, onBack, onRegionClick, backLabel
   }
 
   return (
-    <div className={`map-container national-map${isMobile ? ' national-map--mobile-fill' : ''}`}>
+    <div className={`map-container national-map national-map--fill`}>
       <div className="national-map-header">
         <button className="btn-back" onClick={onBack}>{backLabel}</button>
         <h2>{country?.name}</h2>
@@ -495,7 +495,7 @@ export function NationalMap({ state, countryId, onBack, onRegionClick, backLabel
         )}
       </div>
 
-      <PanZoomMap enabled={isMobile}>
+      <PanZoomMap enabled showHint={isMobile}>
         <NationalMapSvg
           state={state}
           countryId={countryId}

@@ -100,6 +100,20 @@ export function usePanZoom({
     [applyTransform, clampScale, viewportSize.w, viewportSize.h]
   );
 
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !enabled) return;
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const factor = e.deltaY > 0 ? 1 / 1.12 : 1.12;
+      zoomBy(factor);
+    };
+
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [containerRef, enabled, zoomBy]);
+
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (!enabled || e.button > 0) return;
