@@ -159,10 +159,26 @@ export function syncWarTheaters(state: GameState): void {
     if (exists) continue;
     const theater = createTheaterFromWar(state, war.id, def);
     state.warTheaters.push(theater);
-    state.pendingTheaterNotices ??= [];
-    state.pendingTheaterNotices.push(theater.id);
+    // Only interrupt the player when they are a belligerent — foreign wars
+    // (e.g. RU–UA at USA campaign start) still open in the background for reports.
+    if (war.belligerents.includes(state.playerCountryId)) {
+      state.pendingTheaterNotices ??= [];
+      state.pendingTheaterNotices.push(theater.id);
+    }
     state.history.push(`Turn ${state.turn}: ${def.name} opens — operational hex board active.`);
   }
+
+  pruneForeignTheaterNotices(state);
+}
+
+/** Drop theater popups for wars the player is not fighting. */
+export function pruneForeignTheaterNotices(state: GameState): void {
+  state.pendingTheaterNotices = (state.pendingTheaterNotices ?? []).filter(id => {
+    const theater = (state.warTheaters ?? []).find(t => t.id === id);
+    if (!theater || theater.closed) return false;
+    const war = state.wars.find(w => w.id === theater.warId);
+    return Boolean(war?.belligerents.includes(state.playerCountryId));
+  });
 }
 
 export function getActiveTheaters(state: GameState): WarTheaterState[] {

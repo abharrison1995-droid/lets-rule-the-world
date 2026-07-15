@@ -8,7 +8,7 @@ import {
 import { DEFAULT_DOMESTIC_SPLIT } from './propaganda';
 import { defaultBudget } from './economy';
 import { createDefaultNpcMechanicState } from './npcMechanics';
-import { syncWarTheaters } from './warTheater';
+import { syncWarTheaters, pruneForeignTheaterNotices } from './warTheater';
 import { createUsaCampaignState } from './usaCampaign';
 import { startUsaIntroCutscene } from './cutscenes';
 import { formatModeLabel } from '../data/gameModes';
@@ -212,6 +212,7 @@ function fillMissingSaveFields(state: GameState): GameState {
   }
   state.interventionMeters ??= {};
   state.pendingTheaterNotices ??= [];
+  pruneForeignTheaterNotices(state);
   state.collapsedNations ??= [];
   for (const t of state.warTheaters) {
     t.playerDoctrineAi ??= true;
