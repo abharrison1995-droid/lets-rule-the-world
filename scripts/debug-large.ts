@@ -21,6 +21,8 @@ import {
   getDiplomacyRelationTargets,
   getNpcNationIds,
 } from '../src/engine/npcNation.ts';
+import { chooseCutsceneOption, maybeStartPostCubaCutscene } from '../src/engine/cutscenes.ts';
+import { hasBlockingCutscene } from '../src/data/cutscenes.ts';
 import { REGIONS } from '../src/data/regions.ts';
 import { COUNTRIES } from '../src/data/countries.ts';
 
@@ -325,6 +327,69 @@ function cloneUsa() {
     pass('save.campaignRevive', `mission deadline ${fixed.usaCampaign.activeMission.deadlineTurn}`);
   else fail('save.campaignRevive', JSON.stringify(fixed?.usaCampaign));
   deleteSave();
+}
+
+{
+  const s = cloneUsa();
+  acknowledgeCampaignBrief(s, 'ukraine');
+  playerDeclareWar(s, 'cuba');
+  s.regions.cuba_west!.controlledBy = 'usa';
+  s.actionEnergy = 4;
+  s.countries.usa!.stats.treasuryPoints = 200;
+  installCampaignClient(s, 'cuba');
+  maybeStartPostCubaCutscene(s);
+  if (s.activeCutscene?.sceneId === 'usa_post_cuba') pass('postCuba.install', 'cutscene queued');
+  else fail('postCuba.install', String(s.activeCutscene?.sceneId));
+  chooseCutsceneOption(s, 0);
+  chooseCutsceneOption(s, 0);
+  if (!hasBlockingCutscene(s) && s.completedCutscenes?.includes('usa_post_cuba'))
+    pass('postCuba.resolve', 'completed');
+  else fail('postCuba.resolve', JSON.stringify(s.completedCutscenes));
+  maybeStartPostCubaCutscene(s);
+  if (!hasBlockingCutscene(s)) pass('postCuba.idempotent', 'no re-fire');
+  else fail('postCuba.idempotent', 're-fired');
+}
+
+{
+  const s = cloneUsa();
+  acknowledgeCampaignBrief(s, 'ukraine');
+  for (const id of ['cuba_west', 'cuba_central', 'cuba_east'] as const) {
+    s.regions[id]!.controlledBy = 'usa';
+  }
+  const next = advanceTurn(s);
+  if (next.activeCutscene?.sceneId === 'usa_post_cuba')
+    pass('postCuba.conquerAdvance', 'fires on End Turn after conquest');
+  else fail('postCuba.conquerAdvance', String(next.activeCutscene?.sceneId));
+}
+
+{
+  deleteSave();
+  const s = cloneUsa();
+  acknowledgeCampaignBrief(s, 'ukraine');
+  s.usaCampaign!.activeMission!.status = 'won';
+  s.usaCampaign!.completedMissions = ['mission_cuba'];
+  s.activeCutscene = null;
+  s.completedCutscenes = [];
+  saveGame(s);
+  const loaded = loadGame<ReturnType<typeof cloneUsa>>();
+  if (loaded?.activeCutscene?.sceneId === 'usa_post_cuba')
+    pass('postCuba.saveRevive', 'loads mid-campaign Cuba win into cutscene');
+  else fail('postCuba.saveRevive', String(loaded?.activeCutscene?.sceneId));
+  deleteSave();
+}
+
+{
+  const s = cloneUsa();
+  s.usaCampaign!.activeMission!.status = 'won';
+  s.usaCampaign!.completedMissions = ['mission_cuba'];
+  s.turn = PEER_FORCE_PICK_TURN;
+  tickUsaCampaign(s);
+  pickPeerThreat(s, 'china');
+  const hud = getMissionHud(s);
+  const ukraineLeak = (hud?.howToSteps ?? []).some(t => /ukraine/i.test(t));
+  if (hud?.targetId === 'china' && !ukraineLeak)
+    pass('peer.chinaHowTo', 'China how-tos omit Ukraine');
+  else fail('peer.chinaHowTo', JSON.stringify(hud?.howToSteps));
 }
 
 const failed = rows.filter(r => !r.ok);

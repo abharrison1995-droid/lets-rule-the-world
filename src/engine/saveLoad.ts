@@ -10,7 +10,7 @@ import { defaultBudget } from './economy';
 import { createDefaultNpcMechanicState } from './npcMechanics';
 import { syncWarTheaters, pruneForeignTheaterNotices } from './warTheater';
 import { createUsaCampaignState } from './usaCampaign';
-import { startUsaIntroCutscene } from './cutscenes';
+import { startUsaIntroCutscene, maybeStartPostCubaCutscene } from './cutscenes';
 import { formatModeLabel } from '../data/gameModes';
 
 const SAVE_KEY = 'lrw_save';
@@ -210,6 +210,8 @@ function fillMissingSaveFields(state: GameState): GameState {
   ) {
     startUsaIntroCutscene(state);
   }
+  // Mid-campaign saves that won Cuba before the post-Cuba scene shipped (or lost the queue)
+  maybeStartPostCubaCutscene(state);
   state.interventionMeters ??= {};
   state.pendingTheaterNotices ??= [];
   pruneForeignTheaterNotices(state);
