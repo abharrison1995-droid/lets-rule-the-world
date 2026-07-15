@@ -13,6 +13,7 @@ interface GameHeaderProps {
   /** Opens campaign mission sheet (Declare / Install / focus). */
   onOpenMission?: () => void;
   onSave: () => void;
+  endTurnDisabled?: boolean;
 }
 
 export function GameHeader({
@@ -23,6 +24,7 @@ export function GameHeader({
   onOpenTheater,
   onOpenMission,
   onSave,
+  endTurnDisabled = false,
 }: GameHeaderProps) {
   const country = state.countries[state.playerCountryId];
   const atWar = state.wars.some(w => w.belligerents.includes(state.playerCountryId));
@@ -69,7 +71,14 @@ export function GameHeader({
         <button className="btn-header" onClick={onOpenEconomy}>Economy</button>
         <button className="btn-header" onClick={onOpenDiplomacy}>Diplomacy</button>
         <button className="btn-header" onClick={onSave}>Save</button>
-        <button className="btn-end-turn" onClick={onEndTurn}>End Turn ▶</button>
+        <button
+          className="btn-end-turn"
+          onClick={onEndTurn}
+          disabled={endTurnDisabled}
+          title={endTurnDisabled ? 'Finish the briefing first' : undefined}
+        >
+          End Turn ▶
+        </button>
       </div>
     </header>
   );

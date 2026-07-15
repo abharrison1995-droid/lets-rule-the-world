@@ -10,10 +10,11 @@ import { defaultBudget } from './economy';
 import { createDefaultNpcMechanicState } from './npcMechanics';
 import { syncWarTheaters } from './warTheater';
 import { createUsaCampaignState } from './usaCampaign';
+import { startUsaIntroCutscene } from './cutscenes';
 import { formatModeLabel } from '../data/gameModes';
 
 const SAVE_KEY = 'lrw_save';
-export const SAVE_VERSION = 23;
+export const SAVE_VERSION = 24;
 
 interface SavePayload {
   version: number;
@@ -124,6 +125,7 @@ function migrateState(state: GameState, fromVersion: number): GameState {
   }
 
   // v23: revive missing usaCampaign on campaign saves (handled in fillMissingSaveFields)
+  // v24: activeCutscene / completedCutscenes (fillMissingSaveFields)
 
   return fillMissingSaveFields(migrated);
 }
@@ -197,6 +199,16 @@ function fillMissingSaveFields(state: GameState): GameState {
     if (se && !se.neighbours.includes('cuba_west')) {
       se.neighbours = [...se.neighbours, 'cuba_west'];
     }
+  }
+  state.activeCutscene ??= null;
+  state.completedCutscenes ??= [];
+  if (
+    state.gameMode === 'campaign' &&
+    state.usaCampaign &&
+    !state.usaCampaign.briefAcknowledged &&
+    !state.activeCutscene
+  ) {
+    startUsaIntroCutscene(state);
   }
   state.interventionMeters ??= {};
   state.pendingTheaterNotices ??= [];

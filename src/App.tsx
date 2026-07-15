@@ -54,14 +54,15 @@ import { EventModal } from './components/EventModal';
 import { RegionActionPanel } from './components/RegionActionPanel';
 import { SidePanel } from './components/SidePanel';
 import { TurnSummaryModal } from './components/TurnSummaryModal';
-import { CampaignBriefModal } from './components/CampaignBriefModal';
 import { PeerChoiceModal } from './components/PeerChoiceModal';
 import { NationIntroModal } from './components/NationIntroModal';
 import { WarTheaterScreen } from './components/WarTheaterScreen';
 import { WarTheaterNoticeModal } from './components/WarTheaterNoticeModal';
 import { CampaignMissionPanel } from './components/CampaignMissionPanel';
+import { CutsceneModal } from './components/CutsceneModal';
 import { BottomSheet } from './components/BottomSheet';
 import { installCampaignClient, setUkraineAlignment } from './engine/usaCampaign';
+import { hasBlockingCutscene } from './data/cutscenes';
 import { detectFronts } from './engine/combat';
 import type { StrikeType } from './engine/strikes';
 import { useMobileLayout } from './hooks/useMobileLayout';
@@ -167,6 +168,7 @@ export default function App() {
 
   const endTurn = useCallback(() => {
     if (!state || state.gameOver || state.playerWon) return;
+    if (hasBlockingCutscene(state)) return;
     const next = advanceTurn(state);
     setTurnSummary(next.lastTurnReport?.length ? next.lastTurnReport : null);
     updateState(next);
@@ -496,22 +498,27 @@ export default function App() {
     );
   }
 
-  const campaignBriefOpen = Boolean(state.usaCampaign && !state.usaCampaign.briefAcknowledged);
+  const cutsceneOpen = hasBlockingCutscene(state);
   const peerChoiceOpen = Boolean(
-    state.usaCampaign?.peerChoicePending && state.usaCampaign.briefAcknowledged
+    state.usaCampaign?.peerChoicePending &&
+      state.usaCampaign.briefAcknowledged &&
+      !cutsceneOpen
   );
-  const deferTheaterNotice = campaignBriefOpen || peerChoiceOpen;
+  const deferTheaterNotice = cutsceneOpen || peerChoiceOpen || Boolean(
+    state.usaCampaign && !state.usaCampaign.briefAcknowledged
+  );
 
   return (
     <div className="game-layout">
-      {campaignBriefOpen && (
-        <CampaignBriefModal state={state} onConfirm={updateState} />
+      {cutsceneOpen && (
+        <CutsceneModal state={state} onUpdate={updateState} />
       )}
       {peerChoiceOpen && (
         <PeerChoiceModal state={state} onConfirm={updateState} />
       )}
       <GameHeader
         state={state}
+        endTurnDisabled={cutsceneOpen}
         onEndTurn={endTurn}
         onOpenDiplomacy={() => {
           setShowMission(false);
@@ -780,7 +787,13 @@ export default function App() {
           >
             📊 Intel
           </button>
-          <button className="mobile-end-turn" onClick={endTurn}>End Turn ▶</button>
+          <button
+            className="mobile-end-turn"
+            onClick={endTurn}
+            disabled={cutsceneOpen}
+          >
+            End Turn ▶
+          </button>
         </nav>
       )}
     </div>

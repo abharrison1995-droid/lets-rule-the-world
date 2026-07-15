@@ -31,6 +31,7 @@ import {
 import { formatModeLabel } from '../data/gameModes';
 import { isUsaCampaignMode } from '../data/campaignUsa';
 import { createUsaCampaignState, tickUsaCampaign } from './usaCampaign';
+import { startUsaIntroCutscene } from './cutscenes';
 
 export function createInitialState(
   playerCountryId: string,
@@ -51,6 +52,8 @@ export function createInitialState(
     playerCountryId,
     gameMode,
     usaCampaign: isUsaCampaignMode(gameMode) ? createUsaCampaignState(1) : null,
+    activeCutscene: null,
+    completedCutscenes: [],
     countries,
     regions,
     relations,
@@ -110,6 +113,7 @@ export function createInitialState(
   // Seed opening scenario: Russia-Ukraine war
   seedOpeningScenario(state);
   syncWarTheaters(state);
+  startUsaIntroCutscene(state);
 
   return state;
 }

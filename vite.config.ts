@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icons.svg'],
+      includeAssets: ['favicon.svg', 'icons.svg', 'cutscenes/cia_director.png', 'cutscenes/vice_president.png'],
       manifest: {
         name: "Let's Rule The World",
         short_name: 'LRW',

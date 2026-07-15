@@ -37,6 +37,12 @@ export interface UsaCampaignState {
   peerTargetId: string | null;
 }
 
+/** Blocking dialogue scene pointer */
+export interface ActiveCutscene {
+  sceneId: string;
+  beatId: string;
+}
+
 export type BudgetCategory =
   | 'military'
   | 'diplomacy'
@@ -569,6 +575,10 @@ export interface GameState {
   gameMode: GameMode;
   /** USA campaign runtime (null outside campaign) */
   usaCampaign: UsaCampaignState | null;
+  /** Blocking advisor cutscene (null when none) */
+  activeCutscene: ActiveCutscene | null;
+  /** Finished cutscene ids */
+  completedCutscenes: string[];
   countries: Record<string, Country>;
   regions: Record<string, Region>;
   relations: Record<string, number>; // key: "a|b" sorted

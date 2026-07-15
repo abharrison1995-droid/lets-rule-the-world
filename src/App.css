@@ -464,8 +464,123 @@ button.mission-badge-btn:focus-visible {
   outline: none;
 }
 
-.theater-notice-overlay {
-  z-index: 210;
+.cutscene-overlay {
+  z-index: 230;
+  padding: 0.75rem;
+}
+
+.cutscene-modal {
+  width: min(36rem, 100%);
+  max-height: min(92dvh, 48rem);
+  overflow: auto;
+  background: linear-gradient(165deg, #153028 0%, #0c1614 55%, #08110f 100%);
+  border: 1px solid rgba(201, 169, 106, 0.35);
+  border-radius: 6px;
+  padding: 1.25rem 1.2rem 1.35rem;
+  color: var(--foam);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cutscene-kicker {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--brass);
+  margin: 0;
+}
+
+.cutscene-stage {
+  display: grid;
+  grid-template-columns: minmax(7rem, 38%) 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 560px) {
+  .cutscene-stage {
+    grid-template-columns: 1fr;
+  }
+
+  .cutscene-portrait-wrap {
+    max-width: 11rem;
+    margin: 0 auto;
+  }
+}
+
+.cutscene-portrait-wrap {
+  border: 1px solid rgba(201, 169, 106, 0.28);
+  background: rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.cutscene-portrait {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+
+.cutscene-byline {
+  margin: 0 0 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.cutscene-name {
+  font-family: 'Syne', 'Sora', sans-serif;
+  font-size: 1.15rem;
+  color: var(--foam);
+}
+
+.cutscene-title {
+  font-size: 0.78rem;
+  color: var(--brass);
+  letter-spacing: 0.04em;
+}
+
+.cutscene-line {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.45;
+  color: var(--foam);
+}
+
+.cutscene-replies {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+}
+
+.cutscene-reply {
+  text-align: left;
+  font-family: 'Sora', sans-serif;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  padding: 0.75rem 0.9rem;
+  color: var(--foam);
+  background: rgba(232, 230, 225, 0.04);
+  border: 1px solid rgba(201, 169, 106, 0.28);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.cutscene-reply:hover,
+.cutscene-reply:focus-visible {
+  background: rgba(201, 169, 106, 0.12);
+  border-color: rgba(201, 169, 106, 0.55);
+  outline: none;
+}
+
+.btn-end-turn:disabled,
+.mobile-end-turn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .mission-sheet-panel .panel-header {

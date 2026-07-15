@@ -14,6 +14,7 @@ import {
   isPeerMissionId,
   type PeerThreatId,
 } from '../data/campaignUsa';
+import { CUTSCENE_USA_INTRO_CIA } from '../data/cutscenes';
 import { getRelation, modifyRelation } from '../data/relations';
 import { getRegionsForCountry } from '../data/regions';
 import { isAtWarWith } from './actions';
@@ -52,6 +53,13 @@ export function acknowledgeCampaignBrief(
     state.history.push(
       `Turn ${state.turn}: Mission assigned — ${USA_MISSION_CUBA.title} (deadline turn ${m.deadlineTurn}).`
     );
+  }
+  if (state.activeCutscene?.sceneId === CUTSCENE_USA_INTRO_CIA.id) {
+    state.activeCutscene = null;
+  }
+  state.completedCutscenes ??= [];
+  if (!state.completedCutscenes.includes(CUTSCENE_USA_INTRO_CIA.id)) {
+    state.completedCutscenes.push(CUTSCENE_USA_INTRO_CIA.id);
   }
 }
 
