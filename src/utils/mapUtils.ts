@@ -44,3 +44,17 @@ export function shortRegionName(name: string): string {
   const first = name.split(/[\s&]/)[0];
   return first.length > 9 ? `${first.slice(0, 8)}…` : first;
 }
+
+/**
+ * Region map label: first word, unless that word collides with a sibling's
+ * first word on the same map (e.g. "Great Lakes" vs "Great Plains" both
+ * reading as "Great") — then fall back to the full name so regions stay
+ * distinguishable.
+ */
+export function regionMapLabel(region: Region, siblings: Region[], isMobile: boolean): string {
+  const first = region.name.split(/[\s&]/)[0];
+  const collides = siblings.some(s => s.id !== region.id && s.name.split(/[\s&]/)[0] === first);
+  const label = collides ? region.name : first;
+  if (!isMobile) return label;
+  return label.length > 9 ? `${label.slice(0, 8)}…` : label;
+}
