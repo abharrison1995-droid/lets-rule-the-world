@@ -118,10 +118,8 @@ export function terrainHatchUrl(id: string, terrain: Terrain): string | null {
 
 export const MAP_STROKE = {
   ink: '#0a1412',
-  foam: '#9eb5aa',
   brass: '#c9a96a',
   war: '#c45c4a',
   disputed: '#d4a04a',
-  neighbour: '#3d524c',
   neighbourDash: '#5a726a',
 } as const;

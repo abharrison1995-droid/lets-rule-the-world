@@ -12,9 +12,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 1.22,
     governmentType: 'democratic',
     color: '#4a7a9a',
-    worldMapPath:
-      'M 72,185 L 125,168 L 178,172 L 218,200 L 225,238 L 198,268 L 145,272 L 100,248 L 78,212 Z',
-    worldMapLabel: [158, 225],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 167,
       baseGrowthRate: 0.024,
@@ -41,9 +41,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 1.01,
     governmentType: 'democratic',
     color: '#5c6b78',
-    worldMapPath:
-      'M 398,128 L 420,122 L 430,138 L 422,154 L 404,158 L 394,144 Z',
-    worldMapLabel: [412, 142],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 69,
       baseGrowthRate: 0.011,
@@ -70,9 +70,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 0.19,
     governmentType: 'autocratic',
     color: '#8b5a52',
-    worldMapPath:
-      'M 555,78 L 655,68 L 740,80 L 790,100 L 805,132 L 778,158 L 700,165 L 605,158 L 558,140 L 548,115 Z',
-    worldMapLabel: [675, 120],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 56,
       baseGrowthRate: 0.018,
@@ -99,9 +99,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 0.77,
     governmentType: 'autocratic',
     color: '#9a5550',
-    worldMapPath:
-      'M 778,188 L 860,175 L 935,195 L 955,240 L 932,288 L 850,298 L 790,280 L 775,235 Z',
-    worldMapLabel: [865, 245],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 137,
       baseGrowthRate: 0.048,
@@ -128,9 +128,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 0.32,
     governmentType: 'hybrid',
     color: '#b08948',
-    worldMapPath:
-      'M 512,208 L 552,202 L 565,222 L 548,242 L 515,236 L 505,220 Z',
-    worldMapLabel: [536, 226],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 46,
       baseGrowthRate: 0.042,
@@ -157,9 +157,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 0.62,
     governmentType: 'hybrid',
     color: '#4a8a92',
-    worldMapPath:
-      'M 538,268 L 550,264 L 556,278 L 548,288 L 536,284 Z',
-    worldMapLabel: [546, 278],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 37,
       baseGrowthRate: 0.032,
@@ -186,9 +186,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 0.83,
     governmentType: 'hybrid',
     color: '#b07848',
-    worldMapPath:
-      'M 695,288 L 752,275 L 782,312 L 765,358 L 712,365 L 688,328 Z',
-    worldMapLabel: [738, 325],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 73,
       baseGrowthRate: 0.068,
@@ -215,9 +215,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 0.78,
     governmentType: 'hybrid',
     color: '#4a7a62',
-    worldMapPath:
-      'M 648,238 L 688,232 L 702,258 L 688,282 L 655,275 L 642,252 Z',
-    worldMapLabel: [672, 258],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 34,
       baseGrowthRate: 0.025,
@@ -244,9 +244,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 0.35,
     governmentType: 'autocratic',
     color: '#6a7a48',
-    worldMapPath:
-      'M 582,255 L 622,248 L 638,272 L 622,295 L 588,288 L 575,268 Z',
-    worldMapLabel: [608, 275],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 36,
       baseGrowthRate: 0.035,
@@ -273,9 +273,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 0.12,
     governmentType: 'autocratic',
     color: '#5a5868',
-    worldMapPath:
-      'M 955,168 L 982,162 L 992,182 L 982,200 L 958,195 L 952,180 Z',
-    worldMapLabel: [972, 184],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 21,
       baseGrowthRate: 0.01,
@@ -302,9 +302,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 0.51,
     governmentType: 'democratic',
     color: '#7a5560',
-    worldMapPath:
-      'M 968,212 L 995,206 L 1005,226 L 992,242 L 968,236 L 962,222 Z',
-    worldMapLabel: [985, 228],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 55,
       baseGrowthRate: 0.022,
@@ -332,9 +332,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 0.75,
     governmentType: 'democratic',
     color: '#a8924a',
-    worldMapPath:
-      'M 512,155 L 548,150 L 560,172 L 545,192 L 515,186 L 505,168 Z',
-    worldMapLabel: [532, 174],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 29, baseGrowthRate: 0.03, defenseBudget: 0.22, troopQuality: 0.65, techLevel: 0.45,
       moraleBase: 0.75, regimeSecurity: 0.60, warPopularity: 0.7, warExhaustion: 0.3, propagandaSaturation: 0,
@@ -353,9 +353,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 0.25,
     governmentType: 'autocratic',
     color: '#3d6b52',
-    worldMapPath:
-      'M 548,318 L 598,312 L 612,338 L 592,362 L 548,358 L 538,332 Z',
-    worldMapLabel: [578, 340],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 46, baseGrowthRate: 0.035, defenseBudget: 0.07, troopQuality: 0.50, techLevel: 0.55,
       moraleBase: 0.60, regimeSecurity: 0.70, warPopularity: 0.5, warExhaustion: 0, propagandaSaturation: 0,
@@ -374,9 +374,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 2.45,
     governmentType: 'democratic',
     color: '#8a5558',
-    worldMapPath:
-      'M 1035,175 L 1068,168 L 1082,198 L 1062,228 L 1032,220 L 1025,192 Z',
-    worldMapLabel: [1055, 200],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 73, baseGrowthRate: 0.012, defenseBudget: 0.012, troopQuality: 0.80, techLevel: 0.88,
       moraleBase: 0.65, regimeSecurity: 0.85, warPopularity: 0.4, warExhaustion: 0, propagandaSaturation: 0,
@@ -395,9 +395,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 1.12,
     governmentType: 'democratic',
     color: '#4a6a8a',
-    worldMapPath:
-      'M 422,172 L 448,166 L 458,186 L 446,202 L 422,196 L 416,182 Z',
-    worldMapLabel: [438, 186],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 66, baseGrowthRate: 0.011, defenseBudget: 0.019, troopQuality: 0.82, techLevel: 0.80,
       moraleBase: 0.65, regimeSecurity: 0.80, warPopularity: 0.5, warExhaustion: 0, propagandaSaturation: 0,
@@ -416,9 +416,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 0.66,
     governmentType: 'democratic',
     color: '#6a6a62',
-    worldMapPath:
-      'M 468,138 L 498,132 L 508,152 L 498,168 L 470,164 L 462,150 Z',
-    worldMapLabel: [484, 152],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 76, baseGrowthRate: 0.008, defenseBudget: 0.014, troopQuality: 0.75, techLevel: 0.82,
       moraleBase: 0.60, regimeSecurity: 0.85, warPopularity: 0.4, warExhaustion: 0, propagandaSaturation: 0,
@@ -437,9 +437,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 0.88,
     governmentType: 'autocratic',
     color: '#9a8450',
-    worldMapPath:
-      'M 478,305 L 518,298 L 532,325 L 518,350 L 488,346 L 472,325 Z',
-    worldMapLabel: [505, 328],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 36, baseGrowthRate: 0.035, defenseBudget: 0.012, troopQuality: 0.55, techLevel: 0.40,
       moraleBase: 0.50, regimeSecurity: 0.55, warPopularity: 0.5, warExhaustion: 0, propagandaSaturation: 0,
@@ -458,9 +458,9 @@ const COUNTRY_DEFS: Record<string, Country> = {
     debtToGdp: 0.55,
     governmentType: 'autocratic',
     color: '#7a4a48',
-    worldMapPath:
-      'M 232,300 L 262,294 L 276,310 L 265,328 L 238,326 L 225,312 Z',
-    worldMapLabel: [252, 316],
+    // Placeholder — overwritten by WORLD_COASTLINES Natural Earth paths
+    worldMapPath: 'M 0,0 L 1,0 L 1,1 Z',
+    worldMapLabel: [0, 0],
     stats: {
       treasuryPoints: 18, baseGrowthRate: 0.015, defenseBudget: 0.028, troopQuality: 0.48, techLevel: 0.35,
       moraleBase: 0.55, regimeSecurity: 0.62, warPopularity: 0.45, warExhaustion: 0, propagandaSaturation: 0.1,
