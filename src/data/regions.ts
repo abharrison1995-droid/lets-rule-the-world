@@ -28,11 +28,11 @@ export const REGIONS: Record<string, Region> = {
   // USA — 8 regions
   ...Object.fromEntries([
     r('usa_ne', 'usa', 'Northeast', ['usa_mid_atlantic', 'usa_great_lakes'], 'urban', 58000000, 2800, 15000,
-      'M 200,80 L 280,75 L 290,120 L 250,140 L 200,130 Z', [245, 105], 2),
+      'M 198,85 L 230,76 L 265,74 L 288,88 L 292,112 L 275,132 L 245,140 L 215,135 L 198,118 Z', [245, 105], 2),
     r('usa_mid_atlantic', 'usa', 'Mid-Atlantic', ['usa_ne', 'usa_southeast', 'usa_great_lakes'], 'urban', 42000000, 1800, 12000,
       'M 200,130 L 250,140 L 260,180 L 220,190 L 190,160 Z', [225, 160]),
     r('usa_southeast', 'usa', 'Southeast', ['usa_mid_atlantic', 'usa_southwest', 'usa_great_lakes', 'cuba_west'], 'coastal', 65000000, 2200, 18000,
-      'M 190,160 L 220,190 L 240,240 L 200,250 L 170,210 Z', [205, 210]),
+      'M 188,165 L 210,182 L 228,200 L 242,225 L 238,245 L 215,252 L 190,245 L 172,225 L 170,200 Z', [205, 210]),
     r('usa_great_lakes', 'usa', 'Great Lakes', ['usa_ne', 'usa_mid_atlantic', 'usa_southeast', 'usa_plains'], 'urban', 48000000, 2400, 14000,
       'M 170,130 L 200,130 L 190,160 L 160,170 L 140,150 Z', [170, 150]),
     r('usa_plains', 'usa', 'Great Plains', ['usa_great_lakes', 'usa_southeast', 'usa_southwest', 'usa_rockies'], 'plains', 22000000, 900, 8000,
@@ -42,7 +42,7 @@ export const REGIONS: Record<string, Region> = {
     r('usa_rockies', 'usa', 'Rocky Mountains', ['usa_plains', 'usa_southwest', 'usa_west_coast'], 'mountain', 18000000, 700, 6000,
       'M 90,180 L 130,220 L 120,280 L 80,270 L 70,210 Z', [100, 235]),
     r('usa_west_coast', 'usa', 'West Coast', ['usa_southwest', 'usa_rockies'], 'coastal', 52000000, 3500, 16000,
-      'M 50,180 L 90,180 L 80,270 L 40,260 L 30,200 Z', [60, 225], 3),
+      'M 48,185 L 72,178 L 92,182 L 88,220 L 82,255 L 65,270 L 42,260 L 32,230 L 30,200 Z', [60, 225], 3),
   ].map(reg => [reg.id, reg])),
 
   // Russia — 10 regions
@@ -272,11 +272,11 @@ export const REGIONS: Record<string, Region> = {
   // Cuba — 3 regions (NPC / Campaign Mission 1)
   ...Object.fromEntries([
     r('cuba_west', 'cuba', 'Western Cuba', ['cuba_central', 'usa_southeast'], 'coastal', 3500000, 120, 4500,
-      'M 80,200 L 140,195 L 145,230 L 85,235 Z', [112, 215], 1),
+      'M 72,205 L 95,198 L 122,196 L 142,200 L 145,218 L 138,232 L 110,236 L 85,232 L 74,218 Z', [112, 215], 1),
     r('cuba_central', 'cuba', 'Central Cuba', ['cuba_west', 'cuba_east'], 'plains', 4200000, 140, 5000,
-      'M 140,195 L 200,190 L 205,230 L 145,235 Z', [172, 212]),
+      'M 142,200 L 168,194 L 192,192 L 205,200 L 208,218 L 200,232 L 172,236 L 148,232 L 142,218 Z', [172, 212]),
     r('cuba_east', 'cuba', 'Eastern Cuba', ['cuba_central'], 'mountain', 3400000, 100, 5500,
-      'M 200,190 L 255,200 L 250,240 L 205,235 Z', [228, 216], 1),
+      'M 205,200 L 228,194 L 248,198 L 258,212 L 252,230 L 230,238 L 208,232 L 202,216 Z', [228, 216], 1),
   ].map(reg => [reg.id, reg])),
 };
 

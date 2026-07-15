@@ -4,6 +4,12 @@ import { HEMISPHERES, getCountriesInHemisphere, type HemisphereId } from '../dat
 import { useMobileLayout } from '../hooks/useMobileLayout';
 import { computeHemisphereViewBox } from '../utils/mapUtils';
 import { PanZoomMap, useMapInteraction } from './PanZoomMap';
+import {
+  MapAtmosphereDefs,
+  MapOcean,
+  MAP_STROKE,
+  useMapAtmosphereId,
+} from './MapAtmosphere';
 
 const FULL_VIEWBOX = '0 0 900 400';
 
@@ -32,6 +38,7 @@ function WorldMapSvg({
   onCountryClick: (countryId: string) => void;
 }) {
   const { blockClickRef } = useMapInteraction();
+  const atmId = useMapAtmosphereId('world');
 
   const handleCountryClick = (countryId: string) => {
     if (blockClickRef.current) return;
@@ -44,13 +51,8 @@ function WorldMapSvg({
       className="map-svg world-map-svg"
       preserveAspectRatio="xMidYMid meet"
     >
-      <rect width="900" height="400" fill="#0c1929" />
-      {Array.from({ length: 9 }, (_, i) => (
-        <line key={`h${i}`} x1="0" y1={i * 50} x2="900" y2={i * 50} stroke="#1a2a3a" strokeWidth="0.5" />
-      ))}
-      {Array.from({ length: 18 }, (_, i) => (
-        <line key={`v${i}`} x1={i * 50} y1="0" x2={i * 50} y2="400" stroke="#1a2a3a" strokeWidth="0.5" />
-      ))}
+      <MapAtmosphereDefs id={atmId} />
+      <MapOcean id={atmId} width={900} height={400} />
 
       {state.wars.flatMap(war => {
         const pairs: Array<[string, string]> = [];
@@ -69,10 +71,11 @@ function WorldMapSvg({
               y1={countryA.worldMapLabel[1]}
               x2={countryB.worldMapLabel[0]}
               y2={countryB.worldMapLabel[1]}
-              stroke="#ef4444"
-              strokeWidth={hemisphere ? 2 : 1.5}
-              strokeDasharray="6 4"
-              opacity="0.45"
+              className="map-war-line"
+              stroke={MAP_STROKE.war}
+              strokeWidth={hemisphere ? 2.2 : 1.6}
+              strokeDasharray="5 5"
+              opacity="0.55"
               pointerEvents="none"
             />
           );
@@ -85,28 +88,44 @@ function WorldMapSvg({
         const atWar = state.wars.some(w => w.belligerents.includes(country.id));
         const label = country.name.length > 12 ? country.name.split(' ')[0] : country.name;
         const fontSize = hemisphere ? (isMobile ? 13 : 11) : 9;
-        const strokeW = isPlayer ? 3 : atWar ? 2 : isMobile && hemisphere ? 1.5 : 1;
+        const edge = isPlayer ? MAP_STROKE.brass : atWar ? MAP_STROKE.war : MAP_STROKE.ink;
+        const strokeW = isPlayer ? 2.4 : atWar ? 1.8 : isMobile && hemisphere ? 1.4 : 1.1;
 
         return (
-          <g key={country.id} className="country-group" onClick={() => handleCountryClick(country.id)}>
+          <g
+            key={country.id}
+            className={`country-group${isPlayer ? ' is-player' : ''}${atWar ? ' is-war' : ''}`}
+            onClick={() => handleCountryClick(country.id)}
+          >
+            <path
+              d={country.worldMapPath}
+              fill="none"
+              stroke={MAP_STROKE.ink}
+              strokeWidth={strokeW + 1.4}
+              strokeLinejoin="round"
+              opacity={country.playable ? 0.95 : 0.7}
+              pointerEvents="none"
+            />
             <path
               d={country.worldMapPath}
               fill={fill}
-              stroke={isPlayer ? '#fbbf24' : atWar ? '#ef4444' : '#334155'}
+              stroke={edge}
               strokeWidth={strokeW}
-              opacity={country.playable ? 0.92 : 0.58}
+              strokeLinejoin="round"
+              opacity={country.playable ? 0.94 : 0.55}
               className="country-path"
+              filter={`url(#${atmId}-land-inner)`}
             />
             <text
               x={country.worldMapLabel[0]}
               y={country.worldMapLabel[1]}
               textAnchor="middle"
               dominantBaseline="middle"
-              fill="#e2e8f0"
+              fill={isPlayer ? MAP_STROKE.brass : '#e8eee9'}
               fontSize={fontSize}
-              fontWeight={isPlayer ? 'bold' : 'normal'}
+              fontWeight={isPlayer ? 700 : 500}
               pointerEvents="none"
-              className="country-label"
+              className="country-label map-label"
             >
               {label}
             </text>
@@ -114,8 +133,8 @@ function WorldMapSvg({
               <circle
                 cx={country.worldMapLabel[0] + 16}
                 cy={country.worldMapLabel[1] - 14}
-                r={isMobile ? 5 : 4}
-                fill="#ef4444"
+                r={isMobile ? 4.5 : 3.5}
+                fill={MAP_STROKE.war}
                 className="war-pulse"
                 pointerEvents="none"
               />
@@ -131,9 +150,25 @@ function WorldMapSvg({
           const country = state.countries[evt.targetCountryId!];
           if (!country) return null;
           return (
-            <g key={evt.eventId} pointerEvents="none">
-              <circle cx={country.worldMapLabel[0] + 16} cy={country.worldMapLabel[1] - 14} r="6" fill="#f59e0b" />
-              <text x={country.worldMapLabel[0] + 16} y={country.worldMapLabel[1] - 11} textAnchor="middle" fill="#000" fontSize="8" fontWeight="bold">!</text>
+            <g key={evt.eventId} pointerEvents="none" className="map-event-marker">
+              <circle
+                cx={country.worldMapLabel[0] + 16}
+                cy={country.worldMapLabel[1] - 14}
+                r="5.5"
+                fill={MAP_STROKE.disputed}
+                stroke={MAP_STROKE.ink}
+                strokeWidth="0.8"
+              />
+              <text
+                x={country.worldMapLabel[0] + 16}
+                y={country.worldMapLabel[1] - 11}
+                textAnchor="middle"
+                fill="#0c1614"
+                fontSize="8"
+                fontWeight="bold"
+              >
+                !
+              </text>
             </g>
           );
         })}

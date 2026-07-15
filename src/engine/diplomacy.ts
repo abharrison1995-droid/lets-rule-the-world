@@ -297,20 +297,17 @@ export function getPariahIncomeDrag(state: GameState, countryId: string): number
 
 export function getBlocColor(state: GameState, countryId: string): string {
   const country = state.countries[countryId];
-  if (!country) return '#666';
+  if (!country) return '#4a5a55';
 
   for (const alliance of state.alliances) {
     if (alliance.members.includes(countryId) && alliance.tier === 'bloc') {
-      if (alliance.id === 'nato') return '#3b82f6';
-      if (alliance.id === 'csto') return '#ef4444';
-      if (alliance.id === 'sco') return '#dc2626';
+      if (alliance.id === 'nato') return '#4a7c9e';
+      if (alliance.id === 'csto') return '#8f5a55';
+      if (alliance.id === 'sco') return '#9a5555';
     }
   }
 
-  if (state.wars.some(w => w.belligerents.includes(countryId))) {
-    return '#f59e0b';
-  }
-
+  // War is shown via stroke / front lines — keep nation identity in the fill
   return country.color;
 }
 

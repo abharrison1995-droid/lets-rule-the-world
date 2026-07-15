@@ -1113,6 +1113,9 @@ button.mission-badge-btn:focus-visible {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 35%, rgba(40, 90, 78, 0.18), transparent 70%),
+    var(--ink);
 }
 
 .map-svg {
@@ -1133,19 +1136,52 @@ button.mission-badge-btn:focus-visible {
 }
 
 .country-label,
-.region-label {
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+.region-label,
+.map-label {
+  font-family: 'Sora', 'Segoe UI', sans-serif;
+  letter-spacing: 0.02em;
+  text-shadow:
+    0 0 4px rgba(8, 16, 14, 0.95),
+    0 1px 2px rgba(0, 0, 0, 0.9);
   pointer-events: none;
+  paint-order: stroke fill;
+  stroke: rgba(8, 16, 14, 0.75);
+  stroke-width: 2.5px;
+  stroke-linejoin: round;
+}
+
+.map-label--muted {
+  stroke-width: 1.5px;
+  letter-spacing: 0.04em;
 }
 
 .country-path, .region-group {
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: filter 0.18s ease, opacity 0.15s;
 }
 
 .country-path:hover, .region-group:hover {
   opacity: 1 !important;
-  filter: brightness(1.2);
+  filter: brightness(1.12) saturate(1.08);
+}
+
+.region-group.is-selected .country-path,
+.country-group.is-player .country-path {
+  filter: brightness(1.06);
+}
+
+.war-pulse {
+  animation: pulse-war 2.4s ease-in-out infinite;
+}
+
+.map-war-line,
+.map-front-dash {
+  animation: front-breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes front-breathe {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.85; }
 }
 
 .national-map-header {
@@ -2683,20 +2719,32 @@ button.mission-badge-btn:focus-visible {
   margin: 0 auto;
 }
 
+.hemisphere-chooser {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 30%, rgba(40, 90, 78, 0.22), transparent 65%),
+    var(--ink);
+}
+
+.hemisphere-chooser-header h2 {
+  font-family: 'Syne', 'Sora', sans-serif;
+  letter-spacing: 0.04em;
+}
+
 .hemisphere-card {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.35rem;
   padding: 1.25rem 1.5rem;
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-secondary);
   color: var(--text-primary);
   cursor: pointer;
   text-align: left;
   min-height: 120px;
-  transition: border-color 0.15s, transform 0.15s;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+  box-shadow: inset 0 1px 0 rgba(200, 217, 208, 0.06);
 }
 
 .hemisphere-card:active {
@@ -2704,18 +2752,26 @@ button.mission-badge-btn:focus-visible {
 }
 
 .hemisphere-card--americas {
-  background: linear-gradient(135deg, #0f2847 0%, #1a3a5c 50%, #0c1929 100%);
+  background:
+    linear-gradient(145deg, rgba(74, 122, 154, 0.22) 0%, transparent 55%),
+    linear-gradient(180deg, #12241f 0%, #0c1614 100%);
 }
 
 .hemisphere-card--eurasia {
-  background: linear-gradient(135deg, #2a1a0f 0%, #3d2a1a 50%, #1a120c 100%);
+  background:
+    linear-gradient(145deg, rgba(139, 90, 82, 0.2) 0%, transparent 55%),
+    linear-gradient(180deg, #1a1814 0%, #0c1614 100%);
 }
 
 .hemisphere-card--player {
   border-color: var(--brass);
+  box-shadow:
+    inset 0 1px 0 rgba(200, 217, 208, 0.08),
+    0 0 0 1px rgba(201, 169, 106, 0.25);
 }
 
 .hemisphere-card-title {
+  font-family: 'Syne', 'Sora', sans-serif;
   font-size: 1.25rem;
   font-weight: 700;
 }
@@ -2732,17 +2788,19 @@ button.mission-badge-btn:focus-visible {
 }
 
 .hemisphere-card-war {
-  color: #ef4444;
+  color: var(--danger);
 }
 
 .hemisphere-card-badge {
   margin-top: 0.5rem;
   font-size: 0.7rem;
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-  background: rgba(251, 191, 36, 0.2);
+  padding: 0.15rem 0.55rem;
+  border-radius: 2px;
+  background: rgba(201, 169, 106, 0.15);
   color: var(--brass);
-  border: 1px solid rgba(251, 191, 36, 0.4);
+  border: 1px solid rgba(201, 169, 106, 0.35);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .world-map--hemisphere .world-map-svg {
