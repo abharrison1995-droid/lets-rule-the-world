@@ -9,6 +9,29 @@ const RELATION_PAIRS: Array<[string, string, number]> = [
   ['usa', 'iran', -80], ['usa', 'north_korea', -90], ['usa', 'pakistan', 20],
   ['usa', 'egypt', 40],
   ['usa', 'cuba', -70],
+  ['usa', 'canada', 88],
+  ['usa', 'mexico', 55],
+  ['usa', 'brazil', 45],
+  ['usa', 'australia', 75],
+  ['usa', 'poland', 70],
+  ['usa', 'spain', 65],
+  ['usa', 'italy', 68],
+  ['usa', 'sweden', 72],
+  ['usa', 'philippines', 60],
+  ['usa', 'colombia', 40],
+  ['usa', 'venezuela', -55],
+  ['usa', 'iraq', 25],
+  ['usa', 'uae', 55],
+  ['usa', 'indonesia', 40],
+  ['usa', 'vietnam', 35],
+  ['usa', 'kazakhstan', 30],
+  ['usa', 'nigeria', 30],
+  ['usa', 'south_africa', 40],
+  ['usa', 'argentina', 35],
+  ['usa', 'chile', 50],
+  ['usa', 'algeria', 15],
+  ['usa', 'ethiopia', 25],
+  ['usa', 'new_zealand', 70],
 
   // Russia relations
   ['russia', 'china', 60], ['russia', 'iran', 55], ['russia', 'india', 45],
@@ -81,6 +104,27 @@ const RELATION_PAIRS: Array<[string, string, number]> = [
 
   // Japan
   ['japan', 'south_korea', 25], ['japan', 'india', 45], ['japan', 'russia', -35],
+  ['japan', 'australia', 55], ['japan', 'philippines', 40], ['japan', 'vietnam', 35],
+
+  // Americas NPCs
+  ['canada', 'mexico', 50], ['canada', 'england', 70], ['canada', 'france', 55],
+  ['mexico', 'brazil', 35], ['brazil', 'argentina', 40], ['brazil', 'china', 45],
+  ['argentina', 'chile', 45], ['colombia', 'venezuela', -25], ['venezuela', 'cuba', 55],
+  ['venezuela', 'russia', 50], ['venezuela', 'china', 40],
+
+  // Europe NPCs
+  ['spain', 'france', 55], ['spain', 'italy', 50], ['italy', 'france', 55],
+  ['italy', 'germany', 50], ['poland', 'germany', 50], ['poland', 'usa', 70],
+  ['sweden', 'germany', 55], ['sweden', 'poland', 50],
+
+  // Africa / ME / Asia NPCs
+  ['algeria', 'egypt', 35], ['algeria', 'france', -15], ['nigeria', 'south_africa', 30],
+  ['ethiopia', 'egypt', 20], ['iraq', 'iran', 40], ['iraq', 'saudi_arabia', -30],
+  ['iraq', 'turkey', 25], ['uae', 'saudi_arabia', 65], ['uae', 'iran', -25],
+  ['kazakhstan', 'russia', 55], ['kazakhstan', 'china', 45],
+  ['vietnam', 'china', -20], ['vietnam', 'usa', 35], ['indonesia', 'china', 25],
+  ['indonesia', 'australia', 40], ['philippines', 'china', -30],
+  ['australia', 'new_zealand', 80], ['australia', 'china', -15], ['australia', 'india', 50],
 ];
 
 export function relationKey(a: string, b: string): string {

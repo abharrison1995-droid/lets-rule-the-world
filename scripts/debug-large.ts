@@ -396,8 +396,12 @@ function cloneUsa() {
 
 {
   const ids = Object.keys(COUNTRIES);
-  if (ids.length === 18) pass('map.worldCount', '18 nations on board');
+  if (ids.length >= 35) pass('map.worldCount', `${ids.length} nations on board`);
   else fail('map.worldCount', String(ids.length));
+
+  const npcCount = Object.values(COUNTRIES).filter(c => !c.playable).length;
+  if (npcCount >= 24) pass('map.npcCount', `${npcCount} NPC nations`);
+  else fail('map.npcCount', String(npcCount));
 
   let oob = 0;
   let missingLabel = 0;

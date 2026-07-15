@@ -1,4 +1,5 @@
 import type { Country } from '../types/game';
+import { NPC_MAP_NATIONS } from './npcMapNations';
 
 /** Treasury points (TP) — compressed economic scale; growth as decimal per turn */
 export const COUNTRIES: Record<string, Country> = {
@@ -469,11 +470,28 @@ export const COUNTRIES: Record<string, Country> = {
     uniqueMechanics: [],
     collapseCondition: { type: 'hard', triggerStats: { regimeSecurity: 0.22 }, telegraphEventId: 'cuba_crisis_warning' },
   },
+  ...NPC_MAP_NATIONS,
 };
 
 export const ALLIANCES_DATA = [
-  { id: 'nato', name: 'NATO', tier: 'bloc' as const, members: ['usa', 'england', 'france', 'germany', 'turkey'] },
+  {
+    id: 'nato',
+    name: 'NATO',
+    tier: 'bloc' as const,
+    members: [
+      'usa',
+      'england',
+      'france',
+      'germany',
+      'turkey',
+      'canada',
+      'spain',
+      'italy',
+      'poland',
+      'sweden',
+    ],
+  },
   { id: 'csto', name: 'CSTO', tier: 'full_alliance' as const, members: ['russia'] },
   { id: 'sco', name: 'SCO', tier: 'informal' as const, members: ['china', 'russia'] },
-  { id: 'quad', name: 'Quad', tier: 'defensive_pact' as const, members: ['usa', 'india', 'japan'] },
+  { id: 'quad', name: 'Quad', tier: 'defensive_pact' as const, members: ['usa', 'india', 'japan', 'australia'] },
 ];

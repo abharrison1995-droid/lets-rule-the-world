@@ -1,5 +1,5 @@
 import type { GameState, GameMode, StrikeCampaign } from '../types/game';
-import { COUNTRIES } from '../data/countries';
+import { COUNTRIES, ALLIANCES_DATA } from '../data/countries';
 import { REGIONS } from '../data/regions';
 import {
   getDefaultCorporateTaxRate,
@@ -14,7 +14,7 @@ import { startUsaIntroCutscene, maybeStartPostCubaCutscene } from './cutscenes';
 import { formatModeLabel } from '../data/gameModes';
 
 const SAVE_KEY = 'lrw_save';
-export const SAVE_VERSION = 24;
+export const SAVE_VERSION = 25;
 
 interface SavePayload {
   version: number;
@@ -126,6 +126,7 @@ function migrateState(state: GameState, fromVersion: number): GameState {
 
   // v23: revive missing usaCampaign on campaign saves (handled in fillMissingSaveFields)
   // v24: activeCutscene / completedCutscenes (fillMissingSaveFields)
+  // v25: inject full NPC map roster (fillMissingSaveFields)
 
   return fillMissingSaveFields(migrated);
 }
@@ -162,6 +163,25 @@ function fillMissingSaveFields(state: GameState): GameState {
   state.covertAlliances ??= [];
   state.relations ??= {};
   state.countries ??= {};
+  // Inject any catalog nations missing from older saves (full NPC world map)
+  for (const [id, def] of Object.entries(COUNTRIES)) {
+    if (!state.countries[id]) {
+      state.countries[id] = structuredClone(def);
+    }
+  }
+  state.alliances ??= [];
+  for (const def of ALLIANCES_DATA) {
+    const existing = state.alliances.find(a => a.id === def.id);
+    if (!existing) {
+      state.alliances.push({ ...def, members: [...def.members] });
+      continue;
+    }
+    for (const m of def.members) {
+      if (state.countries[m] && !existing.members.includes(m)) {
+        existing.members.push(m);
+      }
+    }
+  }
   state.regions ??= {};
   state.visibleLayers ??= ['military', 'alliances'];
   state.showDefenseRanges ??= false;

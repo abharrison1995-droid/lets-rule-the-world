@@ -170,13 +170,14 @@ export function WorldMap({ state, onCountryClick }: WorldMapProps) {
   const isMobile = useMobileLayout();
   const countries = Object.values(state.countries);
   const nationCount = countries.length;
+  const npcCount = countries.filter(c => !c.playable).length;
 
   return (
     <div className="map-container world-map world-map--fill">
       <div className="world-map-header">
         <h2>Strategic Map</h2>
         <span className="world-map-scope">
-          {nationCount} nations · {isMobile ? 'pinch' : 'scroll'} to zoom · drag to pan
+          {nationCount} nations · {npcCount} NPC · {isMobile ? 'pinch' : 'scroll'} to zoom · drag to pan
         </span>
       </div>
 
