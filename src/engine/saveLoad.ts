@@ -1,5 +1,6 @@
 import type { GameState, GameMode, StrikeCampaign } from '../types/game';
 import { COUNTRIES, ALLIANCES_DATA } from '../data/countries';
+import { WORLD_COASTLINES } from '../data/worldCoastlines';
 import { REGIONS } from '../data/regions';
 import {
   getDefaultCorporateTaxRate,
@@ -167,6 +168,12 @@ function fillMissingSaveFields(state: GameState): GameState {
   for (const [id, def] of Object.entries(COUNTRIES)) {
     if (!state.countries[id]) {
       state.countries[id] = structuredClone(def);
+    } else {
+      const coast = WORLD_COASTLINES[id];
+      if (coast) {
+        state.countries[id].worldMapPath = coast.path;
+        state.countries[id].worldMapLabel = coast.label;
+      }
     }
   }
   state.alliances ??= [];

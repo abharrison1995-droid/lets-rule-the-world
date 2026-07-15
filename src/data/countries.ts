@@ -1,8 +1,9 @@
 import type { Country } from '../types/game';
 import { NPC_MAP_NATIONS } from './npcMapNations';
+import { WORLD_COASTLINES } from './worldCoastlines';
 
 /** Treasury points (TP) — compressed economic scale; growth as decimal per turn */
-export const COUNTRIES: Record<string, Country> = {
+const COUNTRY_DEFS: Record<string, Country> = {
   usa: {
     id: 'usa',
     name: 'United States',
@@ -472,6 +473,22 @@ export const COUNTRIES: Record<string, Country> = {
   },
   ...NPC_MAP_NATIONS,
 };
+
+/** Apply denser shared-seam coastlines over catalog silhouettes. */
+export const COUNTRIES: Record<string, Country> = Object.fromEntries(
+  Object.entries(COUNTRY_DEFS).map(([id, country]) => {
+    const coast = WORLD_COASTLINES[id];
+    if (!coast) return [id, country];
+    return [
+      id,
+      {
+        ...country,
+        worldMapPath: coast.path,
+        worldMapLabel: coast.label,
+      },
+    ];
+  })
+);
 
 export const ALLIANCES_DATA = [
   {

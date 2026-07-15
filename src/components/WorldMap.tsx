@@ -44,6 +44,19 @@ function WorldMapSvg({
       <MapAtmosphereDefs id={atmId} />
       <MapOcean id={atmId} width={WORLD_MAP_WIDTH} height={WORLD_MAP_HEIGHT} />
 
+      {/* Soft continental shelf — denser coastlines read better with a foam fringe */}
+      {countries.map(country => (
+        <path
+          key={`shelf_${country.id}`}
+          d={country.worldMapPath}
+          fill="none"
+          stroke="rgba(180, 210, 200, 0.14)"
+          strokeWidth={5.5}
+          strokeLinejoin="round"
+          pointerEvents="none"
+        />
+      ))}
+
       {state.wars.flatMap(war => {
         const pairs: Array<[string, string]> = [];
         const bells = war.belligerents.filter(b => visibleIds.includes(b));
@@ -91,7 +104,7 @@ function WorldMapSvg({
               d={country.worldMapPath}
               fill="none"
               stroke={MAP_STROKE.ink}
-              strokeWidth={strokeW + 1.4}
+              strokeWidth={strokeW + 1.1}
               strokeLinejoin="round"
               opacity={country.playable ? 0.95 : 0.7}
               pointerEvents="none"
@@ -100,7 +113,7 @@ function WorldMapSvg({
               d={country.worldMapPath}
               fill={fill}
               stroke={edge}
-              strokeWidth={strokeW}
+              strokeWidth={strokeW * 0.9}
               strokeLinejoin="round"
               opacity={country.playable ? 0.94 : 0.55}
               className="country-path"

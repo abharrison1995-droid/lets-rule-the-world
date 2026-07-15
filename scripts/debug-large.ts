@@ -24,6 +24,7 @@ import {
 import { chooseCutsceneOption, maybeStartPostCubaCutscene } from '../src/engine/cutscenes.ts';
 import { hasBlockingCutscene } from '../src/data/cutscenes.ts';
 import { WORLD_MAP_HEIGHT, WORLD_MAP_WIDTH, getWorldMapShortLabel } from '../src/data/worldMap.ts';
+import { areWorldLandNeighbors } from '../src/data/worldCoastlines.ts';
 import { getNationalViewBox } from '../src/utils/mapUtils.ts';
 import { getRegionsForCountry, REGIONS } from '../src/data/regions.ts';
 import { COUNTRIES } from '../src/data/countries.ts';
@@ -418,7 +419,8 @@ function cloneUsa() {
   if (oob === 0 && missingLabel === 0) pass('map.worldBounds', `labels+paths within ${WORLD_MAP_WIDTH}x${WORLD_MAP_HEIGHT}`);
   else fail('map.worldBounds', `oob=${oob} missingLabel=${missingLabel}`);
 
-  // Heavy AABB overlaps (area > 400) signal layout regression
+  // Heavy AABB overlaps for non-neighbors signal layout regression.
+  // Shared-seam neighbors are expected to share bounding boxes.
   const boxes = Object.values(COUNTRIES).map(c => {
     const pts = [...c.worldMapPath.matchAll(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/g)].map(m => [
       Number(m[1]),
@@ -433,6 +435,7 @@ function cloneUsa() {
     for (let j = i + 1; j < boxes.length; j++) {
       const a = boxes[i];
       const b = boxes[j];
+      if (areWorldLandNeighbors(a.id, b.id)) continue;
       const ix0 = Math.max(a.minX, b.minX);
       const iy0 = Math.max(a.minY, b.minY);
       const ix1 = Math.min(a.maxX, b.maxX);
@@ -443,8 +446,15 @@ function cloneUsa() {
       }
     }
   }
-  if (heavy.length === 0) pass('map.worldOverlap', 'no heavy AABB overlaps');
+  if (heavy.length === 0) pass('map.worldOverlap', 'no heavy non-neighbor AABB overlaps');
   else fail('map.worldOverlap', heavy.join(', '));
+
+  const coarse = Object.values(COUNTRIES).filter(c => {
+    const n = [...c.worldMapPath.matchAll(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/g)].length;
+    return n < 8;
+  });
+  if (coarse.length === 0) pass('map.coastDensity', 'all nations ≥8 coastline verts');
+  else fail('map.coastDensity', coarse.map(c => c.id).join(', '));
 }
 
 {
