@@ -32,6 +32,27 @@ const RELATION_PAIRS: Array<[string, string, number]> = [
   ['usa', 'algeria', 15],
   ['usa', 'ethiopia', 25],
   ['usa', 'new_zealand', 70],
+  ['usa', 'netherlands', 75],
+  ['usa', 'belgium', 72],
+  ['usa', 'portugal', 65],
+  ['usa', 'norway', 78],
+  ['usa', 'finland', 70],
+  ['usa', 'greece', 60],
+  ['usa', 'romania', 55],
+  ['usa', 'czechia', 65],
+  ['usa', 'denmark', 72],
+  ['usa', 'switzerland', 70],
+  ['usa', 'ireland', 78],
+  ['usa', 'taiwan', 65],
+  ['usa', 'thailand', 40],
+  ['usa', 'malaysia', 45],
+  ['usa', 'kenya', 35],
+  ['usa', 'morocco', 40],
+  ['usa', 'peru', 40],
+  ['usa', 'jordan', 50],
+  ['usa', 'syria', -40],
+  ['usa', 'belarus', -35],
+  ['usa', 'afghanistan', -25],
 
   // Russia relations
   ['russia', 'china', 60], ['russia', 'iran', 55], ['russia', 'india', 45],
@@ -125,6 +146,28 @@ const RELATION_PAIRS: Array<[string, string, number]> = [
   ['vietnam', 'china', -20], ['vietnam', 'usa', 35], ['indonesia', 'china', 25],
   ['indonesia', 'australia', 40], ['philippines', 'china', -30],
   ['australia', 'new_zealand', 80], ['australia', 'china', -15], ['australia', 'india', 50],
+
+  // Europe expansion
+  ['netherlands', 'belgium', 70], ['netherlands', 'germany', 65], ['belgium', 'france', 60],
+  ['portugal', 'spain', 70], ['norway', 'sweden', 75], ['finland', 'sweden', 70],
+  ['austria', 'germany', 65], ['austria', 'switzerland', 70], ['greece', 'turkey', -25],
+  ['romania', 'ukraine', 45], ['czechia', 'germany', 60], ['czechia', 'poland', 55],
+  ['denmark', 'germany', 65], ['ireland', 'england', 55], ['belarus', 'russia', 75],
+  ['belarus', 'ukraine', -30], ['switzerland', 'france', 55], ['switzerland', 'germany', 55],
+
+  // Africa / ME / Asia expansion
+  ['morocco', 'algeria', -20], ['morocco', 'france', 35], ['libya', 'egypt', 20],
+  ['kenya', 'tanzania', 40], ['kenya', 'ethiopia', 25], ['ghana', 'nigeria', 35],
+  ['angola', 'drc', 15], ['drc', 'tanzania', 20], ['syria', 'turkey', -40],
+  ['syria', 'israel', -80], ['syria', 'iran', 45], ['jordan', 'israel', -15],
+  ['jordan', 'saudi_arabia', 45], ['bangladesh', 'india', 25], ['bangladesh', 'china', 40],
+  ['afghanistan', 'pakistan', 30], ['afghanistan', 'iran', 25], ['malaysia', 'indonesia', 45],
+  ['malaysia', 'china', 35], ['thailand', 'china', 30], ['thailand', 'myanmar', 15],
+  ['myanmar', 'china', 40], ['mongolia', 'china', 35], ['mongolia', 'russia', 40],
+  ['taiwan', 'china', -70], ['taiwan', 'japan', 45], ['taiwan', 'usa', 65],
+  ['uzbekistan', 'kazakhstan', 40], ['uzbekistan', 'russia', 35],
+  ['peru', 'chile', 30], ['peru', 'brazil', 35], ['ecuador', 'colombia', 30],
+  ['bolivia', 'brazil', 30], ['uruguay', 'argentina', 50], ['paraguay', 'brazil', 40],
 ];
 
 export function relationKey(a: string, b: string): string {

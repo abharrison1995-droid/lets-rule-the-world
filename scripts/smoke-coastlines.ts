@@ -40,6 +40,6 @@ const avg =
 console.log(
   failed
     ? `smoke-coastlines FAIL (${failed})`
-    : `smoke-coastlines OK — ${nationIds.length} nations, avg ${avg.toFixed(1)} verts`
+    : `smoke-coastlines OK — ${nationIds.length} nations, avg ${avg.toFixed(1)} verts (Natural Earth)`
 );
 if (failed) process.exitCode = 1;

@@ -1,5 +1,6 @@
 import type { Country } from '../types/game';
 import { NPC_MAP_NATIONS } from './npcMapNations';
+import { NPC_ATLAS_NATIONS } from './npcAtlasNations';
 import { WORLD_COASTLINES } from './worldCoastlines';
 
 /** Treasury points (TP) — compressed economic scale; growth as decimal per turn */
@@ -472,6 +473,7 @@ const COUNTRY_DEFS: Record<string, Country> = {
     collapseCondition: { type: 'hard', triggerStats: { regimeSecurity: 0.22 }, telegraphEventId: 'cuba_crisis_warning' },
   },
   ...NPC_MAP_NATIONS,
+  ...NPC_ATLAS_NATIONS,
 };
 
 /** Apply denser shared-seam coastlines over catalog silhouettes. */
@@ -506,6 +508,15 @@ export const ALLIANCES_DATA = [
       'italy',
       'poland',
       'sweden',
+      'netherlands',
+      'belgium',
+      'portugal',
+      'norway',
+      'finland',
+      'greece',
+      'romania',
+      'czechia',
+      'denmark',
     ],
   },
   { id: 'csto', name: 'CSTO', tier: 'full_alliance' as const, members: ['russia'] },

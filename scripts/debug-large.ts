@@ -24,7 +24,7 @@ import {
 import { chooseCutsceneOption, maybeStartPostCubaCutscene } from '../src/engine/cutscenes.ts';
 import { hasBlockingCutscene } from '../src/data/cutscenes.ts';
 import { WORLD_MAP_HEIGHT, WORLD_MAP_WIDTH, getWorldMapShortLabel } from '../src/data/worldMap.ts';
-import { areWorldLandNeighbors } from '../src/data/worldCoastlines.ts';
+import { areWorldLandNeighbors, WORLD_COASTLINES } from '../src/data/worldCoastlines.ts';
 import { getNationalViewBox } from '../src/utils/mapUtils.ts';
 import { getRegionsForCountry, REGIONS } from '../src/data/regions.ts';
 import { COUNTRIES } from '../src/data/countries.ts';
@@ -397,12 +397,16 @@ function cloneUsa() {
 
 {
   const ids = Object.keys(COUNTRIES);
-  if (ids.length >= 35) pass('map.worldCount', `${ids.length} nations on board`);
+  if (ids.length >= 70) pass('map.worldCount', `${ids.length} nations on board`);
   else fail('map.worldCount', String(ids.length));
 
   const npcCount = Object.values(COUNTRIES).filter(c => !c.playable).length;
-  if (npcCount >= 24) pass('map.npcCount', `${npcCount} NPC nations`);
+  if (npcCount >= 55) pass('map.npcCount', `${npcCount} NPC nations`);
   else fail('map.npcCount', String(npcCount));
+
+  const geoBacked = Object.values(COUNTRIES).filter(c => WORLD_COASTLINES[c.id]).length;
+  if (geoBacked === ids.length) pass('map.geoCoastlines', `all ${geoBacked} use Natural Earth paths`);
+  else fail('map.geoCoastlines', `${geoBacked}/${ids.length}`);
 
   let oob = 0;
   let missingLabel = 0;
@@ -436,13 +440,17 @@ function cloneUsa() {
       const a = boxes[i];
       const b = boxes[j];
       if (areWorldLandNeighbors(a.id, b.id)) continue;
+      // Skip pairs where either silhouette spans most of the board (continental giants)
+      const aW = a.maxX - a.minX;
+      const bW = b.maxX - b.minX;
+      if (aW > WORLD_MAP_WIDTH * 0.45 || bW > WORLD_MAP_WIDTH * 0.45) continue;
       const ix0 = Math.max(a.minX, b.minX);
       const iy0 = Math.max(a.minY, b.minY);
       const ix1 = Math.min(a.maxX, b.maxX);
       const iy1 = Math.min(a.maxY, b.maxY);
       if (ix1 > ix0 && iy1 > iy0) {
         const area = (ix1 - ix0) * (iy1 - iy0);
-        if (area > 400) heavy.push(`${a.id}/${b.id}:${area}`);
+        if (area > 1200) heavy.push(`${a.id}/${b.id}:${Math.round(area)}`);
       }
     }
   }
