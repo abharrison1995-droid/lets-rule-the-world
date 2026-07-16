@@ -130,7 +130,7 @@ export interface PressActionResult {
   message: string;
 }
 
-export function dispatchSummitMission(
+function dispatchSummitMission(
   state: GameState,
   targetId: string
 ): PressActionResult {

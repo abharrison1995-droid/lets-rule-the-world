@@ -274,15 +274,6 @@ export function getNegotiationPreview(
   };
 }
 
-export function getAllNegotiationPreviews(
-  state: GameState,
-  playerId: string,
-  targetId: string
-): NegotiationPreview[] {
-  const options: TalkOptionId[] = ['peace', 'military_pact', 'trade_deal', 'intel_sharing', 'ultimatum'];
-  return options.map(opt => getNegotiationPreview(state, playerId, targetId, opt));
-}
-
 export interface NegotiationResult {
   success: boolean;
   message: string;

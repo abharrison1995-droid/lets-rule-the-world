@@ -142,7 +142,7 @@ function breakAlliance(state: GameState, allianceId: string, breaker: string): v
   state.history.push(`Turn ${state.turn}: ${state.countries[breaker]?.name} broke an alliance.`);
 }
 
-export function expelFromAlliance(state: GameState, allianceId: string, expelledId: string, reason: string): void {
+function expelFromAlliance(state: GameState, allianceId: string, expelledId: string, reason: string): void {
   const alliance = state.alliances.find(a => a.id === allianceId);
   if (!alliance || !alliance.members.includes(expelledId)) return;
 
@@ -170,7 +170,7 @@ function applyIdeologicalDrift(state: GameState): void {
   }
 }
 
-export function checkAllianceCallUp(state: GameState, defenderId: string, attackerId: string): string[] {
+function checkAllianceCallUp(state: GameState, defenderId: string, attackerId: string): string[] {
   const joiners: string[] = [];
   for (const alliance of state.alliances) {
     if (!alliance.members.includes(defenderId)) continue;

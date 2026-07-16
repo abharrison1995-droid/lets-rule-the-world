@@ -8,7 +8,7 @@ function isAtWarWith(state: GameState, a: string, b: string): boolean {
 
 export const GREAT_POWERS = new Set(['usa', 'china', 'russia']);
 
-export function getWarDeclarationCap(countryId: string): number {
+function getWarDeclarationCap(countryId: string): number {
   return GREAT_POWERS.has(countryId) ? 2 : 1;
 }
 
@@ -21,7 +21,7 @@ export function canDeclareWarThisTurn(state: GameState, countryId: string): bool
   return getWarsRemaining(state, countryId) > 0;
 }
 
-export function getAttackerBlocExpulsions(
+function getAttackerBlocExpulsions(
   state: GameState,
   attackerId: string,
   defenderId: string
@@ -36,7 +36,7 @@ export function getAttackerBlocExpulsions(
   return expulsions;
 }
 
-export function getBlocMembersJoiningWar(
+function getBlocMembersJoiningWar(
   state: GameState,
   attackerId: string,
   defenderId: string
@@ -59,7 +59,7 @@ export function getBlocMembersJoiningWar(
   return joiners;
 }
 
-export function getAlliesLikelyToJoinEnemy(
+function getAlliesLikelyToJoinEnemy(
   state: GameState,
   attackerId: string,
   defenderId: string
@@ -85,7 +85,7 @@ export function getAlliesLikelyToJoinEnemy(
   return joiners;
 }
 
-export function getRelationHitsFromWar(
+function getRelationHitsFromWar(
   state: GameState,
   attackerId: string,
   defenderId: string

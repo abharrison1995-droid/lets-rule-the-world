@@ -1016,7 +1016,7 @@ button.mission-badge-btn:focus-visible {
 .game-layout {
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
 }
 
 .game-header {

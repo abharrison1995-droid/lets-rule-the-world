@@ -14,7 +14,7 @@ export interface PeaceResult {
   message: string;
 }
 
-export function getWarWithTarget(state: GameState, targetId: string) {
+function getWarWithTarget(state: GameState, targetId: string) {
   return state.wars.find(
     w => w.belligerents.includes(state.playerCountryId) && w.belligerents.includes(targetId)
   );

@@ -68,7 +68,7 @@ export function getCovertAlliancesWithNation(
   );
 }
 
-export function hasCovertAlliance(
+function hasCovertAlliance(
   state: GameState,
   a: string,
   b: string,
@@ -251,7 +251,7 @@ export function resolveCovertNegotiationMission(
   };
 }
 
-export function exposeCovertAlliance(
+function exposeCovertAlliance(
   state: GameState,
   allianceId: string,
   reason: string

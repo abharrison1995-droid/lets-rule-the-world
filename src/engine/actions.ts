@@ -24,10 +24,7 @@ import {
   actionEnergyBlockReason,
   ACTION_ENERGY_COSTS,
 } from './actionEnergy';
-import {
-  getEffectiveSpendCost,
-  getDebtServicePerTurn,
-} from './fiscal';
+import { getEffectiveSpendCost } from './fiscal';
 import { formatDisplayCost } from './treasuryDisplay';
 import type { StrikeType } from './strikes';
 import { getStrikeOptions, computeStrikePower } from './strikes';
@@ -364,13 +361,3 @@ export function playerInvestMilitary(
   return playerStartMilitaryUpgrade(state, category);
 }
 
-export function accumulateTreasury(state: GameState): void {
-  const country = state.countries[state.playerCountryId];
-  if (!country) return;
-  const contribution = country.stats.treasuryPoints * state.budget.reserve * 0.008;
-  const debtService = getDebtServicePerTurn(country);
-  country.stats.treasuryPoints += Math.max(0, contribution - debtService);
-}
-
-/** @deprecated Use accumulateTreasury */
-export const accumulateReserve = accumulateTreasury;

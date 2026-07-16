@@ -40,7 +40,7 @@ function getOilShockDrag(state: GameState, countryId: string): number {
 }
 
 /** Per-turn treasury income from taxation (billions / TP) */
-export function computeTaxBreakdown(state: GameState, countryId: string): TaxBreakdown {
+function computeTaxBreakdown(state: GameState, countryId: string): TaxBreakdown {
   const country = state.countries[countryId];
   if (!country) {
     return { corporateRevenue: 0, incomeRevenue: 0, organicGrowth: 0, facilityBonus: 0, reserveBoost: 0, oilShockDrag: 0, suezDrag: 0, pariahDrag: 0, total: 0 };

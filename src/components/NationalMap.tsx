@@ -2,7 +2,7 @@ import type { GameState, Region, Front, LayerCategory, FacilityType } from '../t
 import { getRegionsForCountry, getNeighbourStrip } from '../data/regions';
 import { getDefenseSystemRating } from '../engine/economy';
 import { useMobileLayout } from '../hooks/useMobileLayout';
-import { getNationalViewBox, shortRegionName } from '../utils/mapUtils';
+import { getNationalViewBox, regionMapLabel } from '../utils/mapUtils';
 import { PanZoomMap, useMapInteraction } from './PanZoomMap';
 import {
   MapAtmosphereDefs,
@@ -203,22 +203,28 @@ function NationalMapSvg({
             {hatch && (
               <path d={region.mapPath} fill={hatch} stroke="none" pointerEvents="none" opacity={0.85} />
             )}
-            <text
-              x={region.center[0]}
-              y={region.center[1]}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fill={isSelected ? MAP_STROKE.brass : '#e8eee9'}
-              fontSize={regionFontSize}
-              fontWeight={isSelected ? 700 : 500}
-              pointerEvents="none"
-              className="region-label map-label"
-            >
-              {isMobile ? shortRegionName(region.name) : region.name.split(' ')[0]}
-            </text>
           </g>
         );
       })}
+
+      {/* Labels render in their own pass, after every fill, so a later region's
+          shape can never paint over an earlier region's name. */}
+      {regions.map(region => (
+        <text
+          key={`label_${region.id}`}
+          x={region.center[0]}
+          y={region.center[1]}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill={selectedRegion === region.id ? MAP_STROKE.brass : '#e8eee9'}
+          fontSize={regionFontSize}
+          fontWeight={selectedRegion === region.id ? 700 : 500}
+          pointerEvents="none"
+          className="region-label map-label"
+        >
+          {regionMapLabel(region, regions, isMobile)}
+        </text>
+      ))}
 
       {neighbourStrip.map(region => (
         <text
@@ -233,7 +239,7 @@ function NationalMapSvg({
           opacity={0.85}
           className="map-label map-label--muted"
         >
-          {shortRegionName(region.name)}
+          {regionMapLabel(region, neighbourStrip, true)}
         </text>
       ))}
 
@@ -468,8 +474,8 @@ export function NationalMap({ state, countryId, onBack, onRegionClick, backLabel
 
   const badgeR = isMobile ? 7 : 5;
   const badgeFont = isMobile ? 6 : 5;
-  const badgeOffsetX = isMobile ? 14 : 12;
-  const badgeOffsetY = isMobile ? -10 : -8;
+  const badgeOffsetX = isMobile ? 19 : 17;
+  const badgeOffsetY = isMobile ? -15 : -13;
   const regionFontSize = isMobile ? 10 : 8;
   const regionStroke = isMobile ? 1.4 : 1.1;
 

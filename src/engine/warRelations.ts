@@ -20,7 +20,7 @@ const HORMUZ_ENERGY_EXPOSED = [
   'saudi_arabia',
 ] as const;
 
-export function getHormuzAffectedNations(initiatorId: string, otherId: string): string[] {
+function getHormuzAffectedNations(initiatorId: string, otherId: string): string[] {
   const affected = new Set<string>([initiatorId, otherId]);
   for (const id of HORMUZ_ENERGY_EXPOSED) {
     affected.add(id);
