@@ -190,13 +190,6 @@ export const LAYER_LABELS: Record<LayerCategory, string> = {
   economic: 'Economic',
 };
 
-import { formatDisplayGDP } from './treasuryDisplay';
-
-/** @deprecated Use formatDisplayGDP(treasuryPoints) — kept for gradual migration */
-export function formatGDP(tpOrLegacy: number): string {
-  return formatDisplayGDP(tpOrLegacy);
-}
-
 export function formatPercent(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
 }

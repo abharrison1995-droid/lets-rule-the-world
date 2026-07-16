@@ -15,13 +15,6 @@ export function getDebtServicePerTurn(country: Country): number {
   return country.stats.treasuryPoints * debt * 0.0012;
 }
 
-/** Liquid treasury available this turn (TP) */
-export function getSpendingPool(state: GameState): number {
-  const country = state.countries[state.playerCountryId];
-  if (!country) return 0;
-  return getFiscalHeadroom(country);
-}
-
 /** Effective TP cost after debt drag when spending */
 export function getEffectiveSpendCost(country: Country, costTp: number): number {
   const debt = country.debtToGdp ?? 0;

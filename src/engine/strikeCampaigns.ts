@@ -8,7 +8,6 @@ import {
   actionEnergyBlockReason,
 } from './actionEnergy';
 import { executeStrike } from './combat';
-import { getRegionsForCountry } from '../data/regions';
 import { isAtWarWith } from './actions';
 import { getRelation, modifyRelation } from '../data/relations';
 import { triggerUnprovokedStrikeEvent } from './events';
@@ -293,8 +292,4 @@ export function resolveStrikeCampaigns(state: GameState): void {
   }
 
   state.strikeCampaigns = surviving;
-}
-
-export function getLaunchRegions(_state: GameState, countryId: string): string[] {
-  return getRegionsForCountry(countryId).map(r => r.id);
 }

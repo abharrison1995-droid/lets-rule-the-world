@@ -39,7 +39,7 @@ export interface NpcNationDossier {
   mechanicStatus: NpcMechanicStatus | null;
 }
 
-export function isNpcNation(state: GameState, countryId: string): boolean {
+function isNpcNation(state: GameState, countryId: string): boolean {
   const country = state.countries[countryId];
   return !!country && !country.playable;
 }

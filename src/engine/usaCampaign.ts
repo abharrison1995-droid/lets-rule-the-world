@@ -1,6 +1,5 @@
 import type { GameState, UkraineAlignment, UsaCampaignState } from '../types/game';
 import {
-  USA_CAMPAIGN_BRIEF,
   USA_MISSION_CUBA,
   PEER_FORCE_PICK_TURN,
   PEER_THREAT_IDS,
@@ -15,7 +14,7 @@ import {
   type PeerThreatId,
 } from '../data/campaignUsa';
 import { CUTSCENE_USA_INTRO_CIA } from '../data/cutscenes';
-import { getRelation, modifyRelation } from '../data/relations';
+import { modifyRelation } from '../data/relations';
 import { getRegionsForCountry } from '../data/regions';
 import { isAtWarWith } from './actions';
 import { ACTION_ENERGY_COSTS, canSpendActionEnergy, spendActionEnergy } from './actionEnergy';
@@ -94,7 +93,7 @@ export function setUkraineAlignment(state: GameState, alignment: UkraineAlignmen
   }
 }
 
-export function getNationControlByPlayer(
+function getNationControlByPlayer(
   state: GameState,
   nationId: string
 ): { total: number; owned: number; avgUnrest: number } {
@@ -450,10 +449,6 @@ export function pickPeerThreat(state: GameState, peerId: 'russia' | 'china'): st
   return null;
 }
 
-export function getCampaignBriefCopy() {
-  return USA_CAMPAIGN_BRIEF;
-}
-
 export interface MissionHudInfo {
   title: string;
   targetName: string;
@@ -582,19 +577,6 @@ export function getActiveMissionSummary(state: GameState): string | null {
   }
 
   return null;
-}
-
-export function getUkraineAlignmentLabel(a: UkraineAlignment): string {
-  if (a === 'ukraine') return 'Back Ukraine';
-  if (a === 'russia') return 'Tilt Moscow';
-  return 'Deniable';
-}
-
-export function previewAlignmentHit(state: GameState, alignment: UkraineAlignment): string {
-  const ua = getRelation(state.relations, 'usa', 'ukraine');
-  const ru = getRelation(state.relations, 'usa', 'russia');
-  void alignment;
-  return `UA ${ua > 0 ? '+' : ''}${ua} · RU ${ru > 0 ? '+' : ''}${ru}`;
 }
 
 export interface CampaignLadderProgress {

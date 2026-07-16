@@ -4,16 +4,6 @@ import type { GameMode, UkraineAlignment } from '../types/game';
 
 export const USA_CAMPAIGN_ID = 'usa_hegemony_v1' as const;
 
-export const USA_CAMPAIGN_BRIEF = {
-  headline: 'Freedom for All of Them',
-  paragraphs: [
-    'US hegemony is more at risk than ever. Russia rising, China arguably more powerful than us already, and a Middle East too fractured to control.',
-    'It’s time to bring freedom to the people of Earth. All of them.',
-  ],
-  ukraineNote:
-    'Russia’s war on Ukraine is already burning. Default posture is to back Kyiv — you may revisit alignment later, but every flip leaves scars.',
-} as const;
-
 /** Select-screen card — keep copy vague; no mission spoilers. */
 export const USA_CAMPAIGN_CARD = {
   id: USA_CAMPAIGN_ID,

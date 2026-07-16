@@ -115,7 +115,7 @@ function seedHexRuntime(def: TheaterDef, state: GameState): Record<string, Theat
   return hexes;
 }
 
-export function createTheaterFromWar(state: GameState, warId: string, def: TheaterDef): WarTheaterState {
+function createTheaterFromWar(state: GameState, warId: string, def: TheaterDef): WarTheaterState {
   const war = state.wars.find(w => w.id === warId);
   const doctrineByCountry: Record<string, TheaterDoctrine> = {};
   for (const id of war?.belligerents ?? def.primaryBelligerents) {
@@ -387,7 +387,7 @@ function pushCombatLog(theater: WarTheaterState, line: string): void {
   theater.combatLog = [line, ...(theater.combatLog ?? [])].slice(0, 8);
 }
 
-export function resolveHexBattle(
+function resolveHexBattle(
   state: GameState,
   theater: WarTheaterState,
   hexDef: TheaterHexDef,
@@ -945,7 +945,7 @@ function runDoctrineImpulse(state: GameState, theater: WarTheaterState, countryI
 }
 
 /** One operational impulse for all actors on a theater */
-export function resolveTheaterImpulse(state: GameState, theaterId: string): void {
+function resolveTheaterImpulse(state: GameState, theaterId: string): void {
   const theater = getTheater(state, theaterId);
   if (!theater || theater.closed || theater.pendingFate) return;
 
@@ -1032,16 +1032,6 @@ export function getRegionHexControl(
     byOwner[owner] = (byOwner[owner] ?? 0) + 1;
   }
   return { total: regionHexes.length, byOwner };
-}
-
-export function playerCanInterveneInTheater(state: GameState, theaterId: string): boolean {
-  const theater = getTheater(state, theaterId);
-  if (!theater || theater.closed) return false;
-  const war = state.wars.find(w => w.id === theater.warId);
-  if (!war) return false;
-  if (war.belligerents.includes(state.playerCountryId)) return true;
-  // Third party with hostile or allied interest can send expeditionary (escalation)
-  return true;
 }
 
 export function playerDeployExpeditionary(
