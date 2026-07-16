@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, lazy, Suspense } from 'react';
 import type {
   GameState,
   GameMode,
@@ -43,18 +43,15 @@ import { GameHeader } from './components/GameHeader';
 import { WorldMap } from './components/WorldMap';
 import { NationalMap } from './components/NationalMap';
 import { LayerTray } from './components/LayerTray';
-import { DiplomacyPanel } from './components/DiplomacyPanel';
 import { WarConfirmModal } from './components/WarConfirmModal';
 import { StrikeConfirmModal } from './components/StrikeConfirmModal';
 import { FacilityConfirmModal } from './components/FacilityConfirmModal';
-import { EconomyPanel } from './components/EconomyPanel';
 import { EventModal } from './components/EventModal';
 import { RegionActionPanel } from './components/RegionActionPanel';
 import { SidePanel } from './components/SidePanel';
 import { TurnSummaryModal } from './components/TurnSummaryModal';
 import { PeerChoiceModal } from './components/PeerChoiceModal';
 import { NationIntroModal } from './components/NationIntroModal';
-import { WarTheaterScreen } from './components/WarTheaterScreen';
 import { WarTheaterNoticeModal } from './components/WarTheaterNoticeModal';
 import { CampaignMissionPanel } from './components/CampaignMissionPanel';
 import { CutsceneModal } from './components/CutsceneModal';
@@ -66,6 +63,19 @@ import { detectFronts } from './engine/combat';
 import type { StrikeType } from './engine/strikes';
 import { useMobileLayout } from './hooks/useMobileLayout';
 import './App.css';
+
+// Lazily loaded: heavy, and not every playthrough opens them.
+const DiplomacyPanel = lazy(() =>
+  import('./components/DiplomacyPanel').then(m => ({ default: m.DiplomacyPanel }))
+);
+const EconomyPanel = lazy(() =>
+  import('./components/EconomyPanel').then(m => ({ default: m.EconomyPanel }))
+);
+const WarTheaterScreen = lazy(() =>
+  import('./components/WarTheaterScreen').then(m => ({ default: m.WarTheaterScreen }))
+);
+
+const PANEL_LOADING = <p className="muted panel-loading">Loading…</p>;
 
 type Screen = 'title' | 'mode' | 'campaigns' | 'saves' | 'nation' | 'game';
 
@@ -540,12 +550,14 @@ export default function App() {
       <div className="game-body">
         <main className="game-main">
           {showTheater ? (
-            <WarTheaterScreen
-              state={state}
-              initialTheaterId={theaterFocusId}
-              onClose={() => { setShowTheater(false); setTheaterFocusId(undefined); }}
-              onUpdate={updateState}
-            />
+            <Suspense fallback={PANEL_LOADING}>
+              <WarTheaterScreen
+                state={state}
+                initialTheaterId={theaterFocusId}
+                onClose={() => { setShowTheater(false); setTheaterFocusId(undefined); }}
+                onUpdate={updateState}
+              />
+            </Suspense>
           ) : state.selectedMapTier === 1 ? (
             <WorldMap state={state} onCountryClick={handleCountryClick} />
           ) : state.selectedCountryId ? (
@@ -599,27 +611,29 @@ export default function App() {
       {feedback && <div className="toast">{feedback}</div>}
 
       {showDiplomacy && (
-        <DiplomacyPanel
-          state={state}
-          onClose={() => setShowDiplomacy(false)}
-          onRequestWar={handleRequestWar}
-          onPressAction={handlePressAction}
-          onProposePeace={handleProposePeace}
-          onNegotiate={handleNegotiate}
-          onCovertNegotiate={handleCovertNegotiate}
-          onCovertOp={handleCovertOp}
-          onProbePacts={handleProbePacts}
-          onExecuteMechanic={handleMechanic}
-          onInstallClient={handleInstallClient}
-          onFocusCountry={handleCountryClick}
-          onOpenTheater={(theaterId) => {
-            setTheaterFocusId(theaterId);
-            setShowTheater(true);
-            setShowDiplomacy(false);
-          }}
-          feedback={feedback}
-          talksResult={talksResult}
-        />
+        <Suspense fallback={PANEL_LOADING}>
+          <DiplomacyPanel
+            state={state}
+            onClose={() => setShowDiplomacy(false)}
+            onRequestWar={handleRequestWar}
+            onPressAction={handlePressAction}
+            onProposePeace={handleProposePeace}
+            onNegotiate={handleNegotiate}
+            onCovertNegotiate={handleCovertNegotiate}
+            onCovertOp={handleCovertOp}
+            onProbePacts={handleProbePacts}
+            onExecuteMechanic={handleMechanic}
+            onInstallClient={handleInstallClient}
+            onFocusCountry={handleCountryClick}
+            onOpenTheater={(theaterId) => {
+              setTheaterFocusId(theaterId);
+              setShowTheater(true);
+              setShowDiplomacy(false);
+            }}
+            feedback={feedback}
+            talksResult={talksResult}
+          />
+        </Suspense>
       )}
       {showMission && state.usaCampaign && (
         <BottomSheet onClose={() => setShowMission(false)} className="mission-sheet-panel">
@@ -708,17 +722,19 @@ export default function App() {
         />
       )}
       {showEconomy && (
-        <EconomyPanel
-          state={state}
-          onBudgetChange={handleBudgetChange}
-          onTaxChange={handleTaxChange}
-          onDomesticSplitChange={handleDomesticSplitChange}
-          onInvestMilitary={handleInvestMilitary}
-          onDomesticPropaganda={handleDomesticPropaganda}
-          onForeignInfluence={handleForeignInfluence}
-          onClose={() => setShowEconomy(false)}
-          feedback={feedback}
-        />
+        <Suspense fallback={PANEL_LOADING}>
+          <EconomyPanel
+            state={state}
+            onBudgetChange={handleBudgetChange}
+            onTaxChange={handleTaxChange}
+            onDomesticSplitChange={handleDomesticSplitChange}
+            onInvestMilitary={handleInvestMilitary}
+            onDomesticPropaganda={handleDomesticPropaganda}
+            onForeignInfluence={handleForeignInfluence}
+            onClose={() => setShowEconomy(false)}
+            feedback={feedback}
+          />
+        </Suspense>
       )}
       {showNationIntro && (
         <NationIntroModal
