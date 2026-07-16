@@ -157,7 +157,7 @@ export function NpcNationBrowser({
   return (
     <section className="panel-section npc-browser-section">
       <h4>World Powers (NPC)</h4>
-      <p className="muted small">Major nations not playable in this campaign — intel dossiers and bilateral ties.</p>
+      <p className="muted small">Major nations not currently playable — intel dossiers and bilateral ties.</p>
       <select
         className="target-select"
         value={selectedId}

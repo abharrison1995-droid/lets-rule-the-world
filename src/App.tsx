@@ -440,6 +440,10 @@ export default function App() {
       <ModeSelect
         onBack={() => setScreen('title')}
         onSelectCampaign={() => setScreen('campaigns')}
+        onSelectSandbox={() => {
+          setPendingMode('sandbox');
+          setScreen('nation');
+        }}
       />
     );
   }
@@ -453,7 +457,6 @@ export default function App() {
     );
   }
 
-  // Nation select retained for future Sandbox unlock; not in current player flow
   if (screen === 'nation') {
     return (
       <NationSelect

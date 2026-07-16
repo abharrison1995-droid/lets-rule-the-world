@@ -3,10 +3,11 @@ import { AtlasBackdrop } from './AtlasBackdrop';
 
 interface ModeSelectProps {
   onSelectCampaign: () => void;
+  onSelectSandbox: () => void;
   onBack: () => void;
 }
 
-export function ModeSelect({ onSelectCampaign, onBack }: ModeSelectProps) {
+export function ModeSelect({ onSelectCampaign, onSelectSandbox, onBack }: ModeSelectProps) {
   const campaign = GAME_MODES.campaign;
   const sandbox = GAME_MODES.sandbox;
 
@@ -35,11 +36,14 @@ export function ModeSelect({ onSelectCampaign, onBack }: ModeSelectProps) {
             <span className="mode-option-blurb">{campaign.blurb}</span>
           </button>
 
-          <div className="mode-option mode-option--locked" aria-disabled="true">
+          <button
+            type="button"
+            className="mode-option mode-option--campaign"
+            onClick={onSelectSandbox}
+          >
             <span className="mode-option-name">{sandbox.name}</span>
             <span className="mode-option-blurb">{sandbox.blurb}</span>
-            <span className="mode-locked-badge">Coming soon</span>
-          </div>
+          </button>
         </div>
       </div>
     </div>
