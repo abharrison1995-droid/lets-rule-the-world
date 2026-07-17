@@ -427,7 +427,7 @@ function NationalMapSvg({
               fontSize={isMobile ? 8 : 7}
               className="map-label"
             >
-              {region.unrest}%
+              {Math.round(region.unrest)}%
             </text>
           </g>
         ))}

@@ -81,7 +81,7 @@ export function RegionActionPanel({
         <p><span className="label">Terrain:</span> {region.terrain}</p>
         <p><span className="label">Troops:</span> {region.garrison.troops.toLocaleString()}</p>
         <p><span className="label">Industry:</span> ${region.industryValue}B</p>
-        {region.unrest > 0 && <p className="warning-text">Unrest: {region.unrest}%</p>}
+        {region.unrest > 0 && <p className="warning-text">Unrest: {Math.round(region.unrest)}%</p>}
         {frontHere && (
           <p className="mission-front-tip">
             Front pressure: <strong>{Math.round(frontHere.pressure)}</strong> — builds each{' '}

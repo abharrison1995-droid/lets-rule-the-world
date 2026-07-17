@@ -3,35 +3,12 @@ import type {
   GameState,
   GameMode,
   TurnReportEntry,
-  BudgetAllocation,
-  MilitaryDev,
-  DomesticSplit,
-  PeaceTermsType,
-  TalkOptionId,
-  CovertTalkOptionId,
-  PressActionId,
-  FacilityType,
 } from './types/game';
 import { createInitialState, advanceTurn } from './engine/gameState';
 import { saveGame, loadGame, peekSaveSummary, listSaveSummaries, deleteSave } from './engine/saveLoad';
-import { resolveEventChoice } from './engine/events';
 import { getEventById } from './data/events';
-import {
-  playerDeclareWar,
-  playerLaunchStrike,
-  playerLaunchCovertOp,
-  playerExecuteMechanic,
-  playerInvestMilitary,
-  getWarDeclarationPreview,
-  playerNegotiate,
-  playerCovertNegotiate,
-  playerProbeCovertPacts,
-  playerPressAction,
-} from './engine/actions';
-import { dispatchTalkMission } from './engine/diplomaticMissions';
-import { playerDomesticPropaganda, playerForeignInfluence } from './engine/propaganda';
-import { playerStartFacilityBuild, getFacilityConfirmPreview } from './engine/facilities';
-import { playerStartStrikeCampaign, playerCancelStrikeCampaign } from './engine/strikeCampaigns';
+import { getWarDeclarationPreview } from './engine/actions';
+import { getFacilityConfirmPreview } from './engine/facilities';
 import { getStrikeConfirmPreview, getCampaignConfirmPreview } from './engine/strikePreview';
 import { TitleScreen } from './components/TitleScreen';
 import { ModeSelect } from './components/ModeSelect';
@@ -56,12 +33,10 @@ import { WarTheaterNoticeModal } from './components/WarTheaterNoticeModal';
 import { CampaignMissionPanel } from './components/CampaignMissionPanel';
 import { CutsceneModal } from './components/CutsceneModal';
 import { BottomSheet } from './components/BottomSheet';
-import { installCampaignClient } from './engine/usaCampaign';
 import { hasBlockingCutscene } from './data/cutscenes';
-import { maybeStartPostCubaCutscene } from './engine/cutscenes';
-import { detectFronts } from './engine/combat';
-import type { StrikeType } from './engine/strikes';
 import { useMobileLayout } from './hooks/useMobileLayout';
+import { useGameActions } from './hooks/useGameActions';
+import { usePanelVisibility } from './hooks/usePanelVisibility';
 import './App.css';
 
 // Lazily loaded: heavy, and not every playthrough opens them.
@@ -79,32 +54,21 @@ const PANEL_LOADING = <p className="muted panel-loading">Loading…</p>;
 
 type Screen = 'title' | 'mode' | 'campaigns' | 'saves' | 'nation' | 'game';
 
-type StrikeConfirmRequest =
-  | { kind: 'strike'; regionId: string; strikeType: StrikeType }
-  | { kind: 'campaign'; sourceRegionId: string; targetRegionId: string; strikeType: StrikeType };
-
-type FacilityConfirmRequest = { regionId: string; facilityType: FacilityType };
-
 export default function App() {
   const [screen, setScreen] = useState<Screen>('title');
   const [state, setState] = useState<GameState | null>(null);
-  const [showDiplomacy, setShowDiplomacy] = useState(false);
-  const [showEconomy, setShowEconomy] = useState(false);
-  const [showSidePanel, setShowSidePanel] = useState(() =>
-    typeof window !== 'undefined' ? !window.matchMedia('(max-width: 768px)').matches : true
-  );
   const [saveSummary, setSaveSummary] = useState(() => peekSaveSummary());
   const [pendingMode, setPendingMode] = useState<GameMode>('campaign');
-  const [feedback, setFeedback] = useState<string | null>(null);
-  const [warConfirmTarget, setWarConfirmTarget] = useState<string | null>(null);
-  const [strikeConfirm, setStrikeConfirm] = useState<StrikeConfirmRequest | null>(null);
-  const [facilityConfirm, setFacilityConfirm] = useState<FacilityConfirmRequest | null>(null);
   const [turnSummary, setTurnSummary] = useState<TurnReportEntry[] | null>(null);
-  const [talksResult, setTalksResult] = useState<string | null>(null);
-  const [showNationIntro, setShowNationIntro] = useState(false);
-  const [showTheater, setShowTheater] = useState(false);
-  const [theaterFocusId, setTheaterFocusId] = useState<string | undefined>(undefined);
-  const [showMission, setShowMission] = useState(false);
+  const {
+    showDiplomacy, setShowDiplomacy,
+    showEconomy, setShowEconomy,
+    showSidePanel, setShowSidePanel,
+    showNationIntro, setShowNationIntro,
+    showTheater, setShowTheater,
+    theaterFocusId, setTheaterFocusId,
+    showMission, setShowMission,
+  } = usePanelVisibility();
   const isMobile = useMobileLayout();
 
   const refreshSaveMeta = useCallback(() => {
@@ -119,18 +83,48 @@ export default function App() {
     setShowTheater(false);
     setShowMission(false);
     refreshSaveMeta();
-  }, [refreshSaveMeta]);
-
-  const showFeedback = (msg: string | null) => {
-    setFeedback(msg);
-    if (msg) setTimeout(() => setFeedback(null), 3000);
-  };
+  }, [refreshSaveMeta, setShowDiplomacy, setShowEconomy, setShowTheater, setShowMission]);
 
   const updateState = useCallback((newState: GameState) => {
     setState(newState);
     saveGame(newState);
     setSaveSummary(peekSaveSummary());
   }, []);
+
+  const {
+    feedback,
+    showFeedback,
+    talksResult,
+    warConfirmTarget,
+    strikeConfirm,
+    facilityConfirm,
+    handleRequestStrike,
+    handleRequestCampaign,
+    handleConfirmStrike,
+    handleCancelStrike,
+    handleCancelCampaign,
+    handleRequestWar,
+    handleInstallClient,
+    handleConfirmWar,
+    handleCancelWar,
+    handleNegotiate,
+    handleCovertNegotiate,
+    handleProbePacts,
+    handlePressAction,
+    handleProposePeace,
+    handleDomesticPropaganda,
+    handleForeignInfluence,
+    handleDomesticSplitChange,
+    handleCovertOp,
+    handleMechanic,
+    handleInvestMilitary,
+    handleEventChoice,
+    handleBudgetChange,
+    handleTaxChange,
+    handleRequestFacilityBuild,
+    handleConfirmFacilityBuild,
+    handleCancelFacilityBuild,
+  } = useGameActions(state, updateState, setState);
 
   const startGame = useCallback((countryId: string, mode: GameMode = pendingMode) => {
     deleteSave();
@@ -142,10 +136,19 @@ export default function App() {
     setShowEconomy(false);
     setShowTheater(false);
     setShowMission(false);
-    setFeedback(null);
+    showFeedback(null);
     setShowNationIntro(false);
     refreshSaveMeta();
-  }, [pendingMode, refreshSaveMeta]);
+  }, [
+    pendingMode,
+    refreshSaveMeta,
+    showFeedback,
+    setShowDiplomacy,
+    setShowEconomy,
+    setShowTheater,
+    setShowMission,
+    setShowNationIntro,
+  ]);
 
   const startUsaCampaign = useCallback(() => {
     startGame('usa', 'campaign');
@@ -162,7 +165,7 @@ export default function App() {
       refreshSaveMeta();
       setScreen('title');
     }
-  }, [refreshSaveMeta]);
+  }, [refreshSaveMeta, showFeedback]);
 
   const handleDeleteSave = useCallback(() => {
     deleteSave();
@@ -184,7 +187,7 @@ export default function App() {
       refreshSaveMeta();
       showFeedback('Game saved.');
     }
-  }, [state, refreshSaveMeta]);
+  }, [state, refreshSaveMeta, showFeedback]);
 
   const handleCountryClick = useCallback((countryId: string) => {
     if (!state) return;
@@ -205,219 +208,6 @@ export default function App() {
     if (!state) return;
     setState({ ...state, selectedRegionId: regionId });
   }, [state]);
-
-  const handleRequestStrike = useCallback((regionId: string, strikeType: StrikeType) => {
-    setStrikeConfirm({ kind: 'strike', regionId, strikeType });
-  }, []);
-
-  const handleRequestCampaign = useCallback((
-    sourceRegionId: string,
-    targetRegionId: string,
-    strikeType: StrikeType
-  ) => {
-    setStrikeConfirm({ kind: 'campaign', sourceRegionId, targetRegionId, strikeType });
-  }, []);
-
-  const handleConfirmStrike = useCallback(() => {
-    if (!state || !strikeConfirm) return;
-    const newState = structuredClone(state);
-    let err: string | null = null;
-
-    if (strikeConfirm.kind === 'strike') {
-      err = playerLaunchStrike(newState, strikeConfirm.regionId, strikeConfirm.strikeType);
-    } else {
-      err = playerStartStrikeCampaign(
-        newState,
-        strikeConfirm.sourceRegionId,
-        strikeConfirm.targetRegionId,
-        strikeConfirm.strikeType
-      );
-    }
-
-    setStrikeConfirm(null);
-    if (err) showFeedback(err);
-    else updateState(newState);
-  }, [state, strikeConfirm, updateState]);
-
-  const handleCancelStrike = useCallback(() => {
-    setStrikeConfirm(null);
-  }, []);
-
-  const handleCancelCampaign = useCallback((campaignId: string) => {
-    if (!state) return;
-    const newState = structuredClone(state);
-    const err = playerCancelStrikeCampaign(newState, campaignId);
-    if (err) showFeedback(err);
-    else updateState(newState);
-  }, [state, updateState]);
-
-  const handleRequestWar = useCallback((targetId: string) => {
-    setWarConfirmTarget(targetId);
-  }, []);
-
-  const handleInstallClient = useCallback((targetId: string) => {
-    if (!state) return;
-    const newState = structuredClone(state);
-    const err = installCampaignClient(newState, targetId);
-    if (err) showFeedback(err);
-    else {
-      maybeStartPostCubaCutscene(newState);
-      updateState(newState);
-      showFeedback('Client government installed.');
-    }
-  }, [state, updateState]);
-
-  const handleConfirmWar = useCallback(() => {
-    if (!state || !warConfirmTarget) return;
-    const newState = structuredClone(state);
-    const err = playerDeclareWar(newState, warConfirmTarget);
-    setWarConfirmTarget(null);
-    if (err) showFeedback(err);
-    else {
-      newState.fronts = detectFronts(newState);
-      updateState(newState);
-      showFeedback(`War declared on ${newState.countries[warConfirmTarget]?.name ?? warConfirmTarget}.`);
-    }
-  }, [state, warConfirmTarget, updateState]);
-
-  const handleCancelWar = useCallback(() => {
-    setWarConfirmTarget(null);
-  }, []);
-
-  const handleNegotiate = useCallback((
-    targetId: string,
-    option: TalkOptionId,
-    peaceTerms?: PeaceTermsType
-  ) => {
-    if (!state) return;
-    const newState = structuredClone(state);
-    const result = playerNegotiate(newState, targetId, option, peaceTerms);
-    setTalksResult(result.message);
-    showFeedback(result.message);
-    if (result.success) updateState(newState);
-  }, [state, updateState]);
-
-  const handleCovertNegotiate = useCallback((
-    targetId: string,
-    option: CovertTalkOptionId
-  ) => {
-    if (!state) return;
-    const newState = structuredClone(state);
-    const result = playerCovertNegotiate(newState, targetId, option);
-    setTalksResult(result.message);
-    showFeedback(result.message);
-    if (result.success) updateState(newState);
-  }, [state, updateState]);
-
-  const handleProbePacts = useCallback((targetId: string) => {
-    if (!state) return;
-    const newState = structuredClone(state);
-    const err = playerProbeCovertPacts(newState, targetId);
-    if (err) showFeedback(err);
-    else {
-      showFeedback('Intelligence probe launched — results next turn.');
-      updateState(newState);
-    }
-  }, [state, updateState]);
-
-  const handlePressAction = useCallback((actionId: PressActionId, targetId: string) => {
-    if (!state) return;
-    const newState = structuredClone(state);
-    const result = playerPressAction(newState, actionId, targetId);
-    showFeedback(result.message);
-    if (result.success) updateState(newState);
-  }, [state, updateState]);
-
-  const handleProposePeace = useCallback((targetId: string, terms: PeaceTermsType) => {
-    if (!state) return;
-    const newState = structuredClone(state);
-    const result = dispatchTalkMission(newState, targetId, 'peace', terms);
-    showFeedback(result.message);
-    if (result.success) updateState(newState);
-  }, [state, updateState]);
-
-  const handleDomesticPropaganda = useCallback(() => {
-    if (!state) return;
-    const newState = structuredClone(state);
-    const err = playerDomesticPropaganda(newState);
-    if (err) showFeedback(err);
-    else updateState(newState);
-  }, [state, updateState]);
-
-  const handleForeignInfluence = useCallback((targetId: string) => {
-    if (!state) return;
-    const newState = structuredClone(state);
-    const err = playerForeignInfluence(newState, targetId);
-    if (err) showFeedback(err);
-    else updateState(newState);
-  }, [state, updateState]);
-
-  const handleDomesticSplitChange = useCallback((split: DomesticSplit) => {
-    if (!state) return;
-    setState({ ...state, domesticSplit: split });
-  }, [state]);
-
-  const handleCovertOp = useCallback((targetId: string) => {
-    if (!state) return;
-    const newState = structuredClone(state);
-    const err = playerLaunchCovertOp(newState, targetId);
-    if (err) showFeedback(err);
-    else updateState(newState);
-  }, [state, updateState]);
-
-  const handleMechanic = useCallback((mechanicId: string, targetId?: string) => {
-    if (!state) return;
-    const newState = structuredClone(state);
-    const err = playerExecuteMechanic(newState, mechanicId, targetId);
-    if (err) showFeedback(err);
-    else updateState(newState);
-  }, [state, updateState]);
-
-  const handleInvestMilitary = useCallback((category: keyof MilitaryDev) => {
-    if (!state) return;
-    const newState = structuredClone(state);
-    const err = playerInvestMilitary(newState, category);
-    if (err) showFeedback(err);
-    else updateState(newState);
-  }, [state, updateState]);
-
-  const handleEventChoice = useCallback((eventId: string, choiceIndex: number, targetCountryId: string) => {
-    if (!state) return;
-    const newState = structuredClone(state);
-    resolveEventChoice(newState, eventId, choiceIndex, targetCountryId);
-    updateState(newState);
-  }, [state, updateState]);
-
-  const handleBudgetChange = useCallback((budget: BudgetAllocation) => {
-    if (!state) return;
-    setState({ ...state, budget });
-  }, [state]);
-
-  const handleTaxChange = useCallback((corporateTaxRate: number, incomeTaxRate: number) => {
-    if (!state) return;
-    setState({ ...state, corporateTaxRate, incomeTaxRate });
-  }, [state]);
-
-  const handleRequestFacilityBuild = useCallback((regionId: string, type: FacilityType) => {
-    setFacilityConfirm({ regionId, facilityType: type });
-  }, []);
-
-  const handleConfirmFacilityBuild = useCallback(() => {
-    if (!state || !facilityConfirm) return;
-    const newState = structuredClone(state);
-    const err = playerStartFacilityBuild(
-      newState,
-      facilityConfirm.regionId,
-      facilityConfirm.facilityType
-    );
-    setFacilityConfirm(null);
-    if (err) showFeedback(err);
-    else updateState(newState);
-  }, [state, facilityConfirm, updateState]);
-
-  const handleCancelFacilityBuild = useCallback(() => {
-    setFacilityConfirm(null);
-  }, []);
 
   const pendingEvent = state?.activeEvents.find(
     e => !e.resolved && (!e.targetCountryId || e.targetCountryId === state.playerCountryId)
