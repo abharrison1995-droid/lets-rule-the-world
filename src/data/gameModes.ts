@@ -35,10 +35,6 @@ export function getPlayableCountriesForMode(mode: GameMode) {
   return all.filter(c => allow.has(c.id));
 }
 
-export function isCountryPlayableInMode(countryId: string, mode: GameMode): boolean {
-  return getPlayableCountriesForMode(mode).some(c => c.id === countryId);
-}
-
 export function formatModeLabel(mode: GameMode): string {
   return GAME_MODES[mode]?.name ?? mode;
 }
