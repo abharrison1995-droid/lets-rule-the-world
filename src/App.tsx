@@ -36,6 +36,7 @@ import { BottomSheet } from './components/BottomSheet';
 import { hasBlockingCutscene } from './data/cutscenes';
 import { useMobileLayout } from './hooks/useMobileLayout';
 import { useGameActions } from './hooks/useGameActions';
+import { usePanelVisibility } from './hooks/usePanelVisibility';
 import './App.css';
 
 // Lazily loaded: heavy, and not every playthrough opens them.
@@ -56,18 +57,18 @@ type Screen = 'title' | 'mode' | 'campaigns' | 'saves' | 'nation' | 'game';
 export default function App() {
   const [screen, setScreen] = useState<Screen>('title');
   const [state, setState] = useState<GameState | null>(null);
-  const [showDiplomacy, setShowDiplomacy] = useState(false);
-  const [showEconomy, setShowEconomy] = useState(false);
-  const [showSidePanel, setShowSidePanel] = useState(() =>
-    typeof window !== 'undefined' ? !window.matchMedia('(max-width: 768px)').matches : true
-  );
   const [saveSummary, setSaveSummary] = useState(() => peekSaveSummary());
   const [pendingMode, setPendingMode] = useState<GameMode>('campaign');
   const [turnSummary, setTurnSummary] = useState<TurnReportEntry[] | null>(null);
-  const [showNationIntro, setShowNationIntro] = useState(false);
-  const [showTheater, setShowTheater] = useState(false);
-  const [theaterFocusId, setTheaterFocusId] = useState<string | undefined>(undefined);
-  const [showMission, setShowMission] = useState(false);
+  const {
+    showDiplomacy, setShowDiplomacy,
+    showEconomy, setShowEconomy,
+    showSidePanel, setShowSidePanel,
+    showNationIntro, setShowNationIntro,
+    showTheater, setShowTheater,
+    theaterFocusId, setTheaterFocusId,
+    showMission, setShowMission,
+  } = usePanelVisibility();
   const isMobile = useMobileLayout();
 
   const refreshSaveMeta = useCallback(() => {
@@ -82,7 +83,7 @@ export default function App() {
     setShowTheater(false);
     setShowMission(false);
     refreshSaveMeta();
-  }, [refreshSaveMeta]);
+  }, [refreshSaveMeta, setShowDiplomacy, setShowEconomy, setShowTheater, setShowMission]);
 
   const updateState = useCallback((newState: GameState) => {
     setState(newState);
@@ -138,7 +139,16 @@ export default function App() {
     showFeedback(null);
     setShowNationIntro(false);
     refreshSaveMeta();
-  }, [pendingMode, refreshSaveMeta, showFeedback]);
+  }, [
+    pendingMode,
+    refreshSaveMeta,
+    showFeedback,
+    setShowDiplomacy,
+    setShowEconomy,
+    setShowTheater,
+    setShowMission,
+    setShowNationIntro,
+  ]);
 
   const startUsaCampaign = useCallback(() => {
     startGame('usa', 'campaign');
